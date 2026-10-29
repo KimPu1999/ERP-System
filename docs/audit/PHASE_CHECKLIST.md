@@ -77,3 +77,19 @@ Phase 1 is **partially implemented and verified**. Backend tests pass at 29 test
 - [x] Applied forward-only migrations `2026_10_29_000043` and `2026_10_29_000044` locally.
 - [ ] Add browser-level responsive/accessibility verification for the organization pages.
 - [ ] Implement Branch Management Phase 2 separately, including branch CRUD and branch-specific permissions.
+
+## Organization Phase 2 — branch management
+
+- [x] Expanded branches with operational profile, contact/address, manager, staff assignment, business hours, timezone, document prefix, status, and archive fields.
+- [x] Added company-scoped unique branch codes, tenant/company indexes, manager foreign key, and forward-only migration `2026_10_29_000045`.
+- [x] Added paginated branch listing with server-side search, status, city, region, manager, sorting, and bounded page sizes.
+- [x] Added real branch KPI summaries for total, active, inactive, and assigned-manager counts.
+- [x] Added create and edit APIs with validation, active manager qualification, staff assignment validation, and audit logging.
+- [x] Added branch details and activity APIs with authorized staff, department, warehouse, manager, and lifecycle data.
+- [x] Added active/inactive/archived lifecycle controls; archived branches preserve historical references and cannot be reactivated.
+- [x] Added tenant/company/branch authorization and cross-tenant/cross-company isolation coverage.
+- [x] Added Branch Management page, reusable summary/filter/table/form/status/details/activity components, responsive styling, and detail tabs.
+- [x] Added manager and staff candidate endpoints without granting new permissions automatically.
+- [x] Branch feature tests pass: 6 tests / 26 assertions; full Laravel suite passes: 56 tests / 182 assertions.
+- [ ] Complete browser-level responsive/accessibility verification when the in-app browser connector is available.
+- [ ] Implement Organization Phase 3 — Department Management separately.

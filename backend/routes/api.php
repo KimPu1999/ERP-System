@@ -117,6 +117,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/invitations', [InvitationController::class, 'store']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
         Route::post('/companies/{company}/branches', [BranchController::class, 'store']);
+        Route::get('/companies/{company}/branch-manager-candidates', [BranchController::class, 'managerCandidates']);
+        Route::get('/companies/{company}/branch-staff-candidates', [BranchController::class, 'staffCandidates']);
+        Route::get('/companies/{company}/branches/{branch}', [BranchController::class, 'show']);
+        Route::patch('/companies/{company}/branches/{branch}', [BranchController::class, 'updateNested']);
+        Route::patch('/companies/{company}/branches/{branch}/status', [BranchController::class, 'status']);
+        Route::get('/companies/{company}/branches/{branch}/activity', [BranchController::class, 'activity']);
         Route::patch('/branches/{branch}', [BranchController::class, 'update']);
         Route::get('/catalog/references', [CatalogReferenceController::class, 'index']);
         Route::post('/catalog/references', [CatalogReferenceController::class, 'store']);

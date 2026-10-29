@@ -18,5 +18,6 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = ['password', 'remember_token'];
     protected function casts(): array { return ['email_verified_at' => 'datetime', 'suspended_at' => 'datetime', 'mfa_enabled_at' => 'datetime', 'mfa_recovery_codes' => 'array', 'password' => 'hashed']; }
     public function tenantMemberships() { return $this->hasMany(TenantMembership::class); }
+    public function roleAssignments() { return $this->hasMany(RoleAssignment::class); }
     public function tenants() { return $this->belongsToMany(Tenant::class, 'tenant_memberships')->withPivot('status')->withTimestamps(); }
 }

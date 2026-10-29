@@ -382,3 +382,79 @@ tr:last-child td { border-bottom: 0; }
 .dashboard-alert .table-action { margin-left: 7px; color: #b91c1c; }
 @keyframes dashboard-skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @keyframes dashboard-spin { to { transform: rotate(360deg); } }
+
+/* Organization · Branch management */
+.branch-heading-actions { display: flex; align-items: center; gap: 10px; }
+.branch-heading-actions .primary { display: inline-flex; align-items: center; gap: 7px; }
+.branch-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.branch-summary-card { min-height: 104px; box-shadow: 0 4px 14px rgba(15,23,42,.03); }
+.branch-summary-card span { display: inline-flex; align-items: center; gap: 7px; text-transform: capitalize; }
+.branch-summary-card strong { font-size: 25px; }
+.branch-filter-bar { display: flex; align-items: end; flex-wrap: wrap; gap: 9px; margin: 14px 0; padding: 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.branch-filter-bar label { display: grid; gap: 5px; min-width: 135px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.branch-filter-bar select, .branch-filter-bar input { min-height: 35px; padding: 0 10px; border: 1px solid var(--border); border-radius: 7px; outline: 0; color: var(--text); background: var(--surface); font-size: 12px; text-transform: none; letter-spacing: 0; }
+.branch-filter-bar select:focus, .branch-filter-bar input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.branch-search { display: flex !important; flex: 1 1 230px; align-items: center; gap: 7px; min-height: 35px; padding: 0 10px; border: 1px solid var(--border); border-radius: 7px; color: var(--muted) !important; background: var(--surface); }
+.branch-search input { min-width: 0; flex: 1; padding: 0; border: 0; }
+.branch-filter-reset { display: inline-flex; align-items: center; gap: 6px; min-height: 35px; }
+.branch-table-card { margin-top: 0; padding: 0; overflow: hidden; }
+.branch-table-scroll { overflow-x: auto; }
+.branch-table-card table { min-width: 1060px; }
+.branch-table-card th { padding-top: 12px; padding-bottom: 12px; }
+.branch-table-card td { vertical-align: middle; }
+.branch-table-card td small, .table-primary { display: block; }
+.branch-table-card td small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.table-primary { font-weight: 650; }
+.table-actions { display: flex; gap: 5px; }
+.branch-status-active { color: #166534; background: #dcfce7; }
+.branch-status-inactive { color: #92400e; background: #fef3c7; }
+.branch-status-archived { color: #475569; background: #e2e8f0; }
+.branch-empty-state { display: grid; min-height: 160px; place-items: center; align-content: center; gap: 4px; color: var(--muted); text-align: center; }
+.branch-empty-state p { margin: 0; color: var(--text); font-size: 13px; font-weight: 650; }
+.branch-empty-state small { font-size: 11px; }
+.branch-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 11px; color: var(--muted); font-size: 11px; }
+.branch-pagination label { display: inline-flex; align-items: center; gap: 7px; }
+.branch-pagination select { min-height: 31px; padding: 0 8px; border: 1px solid var(--border); border-radius: 7px; color: var(--text); background: var(--surface); font-size: 11px; }
+.branch-pagination > div { display: flex; gap: 6px; }
+.branch-pagination .secondary { min-height: 31px; padding: 0 9px; }
+.branch-refresh-indicator { position: fixed; right: 20px; bottom: 20px; color: var(--blue); animation: dashboard-spin .85s linear infinite; }
+.branch-form-overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 22px; background: rgba(15,23,42,.42); }
+.branch-form-dialog { width: min(100%, 920px); max-height: calc(100vh - 44px); overflow: auto; border-radius: 12px; }
+.branch-form { margin: 0; box-shadow: 0 18px 50px rgba(15,23,42,.18); }
+.branch-form h2 { margin: 3px 0 0; font-size: 17px; }
+.branch-form .form-grid { align-items: start; }
+.branch-form textarea, .branch-form select, .branch-form input { width: 100%; margin-top: 7px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 8px; outline: 0; color: var(--text); background: var(--surface); font-size: 13px; }
+.branch-form select[multiple] { min-height: 106px; }
+.branch-form textarea { resize: vertical; }
+.branch-form label { color: var(--text); font-size: 12px; font-weight: 650; }
+.branch-form label > small { display: block; margin-top: 4px; }
+.branch-form input:focus, .branch-form select:focus, .branch-form textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.branch-details-page { display: grid; gap: 12px; }
+.branch-details-page .page-heading { margin-bottom: 4px; }
+.branch-detail-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+.branch-detail-title { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.branch-detail-title > div { display: grid; gap: 3px; min-width: 0; }
+.branch-detail-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.branch-detail-title span:last-child { color: var(--muted); font-size: 11px; }
+.branch-detail-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; color: var(--blue); background: var(--blue-soft); }
+.branch-detail-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.branch-detail-kpis .metric { min-height: 94px; }
+.branch-detail-kpis .metric span { display: inline-flex; align-items: center; gap: 6px; }
+.branch-detail-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-muted); }
+.branch-detail-tabs button { flex: 0 0 auto; padding: 8px 11px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.branch-detail-tabs button:hover, .branch-detail-tabs button.active { color: var(--blue); background: var(--surface); box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+.branch-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.branch-detail-grid .card { min-width: 0; }
+.branch-activity-timeline { display: grid; gap: 14px; margin-top: 5px; }
+.branch-activity-item { display: flex; gap: 10px; }
+.branch-activity-item > div { display: grid; gap: 3px; }
+.branch-activity-item strong { font-size: 12px; text-transform: capitalize; }
+.branch-activity-item time { color: var(--muted); font-size: 10px; }
+.branch-status-actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.branch-status-actions h2 { margin: 4px 0; font-size: 15px; }
+.danger-button { min-height: 39px; padding: 0 13px; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; background: #fef2f2; font-size: 12px; font-weight: 650; }
+.danger-button:hover { background: #fee2e2; }
+.alert-success { color: #166534; border-color: #bbf7d0; background: #f0fdf4; }
+
+@media (max-width: 900px) { .branch-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .branch-detail-grid { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .branch-heading-actions { align-items: stretch; flex-direction: column; } .branch-heading-actions .context-select, .branch-heading-actions .context-select select { width: 100%; } .branch-summary-grid, .branch-detail-kpis { grid-template-columns: 1fr; } .branch-filter-bar label { flex: 1 1 140px; min-width: 0; } .branch-pagination { align-items: flex-start; flex-direction: column; } .branch-pagination > div { width: 100%; } .branch-pagination > div .secondary { flex: 1; } .branch-form-overlay { padding: 10px; } .branch-form-dialog { max-height: calc(100vh - 20px); } .branch-form .form-grid { grid-template-columns: 1fr; } .branch-form .form-span-2 { grid-column: auto; } .branch-status-actions { align-items: stretch; flex-direction: column; } .branch-status-actions .profile-actions { flex-wrap: wrap; } }
