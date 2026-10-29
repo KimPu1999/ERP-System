@@ -13,7 +13,7 @@ final class ProcurementStateService
         'PurchaseRequest' => ['draft' => ['submitted', 'cancelled'], 'submitted' => ['approved', 'rejected', 'cancelled'], 'approved' => ['cancelled']],
         'Rfq' => ['draft' => ['sent', 'cancelled'], 'sent' => ['closed', 'cancelled']],
         'SupplierQuotation' => ['draft' => ['submitted', 'rejected'], 'submitted' => ['accepted', 'rejected']],
-        'PurchaseOrder' => ['draft' => ['submitted', 'cancelled'], 'submitted' => ['approved', 'cancelled'], 'approved' => ['partially_received', 'received', 'cancelled'], 'partially_received' => ['partially_received', 'received', 'closed'], 'received' => ['closed']],
+        'PurchaseOrder' => ['draft' => ['submitted', 'cancelled'], 'submitted' => ['approved', 'rejected', 'revision_required', 'cancelled'], 'revision_required' => ['draft', 'cancelled'], 'rejected' => [], 'approved' => ['partially_received', 'received', 'cancelled'], 'partially_received' => ['partially_received', 'received', 'closed'], 'received' => ['closed']],
         'GoodsReceipt' => ['draft' => ['posted', 'cancelled']],
         'PurchaseReturn' => ['draft' => ['approved', 'cancelled'], 'approved' => ['posted', 'cancelled']],
         'SupplierBill' => ['draft' => ['submitted', 'cancelled'], 'submitted' => ['approved', 'rejected'], 'approved' => ['paid', 'void']],

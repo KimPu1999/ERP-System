@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, ClipboardList, FileCheck2, PackageCheck, Receipt, RotateCcw, Settings2, ShoppingCart, Truck, Users, type LucideIcon } from 'lucide-react';
+import { BarChart3, ClipboardCheck, ClipboardList, FileCheck2, PackageCheck, Receipt, RotateCcw, Settings2, ShoppingCart, Truck, Users, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 
@@ -11,6 +11,7 @@ const purchasingNavItems: PurchasingNavItem[] = [
   { label: 'Suppliers', to: '/purchasing/suppliers', icon: Users },
   { label: 'Purchase Requests', icon: ClipboardList, unavailable: 'Purchase request management UI is planned for the next purchasing phase.' },
   { label: 'Purchase Orders', to: '/purchasing', icon: ShoppingCart },
+  { label: 'Purchase Approvals', to: '/purchasing/approvals', icon: ClipboardCheck },
   { label: 'Goods Receipts', icon: PackageCheck, unavailable: 'Goods receipt posting is available through the API; a dedicated UI is planned.' },
   { label: 'Supplier Bills', icon: Receipt, unavailable: 'Supplier bill UI is planned for the next purchasing phase.' },
   { label: 'Purchase Returns', icon: RotateCcw, unavailable: 'Purchase return UI is planned for the next purchasing phase.' },

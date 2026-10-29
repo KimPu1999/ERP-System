@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Events\PurchaseOrderApproved;
-use App\Models\{AccountingCurrency, Branch, Company, ProcurementApproval, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, User, Warehouse};
-use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService};
+use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, Warehouse};
+use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService, PurchaseOrderApprovalService};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,7 +44,7 @@ final class PurchaseOrderController
     public function show(Request $request, PurchaseOrder $purchaseOrder, AuthorizationService $authorization): JsonResponse
     {
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
-        return response()->json(['data' => $purchaseOrder->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product', 'approvals'])]);
+        return response()->json(['data' => $purchaseOrder->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product', 'approvalRequest.definition', 'approvalRequest.actions.approver', 'approvalRequests.actions.approver'])]);
     }
 
     public function store(Request $request, ProcurementNumberService $numbers, AuditLogger $audit, AuthorizationService $authorization): JsonResponse
@@ -84,31 +83,34 @@ final class PurchaseOrderController
         return response()->json(['data' => $purchaseOrder->fresh()->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product'])]);
     }
 
-    public function submit(Request $request, PurchaseOrder $purchaseOrder, ProcurementStateService $states, AuditLogger $audit, AuthorizationService $authorization): JsonResponse
+    public function submit(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals, AuthorizationService $authorization): JsonResponse
     {
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
-        $data = $request->validate(['approver_ids' => ['nullable', 'array', 'max:10'], 'approver_ids.*' => ['uuid', 'exists:users,id']]);
-        $approvers = $this->eligibleApprovers($purchaseOrder, $data['approver_ids'] ?? null, $request->user()->id, $authorization);
-        $order = DB::transaction(function () use ($purchaseOrder, $states, $request, $approvers): PurchaseOrder {
-            $model = $states->transition($purchaseOrder, 'submitted', $request, (string) $purchaseOrder->tenant_id);
-            foreach ($approvers as $level => $approverId) ProcurementApproval::create(['tenant_id' => $purchaseOrder->tenant_id, 'document_type' => PurchaseOrder::class, 'document_id' => $model->id, 'approver_id' => $approverId, 'level' => $level + 1, 'state' => 'pending']);
-            return $model;
-        });
-        $audit->record($request, 'purchase_order.submitted', (string) $purchaseOrder->tenant_id, $order);
-        return response()->json(['data' => $order->fresh()]);
+        return response()->json(['data' => $approvals->submit($request, $purchaseOrder)]);
     }
 
-    public function approve(Request $request, PurchaseOrder $purchaseOrder, ProcurementStateService $states, AuditLogger $audit, AuthorizationService $authorization): JsonResponse
+    public function approve(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals): JsonResponse
+    {
+        $data = $request->validate(['remarks' => ['nullable', 'string', 'max:2000'], 'comment' => ['nullable', 'string', 'max:2000']]);
+        return response()->json(['data' => $approvals->decide($request, $purchaseOrder, 'approved', $data['remarks'] ?? $data['comment'] ?? null)]);
+    }
+
+    public function reject(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals): JsonResponse
+    {
+        $data = $request->validate(['remarks' => ['required', 'string', 'min:2', 'max:2000']]);
+        return response()->json(['data' => $approvals->decide($request, $purchaseOrder, 'rejected', $data['remarks'])]);
+    }
+
+    public function requestRevision(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals): JsonResponse
+    {
+        $data = $request->validate(['remarks' => ['required', 'string', 'min:2', 'max:2000']]);
+        return response()->json(['data' => $approvals->decide($request, $purchaseOrder, 'revision_required', $data['remarks'])]);
+    }
+
+    public function revise(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals, AuthorizationService $authorization): JsonResponse
     {
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
-        abort_unless((string) $purchaseOrder->created_by !== (string) $request->user()->id, 403, 'The creator cannot approve their own purchase order.');
-        $approval = ProcurementApproval::where('tenant_id', $purchaseOrder->tenant_id)->where('document_type', PurchaseOrder::class)->where('document_id', $purchaseOrder->id)->where('approver_id', $request->user()->id)->where('state', 'pending')->orderBy('level')->lockForUpdate()->firstOrFail();
-        $approval->update(['state' => 'approved', 'comment' => $request->string('comment')->toString(), 'decided_at' => now()]);
-        $pending = ProcurementApproval::where('tenant_id', $purchaseOrder->tenant_id)->where('document_type', PurchaseOrder::class)->where('document_id', $purchaseOrder->id)->where('state', 'pending')->exists();
-        $order = $purchaseOrder;
-        if (! $pending) { $order = $states->transition($purchaseOrder, 'approved', $request, (string) $purchaseOrder->tenant_id); event(new PurchaseOrderApproved($order)); }
-        $audit->record($request, 'purchase_order.approval.recorded', (string) $purchaseOrder->tenant_id, $order);
-        return response()->json(['data' => $order->fresh()]);
+        return response()->json(['data' => $approvals->returnToDraft($request, $purchaseOrder)]);
     }
 
     public function cancel(Request $request, PurchaseOrder $purchaseOrder, ProcurementStateService $states, AuditLogger $audit, AuthorizationService $authorization): JsonResponse
@@ -178,11 +180,4 @@ final class PurchaseOrderController
         return ['items' => $normalized, 'subtotal' => $subtotal, 'discount_total' => $discountTotal, 'tax_total' => $taxTotal, 'shipping_total' => $shipping, 'grand_total' => $grandTotal];
     }
 
-    private function eligibleApprovers(PurchaseOrder $order, ?array $requested, string $creatorId, AuthorizationService $authorization): array
-    {
-        $ids = $requested ?? User::query()->where('id', '!=', $creatorId)->whereHas('tenantMemberships', fn ($q) => $q->where('tenant_id', $order->tenant_id)->where('status', 'active'))->limit(50)->pluck('id')->all();
-        $eligible = collect($ids)->unique()->filter(fn ($id) => (string) $id !== (string) $creatorId && $authorization->allows(User::findOrFail($id), (string) $order->tenant_id, 'procurement.manage', (string) $order->company_id, $order->branch_id ? (string) $order->branch_id : null))->values()->all();
-        if ($eligible === []) throw ValidationException::withMessages(['approver_ids' => ['At least one eligible approver other than the purchase order creator is required.']]);
-        return $eligible;
-    }
 }
