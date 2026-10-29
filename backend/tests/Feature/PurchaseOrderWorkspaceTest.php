@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{Company, Permission, Product, ProductVariant, PurchaseOrder, PurchaseOrderItem, Role, RoleAssignment, Supplier, Tenant, TenantMembership, UnitOfMeasure, User};
+use App\Models\{Company, Permission, Product, ProductVariant, PurchaseOrder, PurchaseOrderItem, Role, RoleAssignment, Supplier, Tenant, TenantMembership, UnitOfMeasure, User, Warehouse};
 
 function purchaseOrderWorkspaceFixture(): array
 {
@@ -38,4 +38,47 @@ it('creates a draft without posting stock and rejects unauthorized company acces
     $unauthorized = User::factory()->create();
     TenantMembership::create(['tenant_id' => $tenant->id, 'user_id' => $unauthorized->id, 'status' => 'active']);
     $this->actingAs($unauthorized)->getJson('/api/v1/purchase-orders?company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])->assertForbidden();
+});
+
+it('persists decimal-safe phase two totals and validates warehouse scope', function (): void {
+    [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
+    $warehouse = Warehouse::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'name' => 'Main warehouse', 'code' => 'MAIN', 'is_active' => true]);
+
+    $response = $this->actingAs($user)->postJson('/api/v1/purchase-orders', [
+        'company_id' => $company->id,
+        'warehouse_id' => $warehouse->id,
+        'supplier_id' => $supplier->id,
+        'order_date' => '2026-10-29',
+        'shipping_total' => '2',
+        'items' => [[
+            'variant_id' => $variant->id,
+            'description' => 'Phase two item',
+            'ordered_quantity' => '3',
+            'unit_price' => '10',
+            'discount_type' => 'percent',
+            'discount_amount' => '10',
+            'tax_rate' => '5',
+        ]],
+    ], ['X-Tenant-Id' => $tenant->id])->assertCreated();
+
+    expect($response->json('data.subtotal'))->toBe('30.000000')
+        ->and($response->json('data.discount_total'))->toBe('3.000000')
+        ->and($response->json('data.tax_total'))->toBe('1.350000')
+        ->and($response->json('data.grand_total'))->toBe('30.350000')
+        ->and($response->json('data.items.0.line_total'))->toBe('28.350000')
+        ->and(PurchaseOrderItem::where('purchase_order_id', $response->json('data.id'))->value('line_total'))->toBe('28.350000');
+});
+
+it('does not allow duplicate variants or unauthorized print access', function (): void {
+    [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
+    $payload = ['company_id' => $company->id, 'supplier_id' => $supplier->id, 'items' => [
+        ['variant_id' => $variant->id, 'ordered_quantity' => '1', 'unit_price' => '10'],
+        ['variant_id' => $variant->id, 'ordered_quantity' => '2', 'unit_price' => '10'],
+    ]];
+    $this->actingAs($user)->postJson('/api/v1/purchase-orders', $payload, ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
+
+    $order = PurchaseOrder::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'supplier_id' => $supplier->id, 'created_by' => $user->id, 'number' => 'PO-PRINT-1', 'state' => 'draft']);
+    $unauthorized = User::factory()->create();
+    TenantMembership::create(['tenant_id' => $tenant->id, 'user_id' => $unauthorized->id, 'status' => 'active']);
+    $this->actingAs($unauthorized)->get('/api/v1/purchase-orders/'.$order->id.'/print', ['X-Tenant-Id' => $tenant->id])->assertForbidden();
 });

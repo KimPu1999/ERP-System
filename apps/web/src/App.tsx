@@ -21,7 +21,9 @@ import { OrganizationPage } from './pages/OrganizationPage';
 import { ProductCatalogPage } from './pages/ProductCatalogPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { SuppliersPage } from './pages/SuppliersPage';
-import { PurchaseOrderDetailsPage, PurchaseOrderFormPage, PurchasingPage } from './pages/PurchasingPage';
+import { PurchaseOrderDetailsPage } from './pages/PurchaseOrderDetailsPage';
+import { PurchaseOrdersPage } from './pages/PurchaseOrdersPage';
+import { PurchaseOrderFormPage } from './pages/PurchaseOrderFormPage';
 import { PurchasingLayout } from './layouts/PurchasingLayout';
 import { CrmSalesPage } from './pages/CrmSalesPage';
 import { AccountingPage } from './pages/AccountingPage';
@@ -64,7 +66,7 @@ export default function App() {
         <Route path="members/:memberId" element={<MemberDetailsPage />} />
         <Route path="roles" element={<RoleManagementPage />} />
       </Route>
-      <Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingLayout />}><Route index element={<PurchasingPage />} /><Route path="suppliers" element={<SuppliersPage />} /><Route path="new" element={<PurchaseOrderFormPage />} /><Route path=":purchaseOrderId/edit" element={<PurchaseOrderFormPage edit />} /><Route path=":purchaseOrderId" element={<PurchaseOrderDetailsPage />} /></Route>
+      <Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingLayout />}><Route index element={<PurchaseOrdersPage />} /><Route path="suppliers" element={<SuppliersPage />} /><Route path="new" element={<PurchaseOrderFormPage />} /><Route path=":purchaseOrderId/edit" element={<PurchaseOrderFormPage edit />} /><Route path=":purchaseOrderId" element={<PurchaseOrderDetailsPage />} /></Route>
       <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /></Route>
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>
