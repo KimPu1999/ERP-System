@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{AccountingCurrency, Branch, Company, CreditNote, Customer, Permission, Product, ProductVariant, Role, RoleAssignment, SalesInvoice, SalesOrder, SalesOrderItem, Tenant, TenantMembership, UnitOfMeasure, User};
+use App\Models\{AccountingCurrency, Branch, ChartAccount, Company, CreditNote, Customer, FiscalPeriod, FiscalYear, JournalEntry, JournalLine, Permission, Product, ProductVariant, Role, RoleAssignment, SalesInvoice, SalesOrder, SalesOrderItem, Tenant, TenantMembership, UnitOfMeasure, User};
 
 function dashboardUserWithReportAccess(): array
 {
@@ -92,4 +92,58 @@ it('requires dashboard permission and active tenant membership', function (): vo
 
     $this->actingAs($user)->getJson('/api/v1/dashboard/overview', ['X-Tenant-Id' => $tenant->id])->assertForbidden();
     $this->actingAs($user)->getJson('/api/v1/dashboard/overview', ['X-Tenant-Id' => Tenant::factory()->create()->id])->assertForbidden();
+});
+
+it('protects analytics endpoints with authentication, tenant membership, and dashboard permission', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    $tenantB = Tenant::factory()->create();
+    $endpoints = ['/api/v1/dashboard/revenue-trend', '/api/v1/dashboard/growth', '/api/v1/dashboard/financial-performance'];
+    foreach ($endpoints as $endpoint) {
+        $response = $this->getJson($endpoint);
+        expect([401, 403])->toContain($response->status());
+        $this->actingAs($user)->getJson($endpoint, ['X-Tenant-Id' => $tenantB->id])->assertForbidden();
+        $this->actingAs($user)->getJson($endpoint, ['X-Tenant-Id' => $tenant->id])->assertOk();
+    }
+});
+
+it('returns revenue trend and growth from recognized revenue with credit notes', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Analytics Company', 'code' => 'AN']);
+    $currency = AccountingCurrency::create(['tenant_id' => $tenant->id, 'code' => 'MMK', 'name' => 'Myanmar Kyat', 'decimal_places' => 0, 'is_base' => true]);
+    $customer = Customer::create(['tenant_id' => $tenant->id, 'name' => 'Analytics Customer', 'code' => 'AC-1']);
+    $currentInvoice = SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'customer_id' => $customer->id, 'number' => 'AN-CURRENT', 'state' => 'issued', 'total' => '100', 'base_total' => '100']);
+    $currentInvoice->forceFill(['created_at' => now()->subDays(2), 'updated_at' => now()->subDays(2)])->save();
+    $creditNote = CreditNote::create(['tenant_id' => $tenant->id, 'customer_id' => $customer->id, 'invoice_id' => $currentInvoice->id, 'number' => 'AN-CN', 'state' => 'issued', 'total' => '20']);
+    $creditNote->forceFill(['created_at' => now()->subDays(1), 'updated_at' => now()->subDays(1)])->save();
+    $previousInvoice = SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'customer_id' => $customer->id, 'number' => 'AN-PREVIOUS', 'state' => 'issued', 'total' => '50', 'base_total' => '50']);
+    $previousInvoice->forceFill(['created_at' => now()->subDays(32), 'updated_at' => now()->subDays(32)])->save();
+
+    $this->actingAs($user)->getJson('/api/v1/dashboard/revenue-trend?period=last_30_days&company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.available', true)->assertJsonPath('data.currency.code', $currency->code)->assertJsonPath('data.totals.current', '80.000000');
+    $this->actingAs($user)->getJson('/api/v1/dashboard/growth?period=last_30_days&company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.growth_percent', '60.00')->assertJsonPath('data.current_period.value', '80.000000');
+});
+
+it('returns posted general ledger financial performance and rejects branch precision it cannot support', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Ledger Company', 'code' => 'GL']);
+    $branch = Branch::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'name' => 'Ledger Branch', 'code' => 'GL-1']);
+    $currency = AccountingCurrency::create(['tenant_id' => $tenant->id, 'code' => 'MMK', 'name' => 'Myanmar Kyat', 'decimal_places' => 0, 'is_base' => true]);
+    $year = FiscalYear::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'name' => 'FY 2026', 'starts_on' => '2026-01-01', 'ends_on' => '2026-12-31', 'state' => 'open']);
+    $period = FiscalPeriod::create(['tenant_id' => $tenant->id, 'fiscal_year_id' => $year->id, 'name' => 'October 2026', 'starts_on' => '2026-10-01', 'ends_on' => '2026-10-31', 'state' => 'open']);
+    $asset = ChartAccount::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'code' => '1100', 'name' => 'Receivable', 'type' => 'asset', 'normal_balance' => 'debit']);
+    $revenue = ChartAccount::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'code' => '4100', 'name' => 'Sales revenue', 'type' => 'revenue', 'normal_balance' => 'credit']);
+    $expense = ChartAccount::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'code' => '5100', 'name' => 'Operating expense', 'type' => 'expense', 'normal_balance' => 'debit']);
+    $liability = ChartAccount::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'code' => '2100', 'name' => 'Payable', 'type' => 'liability', 'normal_balance' => 'credit']);
+    $saleEntry = JournalEntry::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'fiscal_period_id' => $period->id, 'currency_id' => $currency->id, 'created_by' => $user->id, 'number' => 'JE-AN-SALE', 'entry_date' => now()->toDateString(), 'state' => 'posted', 'idempotency_key' => 'analytics-sale', 'posted_at' => now()]);
+    JournalLine::create(['tenant_id' => $tenant->id, 'journal_entry_id' => $saleEntry->id, 'account_id' => $asset->id, 'company_id' => $company->id, 'debit' => '100', 'base_debit' => '100']);
+    JournalLine::create(['tenant_id' => $tenant->id, 'journal_entry_id' => $saleEntry->id, 'account_id' => $revenue->id, 'company_id' => $company->id, 'credit' => '100', 'base_credit' => '100']);
+    $expenseEntry = JournalEntry::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'fiscal_period_id' => $period->id, 'currency_id' => $currency->id, 'created_by' => $user->id, 'number' => 'JE-AN-EXPENSE', 'entry_date' => now()->toDateString(), 'state' => 'posted', 'idempotency_key' => 'analytics-expense', 'posted_at' => now()]);
+    JournalLine::create(['tenant_id' => $tenant->id, 'journal_entry_id' => $expenseEntry->id, 'account_id' => $expense->id, 'company_id' => $company->id, 'debit' => '30', 'base_debit' => '30']);
+    JournalLine::create(['tenant_id' => $tenant->id, 'journal_entry_id' => $expenseEntry->id, 'account_id' => $liability->id, 'company_id' => $company->id, 'credit' => '30', 'base_credit' => '30']);
+
+    $this->actingAs($user)->getJson('/api/v1/dashboard/financial-performance?period=last_30_days&company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.available', true)->assertJsonPath('data.totals.current.income', '100.000000')->assertJsonPath('data.totals.current.expenses', '30.000000')->assertJsonPath('data.totals.current.profit', '70.000000');
+    $this->actingAs($user)->getJson('/api/v1/dashboard/financial-performance?period=last_30_days&company_id='.$company->id.'&branch_id='.$branch->id, ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.available', false);
 });

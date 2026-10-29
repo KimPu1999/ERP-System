@@ -46,6 +46,17 @@ export type DashboardOverview = {
   pending_approvals: Array<{ id: string; document_type: string; reference: string; requested_by: string; date: string; amount: string; status: string }>;
 };
 export const getDashboardOverview = (params: Record<string, string | undefined>) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: DashboardOverview }>(`/dashboard/overview?${query.toString()}`); };
+export type DashboardAnalyticsParams = { period?: string; company_id?: string; branch_id?: string; date_from?: string; date_to?: string; year?: string; comparison_period?: 'previous_period' | 'previous_year' };
+export type DashboardAnalyticsPoint = { key: string; label: string; current: string; previous: string };
+export type DashboardAnalyticsBase = { available: boolean; reason: string | null; currency: { code: string | null; decimal_places: number | null }; accounting_basis: string | null; filters: { period: string; year: number | null; comparison_period: string; from: string; to: string; company_id: string | null; branch_id: string | null; timezone: string }; points: DashboardAnalyticsPoint[] };
+export type DashboardRevenueTrend = DashboardAnalyticsBase & { granularity: 'day' | 'month' | null; current_period?: { from: string; to: string }; comparison_period?: { from: string; to: string }; totals: { current: string; previous: string } | null };
+export type DashboardGrowth = Omit<DashboardAnalyticsBase, 'points'> & { current_period: { from: string; to: string; value: string }; previous_period: { from: string; to: string; value: string }; growth_percent: string | null; target: { value: string; percent: string } | null };
+export type DashboardFinancialValue = { income: string; expenses: string; profit: string };
+export type DashboardFinancialPerformance = Omit<DashboardAnalyticsBase, 'points'> & { granularity: 'day' | 'month' | null; totals: { current: DashboardFinancialValue; previous: DashboardFinancialValue } | null; points: Array<{ key: string; label: string; current: DashboardFinancialValue; previous: DashboardFinancialValue }> };
+const dashboardAnalytics = <T>(path: string, params: DashboardAnalyticsParams) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: T }>(`${path}?${query.toString()}`); };
+export const getDashboardRevenueTrend = (params: DashboardAnalyticsParams) => dashboardAnalytics<DashboardRevenueTrend>('/dashboard/revenue-trend', params);
+export const getDashboardGrowth = (params: DashboardAnalyticsParams) => dashboardAnalytics<DashboardGrowth>('/dashboard/growth', params);
+export const getDashboardFinancialPerformance = (params: DashboardAnalyticsParams) => dashboardAnalytics<DashboardFinancialPerformance>('/dashboard/financial-performance', params);
 export type Tenant = { id: string; name: string; slug: string; status?: string };
 export type Company = { id: string; tenant_id: string; name: string; code: string; is_active: boolean };
 export type Branch = { id: string; company_id: string; name: string; code: string; is_active: boolean };

@@ -1,19 +1,18 @@
 import { ArrowUpRight, BarChart3, Boxes, ClipboardCheck, FileText, PackagePlus, ShoppingCart, TrendingUp, Truck, Warehouse, type LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { DashboardEmptyState, DashboardKpiGrid, DashboardKpiSkeleton } from './DashboardKpi';
+import { DashboardKpiGrid, DashboardKpiSkeleton } from './DashboardKpi';
+import { DashboardAnalytics, type DashboardAnalyticsProps } from './DashboardAnalytics';
 import { formatMoney as money, formatNumber as number } from '../lib/dashboardFormatting';
 import type { DashboardOverview } from '../lib/api';
 
-type PanelProps = { title: string; eyebrow?: string; children: ReactNode; className?: string };
 type Currency = DashboardOverview['currency']['code'];
 
 const shortDate = (value: string | null) => value ? new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`)) : '—';
 
-export function DashboardFoundation({ data, onNavigate }: { data: DashboardOverview; onNavigate: (path: string) => void }) {
+export function DashboardFoundation({ data, onNavigate, analytics }: { data: DashboardOverview; onNavigate: (path: string) => void; analytics: DashboardAnalyticsProps }) {
   const currency = data.currency.code;
   return <div className="dashboard-foundation">
     <section className="dashboard-section-block" aria-labelledby="dashboard-kpis-title"><SectionHeading id="dashboard-kpis-title" title="Business snapshot" subtitle={`${shortDate(data.filters.from)} – ${shortDate(data.filters.to)}`} /><DashboardKpiGrid kpis={data.kpis} currency={currency} />{!data.currency.configured && <p className="alert alert-warning" role="status">Configure a base accounting currency to display financial totals.</p>}</section>
-    <section className="dashboard-section-block" aria-labelledby="dashboard-analytics-title"><SectionHeading id="dashboard-analytics-title" title="Analytics overview" subtitle="Aggregated from approved ERP records." /><div className="foundation-analytics-grid"><DashboardPanel title="Revenue overview" eyebrow="Revenue vs expenses"><LineChart items={data.charts.revenue_expenses} currency={currency} /></DashboardPanel><DashboardPanel title="Growth & performance" eyebrow="Sales by category"><CategoryChart items={data.charts.sales_by_category} currency={currency} /></DashboardPanel><DashboardPanel title="Income, expense & profit" eyebrow="Financial performance" className="foundation-chart-wide"><FinancialBars items={data.charts.revenue_expenses} /></DashboardPanel><DashboardPanel title="Monthly sales trend" eyebrow="Issued invoice totals" className="foundation-chart-wide"><MonthlyChart items={data.charts.sales_trend} currency={currency} /></DashboardPanel></div></section>
+    <section className="dashboard-section-block" aria-labelledby="dashboard-analytics-title"><SectionHeading id="dashboard-analytics-title" title="Analytics overview" subtitle="Interactive, filter-aware financial reporting." /><DashboardAnalytics {...analytics} /></section>
     <section className="dashboard-section-block" aria-labelledby="dashboard-business-title"><SectionHeading id="dashboard-business-title" title="Business performance" subtitle="Recent sales and product performance." /><div className="foundation-three-grid"><SalesTable title="Recent transactions" icon={FileText} data={data.recent_sales} currency={currency} onNavigate={onNavigate} /><ProductsTable title="Top products by sales" icon={BarChart3} rows={data.top_products} currency={currency} /><ProductsTable title="Top products by volume" icon={Boxes} rows={data.top_products_by_volume} currency={currency} volume /></div></section>
     <section className="dashboard-section-block" aria-labelledby="dashboard-operations-title"><SectionHeading id="dashboard-operations-title" title="Operations monitoring" subtitle="Approvals, inventory alerts, and common workflows." /><div className="foundation-three-grid"><ApprovalsTable rows={data.pending_approvals} /><InventoryTable rows={data.inventory_alerts} /><QuickActions onNavigate={onNavigate} /></div></section>
   </div>;
@@ -24,36 +23,6 @@ export function DashboardFoundationLoading() {
 }
 
 function SectionHeading({ id, title, subtitle }: { id: string; title: string; subtitle: string }) { return <div className="dashboard-section-heading"><div><p className="dashboard-section-kicker">ERP Cloud</p><h2 id={id}>{title}</h2></div><p>{subtitle}</p></div>; }
-function DashboardPanel({ title, eyebrow, children, className = '' }: PanelProps) { return <article className={`dashboard-panel foundation-panel ${className}`}><div className="panel-heading"><div><p className="panel-eyebrow">{eyebrow}</p><h3>{title}</h3></div></div>{children}</article>; }
-
-function LineChart({ items, currency }: { items: DashboardOverview['charts']['revenue_expenses']; currency: Currency }) {
-  if (items.length === 0) return <DashboardEmptyState message="No revenue or expense activity in this period." />;
-  const max = Math.max(...items.flatMap((item) => [Number(item.revenue), Number(item.expenses)]), 1);
-  const points = (key: 'revenue' | 'expenses') => items.map((item, index) => `${(index / Math.max(items.length - 1, 1)) * 100},${92 - (Number(item[key]) / max) * 78}`).join(' ');
-  return <div className="chart-wrap"><div className="chart-legend"><span><i className="legend-dot revenue-dot" />Revenue</span><span><i className="legend-dot expense-dot" />Expenses</span><strong>{money(items.reduce((sum, item) => sum + Number(item.revenue), 0), currency)}</strong></div><svg className="line-chart" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Revenue versus expenses"><path d="M0 92H100M0 53H100M0 14H100" className="chart-grid-line" /><polyline points={points('expenses')} className="chart-line expenses-line" /><polyline points={points('revenue')} className="chart-line revenue-line" /></svg><div className="chart-axis"><span>{items[0]?.label}</span><span>{items[Math.floor(items.length / 2)]?.label}</span><span>{items.at(-1)?.label}</span></div></div>;
-}
-
-function CategoryChart({ items, currency }: { items: DashboardOverview['charts']['sales_by_category']; currency: Currency }) {
-  if (items.length === 0) return <DashboardEmptyState message="No category sales in this period." />;
-  const total = items.reduce((sum, item) => sum + Number(item.value), 0);
-  let cursor = 0;
-  const colors = ['#2563eb', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899', '#94a3b8'];
-  const stops = items.map((item, index) => { const start = cursor; cursor += total ? (Number(item.value) / total) * 100 : 0; return `${colors[index % colors.length]} ${start}% ${cursor}%`; }).join(', ');
-  return <div className="donut-layout"><div className="donut" style={{ background: `conic-gradient(${stops})` }}><div><strong>{money(total, currency)}</strong><span>Total sales</span></div></div><div className="donut-legend">{items.map((item, index) => <span key={item.label}><i className="legend-dot" style={{ background: colors[index % colors.length] }} />{item.label}<strong>{money(item.value, currency)}</strong></span>)}</div></div>;
-}
-
-function FinancialBars({ items }: { items: DashboardOverview['charts']['revenue_expenses'] }) {
-  if (items.length === 0) return <DashboardEmptyState message="No financial activity in this period." />;
-  const sampled = items.slice(-8);
-  const max = Math.max(...sampled.flatMap((item) => [Number(item.revenue), Number(item.expenses)]), 1);
-  return <div className="foundation-bars-preview">{sampled.map((item) => { const revenue = Number(item.revenue); const expense = Number(item.expenses); return <div className="foundation-bar-group" key={item.label} title={`${item.label}: income ${revenue}, expense ${expense}`}><i className="bar-income" style={{ height: `${Math.max(8, (revenue / max) * 100)}%` }} /><i className="bar-expense" style={{ height: `${Math.max(8, (expense / max) * 100)}%` }} /><i className="bar-profit" style={{ height: `${Math.max(8, (Math.max(0, revenue - expense) / max) * 100)}%` }} /></div>; })}</div>;
-}
-
-function MonthlyChart({ items, currency }: { items: DashboardOverview['charts']['sales_trend']; currency: Currency }) {
-  if (items.length === 0) return <DashboardEmptyState message="No monthly sales in this period." />;
-  const max = Math.max(...items.map((item) => Number(item.value)), 1);
-  return <div className="trend-chart">{items.map((item) => <div className="trend-column" key={item.label} title={`${item.label}: ${money(item.value, currency)}`}><div className="trend-bar" style={{ height: `${Math.max(4, (Number(item.value) / max) * 100)}%` }} /><span>{item.label.split(' ')[0]}</span></div>)}</div>;
-}
 
 function SalesTable({ title, icon: Icon, data, currency, onNavigate }: { title: string; icon: LucideIcon; data: DashboardOverview['recent_sales']; currency: Currency; onNavigate: (path: string) => void }) {
   return <article className="dashboard-panel foundation-table-panel"><PanelTitle title={title} icon={Icon} action="View all" onAction={() => onNavigate('/crm-sales')} /><div className="foundation-table-wrap"><table className="dashboard-table"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>{data.length === 0 ? <EmptyRow colSpan={5} message="No sales transactions in this period." /> : data.map((item) => <tr key={item.id}><td>{item.number}</td><td>{item.customer}</td><td>{shortDate(item.date)}</td><td>{money(item.amount, currency)}</td><td><span className="table-status">{item.status}</span></td></tr>)}</tbody></table></div></article>;

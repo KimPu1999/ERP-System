@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardFilterBar, type DashboardPeriod } from '../components/DashboardFilterBar';
 import { DashboardFoundation, DashboardFoundationLoading } from '../components/DashboardFoundation';
-import { clearActiveTenantId, getActiveTenantId, getDashboardBranches, getDashboardCompanies, getDashboardOverview, getTenants, setActiveTenantId } from '../lib/api';
+import { clearActiveTenantId, getActiveTenantId, getDashboardBranches, getDashboardCompanies, getDashboardFinancialPerformance, getDashboardGrowth, getDashboardOverview, getDashboardRevenueTrend, getTenants, setActiveTenantId } from '../lib/api';
 
 const validPeriods: DashboardPeriod[] = ['today', 'last_7_days', 'last_30_days', 'this_month', 'this_year', 'custom'];
 const readPeriod = (value: string | null): DashboardPeriod => value && validPeriods.includes(value as DashboardPeriod) ? value as DashboardPeriod : 'last_30_days';
@@ -15,6 +15,7 @@ export function CompanyDashboard() {
   const period = readPeriod(searchParams.get('period'));
   const companyId = searchParams.get('company_id') ?? '';
   const branchId = searchParams.get('branch_id') ?? '';
+  const analyticsYear = searchParams.get('analytics_year') ?? '';
   const dateFrom = searchParams.get('date_from') ?? searchParams.get('from') ?? '';
   const dateTo = searchParams.get('date_to') ?? searchParams.get('to') ?? '';
   const dateError = period === 'custom' && dateFrom && dateTo && dateFrom > dateTo ? 'Start date must be on or before the end date.' : undefined;
@@ -28,6 +29,11 @@ export function CompanyDashboard() {
   const branches = useQuery({ queryKey: ['branches', 'dashboard', tenantId, companyId], queryFn: () => getDashboardBranches(companyId), enabled: tenantReady && Boolean(companyId) });
   const branchRows = useMemo(() => branches.data?.data.data ?? [], [branches.data]);
   const dashboard = useQuery({ queryKey: ['dashboard-overview', tenantId, period, companyId, branchId, dateFrom, dateTo], queryFn: () => getDashboardOverview({ period, company_id: companyId || undefined, branch_id: branchId || undefined, ...(period === 'custom' ? { date_from: dateFrom, date_to: dateTo } : {}) }), enabled: tenantReady && (period !== 'custom' || Boolean(dateFrom && dateTo && !dateError)) });
+  const analyticsParams = useMemo(() => ({ period, company_id: companyId || undefined, branch_id: branchId || undefined, ...(period === 'custom' ? { date_from: dateFrom, date_to: dateTo } : {}), ...(analyticsYear ? { year: analyticsYear, comparison_period: 'previous_year' as const } : { comparison_period: 'previous_period' as const }) }), [analyticsYear, branchId, companyId, dateFrom, dateTo, period]);
+  const analyticsEnabled = tenantReady && (Boolean(analyticsYear) || period !== 'custom' || Boolean(dateFrom && dateTo && !dateError));
+  const revenueAnalytics = useQuery({ queryKey: ['dashboard-revenue-trend', tenantId, analyticsParams], queryFn: () => getDashboardRevenueTrend(analyticsParams), enabled: analyticsEnabled });
+  const growthAnalytics = useQuery({ queryKey: ['dashboard-growth', tenantId, analyticsParams], queryFn: () => getDashboardGrowth(analyticsParams), enabled: analyticsEnabled });
+  const financialAnalytics = useQuery({ queryKey: ['dashboard-financial-performance', tenantId, analyticsParams], queryFn: () => getDashboardFinancialPerformance(analyticsParams), enabled: analyticsEnabled });
 
   useEffect(() => {
     if (tenants.isPending) return;
@@ -76,7 +82,7 @@ export function CompanyDashboard() {
     {!tenantError && !tenants.isPending && tenantRows.length === 0 && <div className="dashboard-loading" role="status">No active workspace access is available for this account.</div>}
     {dashboard.isError && <div className="alert alert-danger dashboard-alert" role="alert">Unable to load dashboard data. {dashboard.error.message} <button className="table-action" onClick={() => void dashboard.refetch()}>Retry</button></div>}
     {dashboard.isLoading && <DashboardFoundationLoading />}
-    {dashboard.data && !dashboard.isError && <DashboardFoundation data={dashboard.data.data} onNavigate={navigate} />}
+    {dashboard.data && !dashboard.isError && <DashboardFoundation data={dashboard.data.data} onNavigate={navigate} analytics={{ revenue: revenueAnalytics.data?.data, growth: growthAnalytics.data?.data, financial: financialAnalytics.data?.data, revenueError: revenueAnalytics.error instanceof Error ? revenueAnalytics.error : null, growthError: growthAnalytics.error instanceof Error ? growthAnalytics.error : null, financialError: financialAnalytics.error instanceof Error ? financialAnalytics.error : null, isLoading: revenueAnalytics.isLoading || growthAnalytics.isLoading || financialAnalytics.isLoading, year: analyticsYear, onYearChange: (value) => updateFilter({ analytics_year: value || undefined }), onRetry: () => { void revenueAnalytics.refetch(); void growthAnalytics.refetch(); void financialAnalytics.refetch(); } }} />}
     {!dashboard.isLoading && !dashboard.isError && !dashboard.data && period === 'custom' && <div className="dashboard-loading" role="status">Select both start and end dates to load dashboard data.</div>}
   </section>;
 }

@@ -82,6 +82,168 @@ final class DashboardController
         ]]);
     }
 
+    public function revenueTrend(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $context = $this->analyticsContext($request, $authorization);
+        if ($context['currency'] === null) return $this->analyticsUnavailable($context, 'Base accounting currency is not configured.');
+        $granularity = $context['year'] !== null || $context['from']->diffInDays($context['to']) > 62 ? 'month' : 'day';
+        $current = $this->revenueBuckets($context['tenant_id'], $context['company_id'], $context['branch_id'], $context['from'], $context['to'], $context['timezone'], $granularity);
+        $previous = $this->revenueBuckets($context['tenant_id'], $context['company_id'], $context['branch_id'], $context['previous_from'], $context['previous_to'], $context['timezone'], $granularity);
+        $points = [];
+        $previousValues = array_values($previous['values']);
+        foreach ($current['buckets'] as $index => $bucket) $points[] = ['key' => $bucket['key'], 'label' => $bucket['label'], 'current' => (string) ($current['values'][$bucket['key']] ?? '0'), 'previous' => (string) ($previousValues[$index] ?? '0')];
+        return response()->json(['data' => [
+            'available' => true,
+            'reason' => null,
+            'currency' => ['code' => $context['currency']->code, 'decimal_places' => $context['currency']->decimal_places],
+            'accounting_basis' => 'posted_sales_invoices_less_valid_credit_notes',
+            'granularity' => $granularity,
+            'filters' => $this->analyticsFilters($context),
+            'current_period' => ['from' => $context['from']->toDateString(), 'to' => $context['to']->toDateString()],
+            'comparison_period' => ['from' => $context['previous_from']->toDateString(), 'to' => $context['previous_to']->toDateString()],
+            'totals' => ['current' => $this->invoiceTotal($context['tenant_id'], $context['company_id'], $context['branch_id'], $context['from'], $context['to']), 'previous' => $this->invoiceTotal($context['tenant_id'], $context['company_id'], $context['branch_id'], $context['previous_from'], $context['previous_to'])],
+            'points' => $points,
+        ]]);
+    }
+
+    public function growth(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $context = $this->analyticsContext($request, $authorization);
+        if ($context['currency'] === null) return $this->analyticsUnavailable($context, 'Base accounting currency is not configured.');
+        $current = $this->invoiceTotal($context['tenant_id'], $context['company_id'], $context['branch_id'], $context['from'], $context['to']);
+        $previous = $this->invoiceTotal($context['tenant_id'], $context['company_id'], $context['branch_id'], $context['previous_from'], $context['previous_to']);
+        $growth = Decimal::compare($previous, '0') === 0 ? null : Decimal::mul(Decimal::div(Decimal::sub($current, $previous), $previous, 6), '100', 2);
+        return response()->json(['data' => [
+            'available' => true,
+            'reason' => $growth === null ? 'No comparable prior-period revenue is available.' : null,
+            'currency' => ['code' => $context['currency']->code, 'decimal_places' => $context['currency']->decimal_places],
+            'accounting_basis' => 'posted_sales_invoices_less_valid_credit_notes',
+            'filters' => $this->analyticsFilters($context),
+            'current_period' => ['from' => $context['from']->toDateString(), 'to' => $context['to']->toDateString(), 'value' => $current],
+            'previous_period' => ['from' => $context['previous_from']->toDateString(), 'to' => $context['previous_to']->toDateString(), 'value' => $previous],
+            'growth_percent' => $growth,
+            'target' => null,
+        ]]);
+    }
+
+    public function financialPerformance(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $context = $this->analyticsContext($request, $authorization);
+        if ($context['currency'] === null) return $this->analyticsUnavailable($context, 'Base accounting currency is not configured.');
+        if ($context['branch_id'] !== null) return $this->analyticsUnavailable($context, 'General ledger entries are company-scoped; branch financial reporting is not configured.');
+        $granularity = $context['year'] !== null || $context['from']->diffInDays($context['to']) > 62 ? 'month' : 'day';
+        $current = $this->ledgerBuckets($context['tenant_id'], $context['company_id'], $context['from'], $context['to'], $granularity);
+        $previous = $this->ledgerBuckets($context['tenant_id'], $context['company_id'], $context['previous_from'], $context['previous_to'], $granularity);
+        $points = [];
+        $previousValues = array_values($previous['values']);
+        foreach ($current['buckets'] as $index => $bucket) {
+            $value = $current['values'][$bucket['key']] ?? ['income' => '0', 'expenses' => '0', 'profit' => '0'];
+            $prior = $previousValues[$index] ?? ['income' => '0', 'expenses' => '0', 'profit' => '0'];
+            $points[] = ['key' => $bucket['key'], 'label' => $bucket['label'], 'current' => $value, 'previous' => $prior];
+        }
+        return response()->json(['data' => [
+            'available' => true,
+            'reason' => null,
+            'currency' => ['code' => $context['currency']->code, 'decimal_places' => $context['currency']->decimal_places],
+            'accounting_basis' => 'posted_general_ledger_base_currency_by_chart_account_type',
+            'granularity' => $granularity,
+            'filters' => $this->analyticsFilters($context),
+            'totals' => ['current' => $this->ledgerTotals($current), 'previous' => $this->ledgerTotals($previous)],
+            'points' => $points,
+        ]]);
+    }
+
+    private function analyticsContext(Request $request, AuthorizationService $authorization): array
+    {
+        $tenantId = (string) $request->header('X-Tenant-Id');
+        $filters = $request->validate([
+            'period' => ['nullable', 'in:today,last_7_days,last_30_days,this_month,this_year,custom'],
+            'from' => ['nullable', 'date'], 'to' => ['nullable', 'date'],
+            'date_from' => ['nullable', 'date'], 'date_to' => ['nullable', 'date'],
+            'company_id' => ['nullable', 'uuid'], 'branch_id' => ['nullable', 'uuid'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+            'comparison_period' => ['nullable', 'in:previous_period,previous_year'],
+        ]);
+        $period = $filters['period'] ?? 'last_30_days';
+        $dateFrom = $filters['date_from'] ?? $filters['from'] ?? null;
+        $dateTo = $filters['date_to'] ?? $filters['to'] ?? null;
+        $companyId = $filters['company_id'] ?? null;
+        $branchId = $filters['branch_id'] ?? null;
+        abort_unless($authorization->allows($request->user(), $tenantId, 'reports.view', $companyId, $branchId), 403);
+        if ($companyId) abort_unless(Company::where('tenant_id', $tenantId)->whereKey($companyId)->exists(), 404);
+        if ($branchId) abort_unless($companyId && Branch::where('tenant_id', $tenantId)->whereKey($branchId)->where('company_id', $companyId)->exists(), 404);
+        $timezone = $companyId ? (string) Company::where('tenant_id', $tenantId)->whereKey($companyId)->value('timezone') : (string) config('app.timezone', 'UTC');
+        if (! in_array($timezone, timezone_identifiers_list(), true)) $timezone = (string) config('app.timezone', 'UTC');
+        $year = isset($filters['year']) ? (int) $filters['year'] : null;
+        if ($year !== null) {
+            $from = CarbonImmutable::create($year, 1, 1, 0, 0, 0, $timezone)->startOfYear();
+            $to = $from->endOfYear();
+            $comparison = 'previous_year';
+        } else {
+            if ($period === 'custom' && (! $dateFrom || ! $dateTo)) throw ValidationException::withMessages(['date_from' => ['Both date_from and date_to are required for a custom period.']]);
+            if ($dateFrom && $dateTo && CarbonImmutable::parse($dateFrom)->gt(CarbonImmutable::parse($dateTo))) throw ValidationException::withMessages(['date_to' => ['date_to must be on or after date_from.']]);
+            [$from, $to] = $this->range($period, ['from' => $dateFrom, 'to' => $dateTo], $timezone);
+            $comparison = $filters['comparison_period'] ?? 'previous_period';
+        }
+        if ($comparison === 'previous_year') {
+            $previousFrom = $from->subYear()->startOfDay();
+            $previousTo = $to->subYear()->endOfDay();
+        } else {
+            $previousTo = $from->subDay()->endOfDay();
+            $previousFrom = $previousTo->subDays($from->diffInDays($to))->startOfDay();
+        }
+        return ['tenant_id' => $tenantId, 'company_id' => $companyId, 'branch_id' => $branchId, 'timezone' => $timezone, 'period' => $period, 'year' => $year, 'comparison_period' => $comparison, 'from' => $from, 'to' => $to, 'previous_from' => $previousFrom, 'previous_to' => $previousTo, 'currency' => AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places'])];
+    }
+
+    private function analyticsFilters(array $context): array
+    {
+        return ['period' => $context['period'], 'year' => $context['year'], 'comparison_period' => $context['comparison_period'], 'from' => $context['from']->toDateString(), 'to' => $context['to']->toDateString(), 'company_id' => $context['company_id'], 'branch_id' => $context['branch_id'], 'timezone' => $context['timezone']];
+    }
+
+    private function analyticsUnavailable(array $context, string $reason): JsonResponse
+    {
+        return response()->json(['data' => ['available' => false, 'reason' => $reason, 'currency' => $context['currency'] ? ['code' => $context['currency']->code, 'decimal_places' => $context['currency']->decimal_places] : ['code' => null, 'decimal_places' => null], 'accounting_basis' => null, 'granularity' => null, 'filters' => $this->analyticsFilters($context), 'points' => [], 'totals' => null, 'growth_percent' => null, 'target' => null]], 200);
+    }
+
+    private function revenueBuckets(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to, string $timezone, string $granularity): array
+    {
+        $format = $granularity === 'month' ? 'YYYY-MM' : 'YYYY-MM-DD';
+        $invoiceExpression = "TO_CHAR(sales_invoices.created_at AT TIME ZONE ?, '{$format}')";
+        $invoices = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw("{$invoiceExpression} as bucket, SUM(COALESCE(base_total, total)) as value", [$timezone])->groupBy('bucket')->pluck('value', 'bucket');
+        $creditExpression = "TO_CHAR(cn.created_at AT TIME ZONE ?, '{$format}')";
+        $creditNotes = DB::table('credit_notes as cn')->join('sales_invoices as si', 'si.id', '=', 'cn.invoice_id')->where('cn.tenant_id', $tenantId)->whereNotIn('cn.state', ['draft', 'cancelled', 'void'])->whereBetween('cn.created_at', [$from, $to])->when($companyId, fn ($q) => $q->where('si.company_id', $companyId))->when($branchId, fn ($q) => $q->where('si.branch_id', $branchId))->selectRaw("{$creditExpression} as bucket, SUM(cn.total * COALESCE(si.exchange_rate, 1)) as value", [$timezone])->groupBy('bucket')->pluck('value', 'bucket');
+        $buckets = $this->analyticsBuckets($from, $to, $granularity);
+        $values = [];
+        foreach ($buckets as $bucket) $values[$bucket['key']] = Decimal::sub((string) ($invoices[$bucket['key']] ?? '0'), (string) ($creditNotes[$bucket['key']] ?? '0'));
+        return ['buckets' => $buckets, 'values' => $values];
+    }
+
+    private function ledgerBuckets(string $tenantId, ?string $companyId, CarbonImmutable $from, CarbonImmutable $to, string $granularity): array
+    {
+        $format = $granularity === 'month' ? 'YYYY-MM' : 'YYYY-MM-DD';
+        $rows = DB::table('journal_lines as jl')->join('journal_entries as je', 'je.id', '=', 'jl.journal_entry_id')->join('chart_accounts as ca', 'ca.id', '=', 'jl.account_id')->where('jl.tenant_id', $tenantId)->where('je.tenant_id', $tenantId)->where('je.state', 'posted')->whereBetween('je.entry_date', [$from->toDateString(), $to->toDateString()])->when($companyId, fn ($q) => $q->where('jl.company_id', $companyId))->selectRaw("TO_CHAR(je.entry_date, '{$format}') as bucket")->selectRaw("SUM(CASE WHEN ca.type = 'revenue' THEN jl.base_credit - jl.base_debit ELSE 0 END) as income")->selectRaw("SUM(CASE WHEN ca.type = 'expense' THEN jl.base_debit - jl.base_credit ELSE 0 END) as expenses")->groupBy('bucket')->get();
+        $buckets = $this->analyticsBuckets($from, $to, $granularity);
+        $values = [];
+        foreach ($rows as $row) $values[$row->bucket] = ['income' => (string) $row->income, 'expenses' => (string) $row->expenses, 'profit' => Decimal::sub((string) $row->income, (string) $row->expenses)];
+        return ['buckets' => $buckets, 'values' => $values];
+    }
+
+    private function ledgerTotals(array $series): array
+    {
+        $income = '0'; $expenses = '0';
+        foreach ($series['values'] as $value) { $income = Decimal::add($income, $value['income']); $expenses = Decimal::add($expenses, $value['expenses']); }
+        return ['income' => $income, 'expenses' => $expenses, 'profit' => Decimal::sub($income, $expenses)];
+    }
+
+    private function analyticsBuckets(CarbonImmutable $from, CarbonImmutable $to, string $granularity): array
+    {
+        $buckets = [];
+        $cursor = $granularity === 'month' ? $from->startOfMonth() : $from->startOfDay();
+        $end = $granularity === 'month' ? $to->startOfMonth() : $to->startOfDay();
+        while ($cursor->lte($end)) { $key = $granularity === 'month' ? $cursor->format('Y-m') : $cursor->format('Y-m-d'); $buckets[] = ['key' => $key, 'label' => $granularity === 'month' ? $cursor->format('M Y') : $cursor->format('M j')]; $cursor = $granularity === 'month' ? $cursor->addMonth() : $cursor->addDay(); }
+        return $buckets;
+    }
+
     private function range(string $period, array $filters, string $timezone): array
     {
         $today = CarbonImmutable::now($timezone)->startOfDay();

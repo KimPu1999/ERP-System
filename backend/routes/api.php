@@ -229,6 +229,9 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/automation/rules', [WorkflowController::class, 'storeAutomation']);
         Route::post('/automation/rules/{rule}/run', [WorkflowController::class, 'runAutomation']);
         Route::get('/dashboard/overview', [DashboardController::class, 'show']);
+        Route::get('/dashboard/revenue-trend', [DashboardController::class, 'revenueTrend']);
+        Route::get('/dashboard/growth', [DashboardController::class, 'growth']);
+        Route::get('/dashboard/financial-performance', [DashboardController::class, 'financialPerformance']);
         Route::get('/dashboards/summary', [DashboardController::class, 'show']);
     });
 });
