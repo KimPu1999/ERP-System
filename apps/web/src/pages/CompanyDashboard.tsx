@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardFilterBar, type DashboardPeriod } from '../components/DashboardFilterBar';
 import { DashboardFoundation, DashboardFoundationLoading } from '../components/DashboardFoundation';
-import { clearActiveTenantId, getActiveTenantId, getDashboardBranches, getDashboardCompanies, getDashboardFinancialPerformance, getDashboardGrowth, getDashboardOverview, getDashboardRevenueTrend, getTenants, setActiveTenantId } from '../lib/api';
+import { clearActiveTenantId, getActiveTenantId, getDashboardBranches, getDashboardCompanies, getDashboardFinancialPerformance, getDashboardGrowth, getDashboardOverview, getDashboardRecentTransactions, getDashboardRevenueTrend, getDashboardTopProducts, getTenants, setActiveTenantId } from '../lib/api';
 
 const validPeriods: DashboardPeriod[] = ['today', 'last_7_days', 'last_30_days', 'this_month', 'this_year', 'custom'];
 const readPeriod = (value: string | null): DashboardPeriod => value && validPeriods.includes(value as DashboardPeriod) ? value as DashboardPeriod : 'last_30_days';
@@ -34,6 +34,11 @@ export function CompanyDashboard() {
   const revenueAnalytics = useQuery({ queryKey: ['dashboard-revenue-trend', tenantId, analyticsParams], queryFn: () => getDashboardRevenueTrend(analyticsParams), enabled: analyticsEnabled });
   const growthAnalytics = useQuery({ queryKey: ['dashboard-growth', tenantId, analyticsParams], queryFn: () => getDashboardGrowth(analyticsParams), enabled: analyticsEnabled });
   const financialAnalytics = useQuery({ queryKey: ['dashboard-financial-performance', tenantId, analyticsParams], queryFn: () => getDashboardFinancialPerformance(analyticsParams), enabled: analyticsEnabled });
+  const businessParams = useMemo(() => ({ period, company_id: companyId || undefined, branch_id: branchId || undefined, ...(period === 'custom' ? { date_from: dateFrom, date_to: dateTo } : {}), ...(analyticsYear ? { year: analyticsYear } : {}), limit: '8' }), [analyticsYear, branchId, companyId, dateFrom, dateTo, period]);
+  const businessEnabled = tenantReady && (Boolean(analyticsYear) || period !== 'custom' || Boolean(dateFrom && dateTo && !dateError));
+  const recentTransactions = useQuery({ queryKey: ['dashboard-recent-transactions', tenantId, businessParams], queryFn: () => getDashboardRecentTransactions(businessParams), enabled: businessEnabled });
+  const topProductsSales = useQuery({ queryKey: ['dashboard-top-products-sales', tenantId, businessParams], queryFn: () => getDashboardTopProducts(businessParams, 'sales'), enabled: businessEnabled });
+  const topProductsVolume = useQuery({ queryKey: ['dashboard-top-products-volume', tenantId, businessParams], queryFn: () => getDashboardTopProducts(businessParams, 'volume'), enabled: businessEnabled });
 
   useEffect(() => {
     if (tenants.isPending) return;
@@ -82,7 +87,7 @@ export function CompanyDashboard() {
     {!tenantError && !tenants.isPending && tenantRows.length === 0 && <div className="dashboard-loading" role="status">No active workspace access is available for this account.</div>}
     {dashboard.isError && <div className="alert alert-danger dashboard-alert" role="alert">Unable to load dashboard data. {dashboard.error.message} <button className="table-action" onClick={() => void dashboard.refetch()}>Retry</button></div>}
     {dashboard.isLoading && <DashboardFoundationLoading />}
-    {dashboard.data && !dashboard.isError && <DashboardFoundation data={dashboard.data.data} onNavigate={navigate} analytics={{ revenue: revenueAnalytics.data?.data, growth: growthAnalytics.data?.data, financial: financialAnalytics.data?.data, revenueError: revenueAnalytics.error instanceof Error ? revenueAnalytics.error : null, growthError: growthAnalytics.error instanceof Error ? growthAnalytics.error : null, financialError: financialAnalytics.error instanceof Error ? financialAnalytics.error : null, isLoading: revenueAnalytics.isLoading || growthAnalytics.isLoading || financialAnalytics.isLoading, year: analyticsYear, onYearChange: (value) => updateFilter({ analytics_year: value || undefined }), onRetry: () => { void revenueAnalytics.refetch(); void growthAnalytics.refetch(); void financialAnalytics.refetch(); } }} />}
+    {dashboard.data && !dashboard.isError && <DashboardFoundation data={dashboard.data.data} onNavigate={navigate} analytics={{ revenue: revenueAnalytics.data?.data, growth: growthAnalytics.data?.data, financial: financialAnalytics.data?.data, revenueError: revenueAnalytics.error instanceof Error ? revenueAnalytics.error : null, growthError: growthAnalytics.error instanceof Error ? growthAnalytics.error : null, financialError: financialAnalytics.error instanceof Error ? financialAnalytics.error : null, isLoading: revenueAnalytics.isLoading || growthAnalytics.isLoading || financialAnalytics.isLoading, year: analyticsYear, onYearChange: (value) => updateFilter({ analytics_year: value || undefined }), onRetry: () => { void revenueAnalytics.refetch(); void growthAnalytics.refetch(); void financialAnalytics.refetch(); } }} business={{ recent: recentTransactions.data?.data, sales: topProductsSales.data?.data, volume: topProductsVolume.data?.data, isLoading: recentTransactions.isLoading || topProductsSales.isLoading || topProductsVolume.isLoading, recentError: recentTransactions.error instanceof Error ? recentTransactions.error : null, salesError: topProductsSales.error instanceof Error ? topProductsSales.error : null, volumeError: topProductsVolume.error instanceof Error ? topProductsVolume.error : null, onRetry: () => { void recentTransactions.refetch(); void topProductsSales.refetch(); void topProductsVolume.refetch(); } }} />}
     {!dashboard.isLoading && !dashboard.isError && !dashboard.data && period === 'custom' && <div className="dashboard-loading" role="status">Select both start and end dates to load dashboard data.</div>}
   </section>;
 }

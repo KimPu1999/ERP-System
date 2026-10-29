@@ -57,6 +57,14 @@ const dashboardAnalytics = <T>(path: string, params: DashboardAnalyticsParams) =
 export const getDashboardRevenueTrend = (params: DashboardAnalyticsParams) => dashboardAnalytics<DashboardRevenueTrend>('/dashboard/revenue-trend', params);
 export const getDashboardGrowth = (params: DashboardAnalyticsParams) => dashboardAnalytics<DashboardGrowth>('/dashboard/growth', params);
 export const getDashboardFinancialPerformance = (params: DashboardAnalyticsParams) => dashboardAnalytics<DashboardFinancialPerformance>('/dashboard/financial-performance', params);
+export type DashboardBusinessParams = DashboardAnalyticsParams & { limit?: string };
+export type DashboardTransaction = { id: string; type: string; type_label: string; reference: string; party_name: string; occurred_at: string; amount: string; currency_code: string | null; direction: 'inflow' | 'outflow' | 'neutral'; status: string; detail_path: string | null; view_all_path: string | null };
+export type DashboardRecentTransactions = { available: boolean; reason: string | null; filters: DashboardAnalyticsBase['filters']; items: DashboardTransaction[]; pagination: { limit: number; has_more: boolean } };
+export type DashboardProductRankingItem = { rank: number; product_id: string; variant_id: string; product: string; sku: string; unit_name: string; quantity: string; revenue: string; currency_code: string | null; percentage: string | null; bar_percent: string; detail_path: string | null };
+export type DashboardProductRanking = { available: boolean; reason: string | null; ranking: 'sales' | 'volume'; filters: DashboardAnalyticsBase['filters']; methodology: string | null; items: DashboardProductRankingItem[]; pagination: { limit: number; has_more: boolean } };
+const dashboardBusiness = <T>(path: string, params: DashboardBusinessParams, extra: Record<string, string> = {}) => { const entries = Object.entries({ ...params, ...extra }).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: T }>(path + '?' + query.toString()); };
+export const getDashboardRecentTransactions = (params: DashboardBusinessParams) => dashboardBusiness<DashboardRecentTransactions>('/dashboard/recent-transactions', params);
+export const getDashboardTopProducts = (params: DashboardBusinessParams, ranking: 'sales' | 'volume') => dashboardBusiness<DashboardProductRanking>('/dashboard/top-products', params, { ranking });
 export type Tenant = { id: string; name: string; slug: string; status?: string };
 export type Company = { id: string; tenant_id: string; name: string; code: string; is_active: boolean };
 export type Branch = { id: string; company_id: string; name: string; code: string; is_active: boolean };

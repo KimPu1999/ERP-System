@@ -153,6 +153,174 @@ final class DashboardController
         ]]);
     }
 
+    public function recentTransactions(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $context = $this->analyticsContext($request, $authorization);
+        $limit = min(max($request->integer('limit', 8), 1), 10);
+        $tenantId = $context['tenant_id'];
+        $companyId = $context['company_id'];
+        $branchId = $context['branch_id'];
+        $from = $context['from'];
+        $to = $context['to'];
+        $baseCurrency = $context['currency']?->code;
+        $rows = collect();
+
+        $invoices = DB::table('sales_invoices as si')
+            ->leftJoin('customers as c', 'c.id', '=', 'si.customer_id')
+            ->leftJoin('accounting_currencies as ac', 'ac.id', '=', 'si.currency_id')
+            ->where('si.tenant_id', $tenantId)
+            ->whereIn('si.state', ['issued', 'partially_paid', 'paid'])
+            ->whereBetween('si.created_at', [$from, $to])
+            ->when($companyId, fn ($query) => $query->where('si.company_id', $companyId))
+            ->when($branchId, fn ($query) => $query->where('si.branch_id', $branchId))
+            ->orderByDesc('si.created_at')->limit($limit)
+            ->get(['si.id', 'si.number as reference', 'c.name as party_name', 'si.created_at as occurred_at', 'si.total as amount', 'si.state as status', 'ac.code as currency_code'])
+            ->map(fn ($row) => $this->transactionRow($row, 'sales_invoice', 'Sales invoice', 'inflow', $row->currency_code ?: $baseCurrency, '/crm-sales'));
+        $rows = $rows->merge($invoices);
+
+        $creditNotes = DB::table('credit_notes as cn')
+            ->join('sales_invoices as si', 'si.id', '=', 'cn.invoice_id')
+            ->leftJoin('customers as c', 'c.id', '=', 'cn.customer_id')
+            ->leftJoin('accounting_currencies as ac', 'ac.id', '=', 'si.currency_id')
+            ->where('cn.tenant_id', $tenantId)
+            ->whereIn('cn.state', ['issued', 'applied'])
+            ->whereBetween('cn.created_at', [$from, $to])
+            ->when($companyId, fn ($query) => $query->where('si.company_id', $companyId))
+            ->when($branchId, fn ($query) => $query->where('si.branch_id', $branchId))
+            ->orderByDesc('cn.created_at')->limit($limit)
+            ->get(['cn.id', 'cn.number as reference', 'c.name as party_name', 'cn.created_at as occurred_at', 'cn.total as amount', 'cn.state as status', 'ac.code as currency_code'])
+            ->map(fn ($row) => $this->transactionRow($row, 'credit_note', 'Credit note / refund', 'outflow', $row->currency_code ?: $baseCurrency, '/crm-sales'));
+        $rows = $rows->merge($creditNotes);
+
+        $payments = DB::table('payments_received as pr')
+            ->join('customers as c', 'c.id', '=', 'pr.customer_id')
+            ->where('pr.tenant_id', $tenantId)
+            ->where('pr.state', 'verified')
+            ->whereBetween(DB::raw('COALESCE(pr.verified_at, pr.created_at)'), [$from, $to])
+            ->when($companyId || $branchId, function ($query) use ($companyId, $branchId): void {
+                $query->whereExists(function ($subquery) use ($companyId, $branchId): void {
+                    $subquery->select(DB::raw('1'))->from('payment_allocations as pa')->join('sales_invoices as si2', 'si2.id', '=', 'pa.invoice_id')->whereColumn('pa.payment_id', 'pr.id')->when($companyId, fn ($q) => $q->where('si2.company_id', $companyId))->when($branchId, fn ($q) => $q->where('si2.branch_id', $branchId));
+                });
+            })
+            ->orderByDesc(DB::raw('COALESCE(pr.verified_at, pr.created_at)'))->limit($limit)
+            ->get(['pr.id', 'pr.reference', 'c.name as party_name', DB::raw('COALESCE(pr.verified_at, pr.created_at) as occurred_at'), 'pr.amount', 'pr.state as status'])
+            ->map(fn ($row) => $this->transactionRow($row, 'customer_payment', 'Customer payment', 'inflow', $baseCurrency, '/crm-sales'));
+        $rows = $rows->merge($payments);
+
+        $supplierBills = DB::table('supplier_bills as sb')
+            ->join('suppliers as s', 's.id', '=', 'sb.supplier_id')
+            ->leftJoin('purchase_orders as po', 'po.id', '=', 'sb.purchase_order_id')
+            ->leftJoin('accounting_currencies as ac', 'ac.id', '=', 'po.currency_id')
+            ->where('sb.tenant_id', $tenantId)
+            ->whereIn('sb.state', ['approved', 'posted'])
+            ->whereBetween('sb.created_at', [$from, $to])
+            ->when($companyId, fn ($query) => $query->where('po.company_id', $companyId))
+            ->when($branchId, fn ($query) => $query->where('po.branch_id', $branchId))
+            ->orderByDesc('sb.created_at')->limit($limit)
+            ->get(['sb.id', 'sb.number as reference', 's.name as party_name', 'sb.created_at as occurred_at', 'sb.total as amount', 'sb.state as status', 'ac.code as currency_code'])
+            ->map(fn ($row) => $this->transactionRow($row, 'supplier_bill', 'Supplier bill', 'outflow', $row->currency_code ?: $baseCurrency, '/purchasing'));
+        $rows = $rows->merge($supplierBills);
+
+        $journals = DB::table('journal_entries as je')
+            ->join('journal_lines as jl', 'jl.journal_entry_id', '=', 'je.id')
+            ->leftJoin('accounting_currencies as ac', 'ac.id', '=', 'je.currency_id')
+            ->where('je.tenant_id', $tenantId)->where('jl.tenant_id', $tenantId)->where('je.state', 'posted')
+            ->whereBetween('je.entry_date', [$from->toDateString(), $to->toDateString()])
+            ->when($companyId, fn ($query) => $query->where('je.company_id', $companyId))
+            ->select('je.id', 'je.number as reference', 'je.description as party_name', 'je.entry_date as occurred_at', 'je.state as status', 'ac.code as currency_code')
+            ->selectRaw('SUM(jl.debit) as amount')
+            ->groupBy('je.id', 'je.number', 'je.description', 'je.entry_date', 'je.state', 'ac.code')
+            ->orderByDesc('je.entry_date')->limit($limit)
+            ->get()
+            ->map(fn ($row) => $this->transactionRow($row, 'journal_entry', 'Accounting transaction', 'neutral', $row->currency_code ?: $baseCurrency, '/accounting'));
+        $rows = $rows->merge($journals);
+
+        $items = $rows->sortByDesc('occurred_at')->take($limit)->values()->all();
+        return response()->json(['data' => [
+            'available' => true,
+            'reason' => null,
+            'filters' => $this->analyticsFilters($context),
+            'items' => $items,
+            'pagination' => ['limit' => $limit, 'has_more' => count($items) === $limit],
+        ]]);
+    }
+
+    public function topProductsRanking(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $context = $this->analyticsContext($request, $authorization);
+        $filters = $request->validate(['ranking' => ['nullable', 'in:sales,volume'], 'limit' => ['nullable', 'integer', 'min:1', 'max:10']]);
+        $ranking = $filters['ranking'] ?? 'sales';
+        $limit = $filters['limit'] ?? 8;
+        if ($ranking === 'sales' && $context['currency'] === null) return $this->rankingUnavailable($context, 'Base accounting currency is not configured.', $ranking, $limit);
+
+        $invoiceRows = DB::table('sales_invoice_items as sii')
+            ->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')
+            ->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')
+            ->join('products as p', 'p.id', '=', 'pv.product_id')
+            ->join('units_of_measure as u', 'u.id', '=', 'pv.unit_id')
+            ->where('si.tenant_id', $context['tenant_id'])->where('sii.tenant_id', $context['tenant_id'])->where('pv.tenant_id', $context['tenant_id'])->where('p.tenant_id', $context['tenant_id'])->where('u.tenant_id', $context['tenant_id'])->whereNotIn('si.state', ['draft', 'cancelled', 'void'])
+            ->whereBetween('si.created_at', [$context['from'], $context['to']])
+            ->when($context['company_id'], fn ($query) => $query->where('si.company_id', $context['company_id']))
+            ->when($context['branch_id'], fn ($query) => $query->where('si.branch_id', $context['branch_id']))
+            ->select('si.id as invoice_id', 'p.id as product_id', 'pv.id as variant_id', 'p.name as product', 'pv.sku', 'u.name as unit_name')
+            ->selectRaw('SUM(sii.quantity) as quantity')
+            ->selectRaw('SUM(sii.line_total * COALESCE(si.exchange_rate, 1)) as revenue')
+            ->groupBy('si.id', 'p.id', 'pv.id', 'p.name', 'pv.sku', 'u.name')
+            ->get();
+
+        $creditNotes = DB::table('credit_notes as cn')->join('sales_invoices as si', 'si.id', '=', 'cn.invoice_id')
+            ->where('cn.tenant_id', $context['tenant_id'])->whereIn('cn.state', ['issued', 'applied'])->whereBetween('cn.created_at', [$context['from'], $context['to']])
+            ->when($context['company_id'], fn ($query) => $query->where('si.company_id', $context['company_id']))
+            ->when($context['branch_id'], fn ($query) => $query->where('si.branch_id', $context['branch_id']))
+            ->select('cn.invoice_id')->selectRaw('SUM(cn.total * COALESCE(si.exchange_rate, 1)) as total')->groupBy('cn.invoice_id')->pluck('total', 'invoice_id');
+        $returns = DB::table('sales_return_items as sri')->join('sales_returns as sr', 'sr.id', '=', 'sri.sales_return_id')->join('sales_orders as so', 'so.id', '=', 'sr.sales_order_id')->join('sales_order_items as soi', 'soi.id', '=', 'sri.sales_order_item_id')->join('product_variants as pv', 'pv.id', '=', 'soi.variant_id')->join('products as p', 'p.id', '=', 'pv.product_id')->join('units_of_measure as u', 'u.id', '=', 'pv.unit_id')
+            ->where('sr.tenant_id', $context['tenant_id'])->where('sri.tenant_id', $context['tenant_id'])->where('soi.tenant_id', $context['tenant_id'])->where('so.tenant_id', $context['tenant_id'])->where('pv.tenant_id', $context['tenant_id'])->where('p.tenant_id', $context['tenant_id'])->where('u.tenant_id', $context['tenant_id'])->where('sr.state', 'received')->whereBetween('sr.created_at', [$context['from'], $context['to']])
+            ->when($context['company_id'], fn ($query) => $query->where('so.company_id', $context['company_id']))
+            ->when($context['branch_id'], fn ($query) => $query->where('so.branch_id', $context['branch_id']))
+            ->select('pv.id as variant_id', 'p.id as product_id', 'p.name as product', 'pv.sku', 'u.name as unit_name')->selectRaw('SUM(sri.quantity) as quantity')->selectRaw('SUM(sri.quantity * soi.unit_price * COALESCE(so.exchange_rate, 1)) as revenue')->groupBy('pv.id', 'p.id', 'p.name', 'pv.sku', 'u.name')->get();
+
+        $invoiceGroups = $invoiceRows->groupBy('invoice_id');
+        $products = [];
+        foreach ($invoiceGroups as $invoiceId => $group) {
+            $invoiceRevenue = '0';
+            foreach ($group as $row) $invoiceRevenue = Decimal::add($invoiceRevenue, (string) $row->revenue);
+            $creditTotal = (string) ($creditNotes[$invoiceId] ?? '0');
+            foreach ($group as $row) {
+                $key = $row->variant_id.'|'.$row->unit_name;
+                $creditShare = Decimal::compare($invoiceRevenue, '0') === 0 ? '0' : Decimal::div(Decimal::mul($creditTotal, (string) $row->revenue), $invoiceRevenue, 6);
+                $products[$key] ??= ['product_id' => $row->product_id, 'variant_id' => $row->variant_id, 'product' => $row->product, 'sku' => $row->sku, 'unit_name' => $row->unit_name, 'quantity' => '0', 'revenue' => '0'];
+                $products[$key]['quantity'] = Decimal::add($products[$key]['quantity'], (string) $row->quantity);
+                $products[$key]['revenue'] = Decimal::add($products[$key]['revenue'], Decimal::sub((string) $row->revenue, $creditShare));
+            }
+        }
+        foreach ($returns as $row) {
+            $key = $row->variant_id.'|'.$row->unit_name;
+            $products[$key] ??= ['product_id' => $row->product_id, 'variant_id' => $row->variant_id, 'product' => $row->product, 'sku' => $row->sku, 'unit_name' => $row->unit_name, 'quantity' => '0', 'revenue' => '0'];
+            $products[$key]['quantity'] = Decimal::sub($products[$key]['quantity'], (string) $row->quantity);
+            $products[$key]['revenue'] = Decimal::sub($products[$key]['revenue'], (string) $row->revenue);
+        }
+        $products = collect($products)->map(function (array $row): array {
+            $row['quantity'] = Decimal::compare($row['quantity'], '0') < 0 ? '0' : Decimal::normalize($row['quantity']);
+            $row['revenue'] = Decimal::compare($row['revenue'], '0') < 0 ? '0' : Decimal::normalize($row['revenue']);
+            return $row;
+        })->filter(fn (array $row) => Decimal::compare($row[$ranking === 'sales' ? 'revenue' : 'quantity'], '0') > 0);
+        $total = $products->reduce(fn (string $carry, array $row) => Decimal::add($carry, $ranking === 'sales' ? $row['revenue'] : $row['quantity']), '0');
+        $max = $products->max(fn (array $row) => (float) $row[$ranking === 'sales' ? 'revenue' : 'quantity']) ?: 0;
+        $products = $products->sort(fn (array $left, array $right) => Decimal::compare($right[$ranking === 'sales' ? 'revenue' : 'quantity'], $left[$ranking === 'sales' ? 'revenue' : 'quantity']))->values()->take($limit)->values();
+        $items = $products->map(fn (array $row, int $index) => ['rank' => $index + 1, 'product_id' => $row['product_id'], 'variant_id' => $row['variant_id'], 'product' => $row['product'], 'sku' => $row['sku'], 'unit_name' => $row['unit_name'], 'quantity' => $row['quantity'], 'revenue' => $row['revenue'], 'currency_code' => $context['currency']?->code, 'percentage' => Decimal::compare($total, '0') === 0 ? null : Decimal::mul(Decimal::div($ranking === 'sales' ? $row['revenue'] : $row['quantity'], $total, 6), '100', 2), 'bar_percent' => $max <= 0 ? '0' : number_format(((float) $row[$ranking === 'sales' ? 'revenue' : 'quantity'] / $max) * 100, 2, '.', ''), 'detail_path' => '/catalog'])->all();
+        return response()->json(['data' => ['available' => true, 'reason' => null, 'ranking' => $ranking, 'filters' => $this->analyticsFilters($context), 'methodology' => $ranking === 'sales' ? 'Posted sales invoice line revenue in base currency, less valid credit notes allocated proportionally to invoice lines and received sales returns.' : 'Posted sales invoice quantities, less received sales-return quantities; each SKU and unit of measure is ranked separately.', 'items' => $items, 'pagination' => ['limit' => $limit, 'has_more' => count($items) === $limit]]]);
+    }
+
+    private function transactionRow(object $row, string $type, string $typeLabel, string $direction, ?string $currency, ?string $viewAllPath): array
+    {
+        return ['id' => (string) $row->id, 'type' => $type, 'type_label' => $typeLabel, 'reference' => (string) $row->reference, 'party_name' => $row->party_name ?: '—', 'occurred_at' => CarbonImmutable::parse((string) $row->occurred_at)->toIso8601String(), 'amount' => (string) $row->amount, 'currency_code' => $currency, 'direction' => $direction, 'status' => (string) $row->status, 'detail_path' => null, 'view_all_path' => $viewAllPath];
+    }
+
+    private function rankingUnavailable(array $context, string $reason, string $ranking, int $limit): JsonResponse
+    {
+        return response()->json(['data' => ['available' => false, 'reason' => $reason, 'ranking' => $ranking, 'filters' => $this->analyticsFilters($context), 'methodology' => null, 'items' => [], 'pagination' => ['limit' => $limit, 'has_more' => false]]]);
+    }
+
     private function analyticsContext(Request $request, AuthorizationService $authorization): array
     {
         $tenantId = (string) $request->header('X-Tenant-Id');

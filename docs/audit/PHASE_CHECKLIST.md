@@ -48,3 +48,17 @@
 ## Phase 1 implementation result
 
 Phase 1 is **partially implemented and verified**. Backend tests pass at 29 tests / 60 assertions, frontend checks/build pass, the forward-only migration is applied, and the local health endpoint reports database/cache success. The unchecked items above remain release blockers.
+
+## Dashboard Phase 4 — business performance
+
+- [x] Added authenticated GET /api/v1/dashboard/recent-transactions.
+- [x] Added authenticated GET /api/v1/dashboard/top-products with ranking=sales|volume and bounded limits.
+- [x] Enforced shared tenant, company, branch, date, timezone, and reports.view authorization context.
+- [x] Added recent transaction coverage for posted sales invoices, valid credit notes, verified customer payments, approved/posted supplier bills, and posted journal entries.
+- [x] Added net product sales and volume ranking with credit-note allocation, received-return deductions, currency metadata, and unit-aware grouping.
+- [x] Replaced legacy dashboard business panels with reusable loading, empty, unavailable, retry, ranking, and transaction components.
+- [x] Connected Phase 4 panels to shared URL filters and React Query refetching.
+- [x] Added endpoint tests for authentication/tenant isolation, ordering, bounded results, credit-note-adjusted ranking, and unit-aware volume ranking.
+- [x] Documented data-source and accounting assumptions in docs/dashboard-phase-4-business-performance-assumptions.md.
+- [ ] Add verified transaction detail routes before enabling per-row View details actions.
+- [ ] Add browser-level responsive/accessibility verification.

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{AccountingCurrency, Branch, ChartAccount, Company, CreditNote, Customer, FiscalPeriod, FiscalYear, JournalEntry, JournalLine, Permission, Product, ProductVariant, Role, RoleAssignment, SalesInvoice, SalesOrder, SalesOrderItem, Tenant, TenantMembership, UnitOfMeasure, User};
+use App\Models\{AccountingCurrency, Branch, ChartAccount, Company, CreditNote, Customer, FiscalPeriod, FiscalYear, JournalEntry, JournalLine, Permission, Product, ProductVariant, Role, RoleAssignment, SalesInvoice, SalesInvoiceItem, SalesOrder, SalesOrderItem, Tenant, TenantMembership, UnitOfMeasure, User};
 
 function dashboardUserWithReportAccess(): array
 {
@@ -97,13 +97,49 @@ it('requires dashboard permission and active tenant membership', function (): vo
 it('protects analytics endpoints with authentication, tenant membership, and dashboard permission', function (): void {
     [$user, $tenant] = dashboardUserWithReportAccess();
     $tenantB = Tenant::factory()->create();
-    $endpoints = ['/api/v1/dashboard/revenue-trend', '/api/v1/dashboard/growth', '/api/v1/dashboard/financial-performance'];
+    $endpoints = ['/api/v1/dashboard/revenue-trend', '/api/v1/dashboard/growth', '/api/v1/dashboard/financial-performance', '/api/v1/dashboard/recent-transactions', '/api/v1/dashboard/top-products'];
     foreach ($endpoints as $endpoint) {
         $response = $this->getJson($endpoint);
         expect([401, 403])->toContain($response->status());
         $this->actingAs($user)->getJson($endpoint, ['X-Tenant-Id' => $tenantB->id])->assertForbidden();
         $this->actingAs($user)->getJson($endpoint, ['X-Tenant-Id' => $tenant->id])->assertOk();
     }
+});
+
+it('returns bounded recent transactions from authorized posted sources in descending order', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Transactions Company', 'code' => 'TX']);
+    $customer = Customer::create(['tenant_id' => $tenant->id, 'name' => 'Transaction Customer', 'code' => 'TX-C']);
+    $older = SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'customer_id' => $customer->id, 'number' => 'INV-OLDER', 'state' => 'issued', 'total' => '25']);
+    $older->forceFill(['created_at' => now()->subDays(2), 'updated_at' => now()->subDays(2)])->save();
+    $newer = SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'customer_id' => $customer->id, 'number' => 'INV-NEWER', 'state' => 'paid', 'total' => '75']);
+    $newer->forceFill(['created_at' => now()->subDay(), 'updated_at' => now()->subDay()])->save();
+
+    $this->actingAs($user)->getJson('/api/v1/dashboard/recent-transactions?period=last_30_days&company_id='.$company->id.'&limit=1', ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.items.0.reference', 'INV-NEWER')->assertJsonPath('data.items.0.type', 'sales_invoice')->assertJsonPath('data.pagination.limit', 1);
+});
+
+it('ranks net product sales and volume without mixing tenants or currencies', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Products Company', 'code' => 'PR']);
+    AccountingCurrency::create(['tenant_id' => $tenant->id, 'code' => 'MMK', 'name' => 'Myanmar Kyat', 'decimal_places' => 0, 'is_base' => true]);
+    $customer = Customer::create(['tenant_id' => $tenant->id, 'name' => 'Product Customer', 'code' => 'PR-C']);
+    $unit = UnitOfMeasure::create(['tenant_id' => $tenant->id, 'name' => 'Each', 'code' => 'EA']);
+    $first = Product::create(['tenant_id' => $tenant->id, 'name' => 'First product', 'slug' => 'first-product', 'status' => 'active']);
+    $second = Product::create(['tenant_id' => $tenant->id, 'name' => 'Second product', 'slug' => 'second-product', 'status' => 'active']);
+    $firstVariant = ProductVariant::create(['tenant_id' => $tenant->id, 'product_id' => $first->id, 'unit_id' => $unit->id, 'sku' => 'PR-1', 'internal_barcode' => 'PR0001', 'cost' => '5', 'price' => '10', 'is_active' => true]);
+    $secondVariant = ProductVariant::create(['tenant_id' => $tenant->id, 'product_id' => $second->id, 'unit_id' => $unit->id, 'sku' => 'PR-2', 'internal_barcode' => 'PR0002', 'cost' => '5', 'price' => '10', 'is_active' => true]);
+    $invoice = SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'customer_id' => $customer->id, 'number' => 'INV-PRODUCTS', 'state' => 'issued', 'total' => '150', 'base_total' => '150']);
+    SalesInvoiceItem::create(['tenant_id' => $tenant->id, 'invoice_id' => $invoice->id, 'variant_id' => $firstVariant->id, 'quantity' => '10', 'unit_price' => '10', 'discount_amount' => '0', 'tax_amount' => '0', 'line_total' => '100']);
+    SalesInvoiceItem::create(['tenant_id' => $tenant->id, 'invoice_id' => $invoice->id, 'variant_id' => $secondVariant->id, 'quantity' => '5', 'unit_price' => '10', 'discount_amount' => '0', 'tax_amount' => '0', 'line_total' => '50']);
+    CreditNote::create(['tenant_id' => $tenant->id, 'customer_id' => $customer->id, 'invoice_id' => $invoice->id, 'number' => 'CN-PRODUCTS', 'state' => 'issued', 'total' => '30']);
+
+    $response = $this->actingAs($user)->getJson('/api/v1/dashboard/top-products?period=last_30_days&company_id='.$company->id.'&ranking=sales', ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.available', true)->assertJsonPath('data.items.0.product', 'First product')->assertJsonPath('data.items.0.revenue', '80.000000');
+    expect(collect($response->json('data.items'))->pluck('sku')->all())->toBe(['PR-1', 'PR-2']);
+
+    $this->actingAs($user)->getJson('/api/v1/dashboard/top-products?period=last_30_days&company_id='.$company->id.'&ranking=volume', ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.items.0.product', 'First product')->assertJsonPath('data.items.0.quantity', '10.000000')->assertJsonPath('data.items.0.unit_name', 'Each');
 });
 
 it('returns revenue trend and growth from recognized revenue with credit notes', function (): void {
