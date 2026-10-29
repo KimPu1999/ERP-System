@@ -75,6 +75,12 @@ it('creates a complete active company with owner membership inside the current t
         'country_code' => 'MM',
         'region' => 'Yangon',
         'city' => 'Yangon',
+        'street_address' => '100 Merchant Street',
+        'industry' => 'Retail',
+        'alternative_phone' => '+959987654321',
+        'township' => 'Pabedan',
+        'fiscal_year_start' => '2026-04-01',
+        'document_number_prefix' => 'NW',
         'base_currency' => 'MMK',
         'timezone' => 'Asia/Yangon',
         'default_locale' => 'my',
@@ -84,9 +90,22 @@ it('creates a complete active company with owner membership inside the current t
     $response->assertCreated()
         ->assertJsonPath('data.name', 'Northwind Legal')
         ->assertJsonPath('data.trading_name', 'Northwind')
-        ->assertJsonPath('data.is_active', true);
+        ->assertJsonPath('data.is_active', true)
+        ->assertJsonPath('data.industry', 'Retail')
+        ->assertJsonPath('data.township', 'Pabedan')
+        ->assertJsonPath('data.document_number_prefix', 'NW');
     $companyId = $response->json('data.id');
     expect(CompanyMembership::where('company_id', $companyId)->where('user_id', $user->id)->where('status', 'active')->exists())->toBeTrue();
+});
+
+it('rejects incomplete company setup fields', function (): void {
+    [$user, $tenant] = organizationUser('company.manage');
+    app(SubscriptionService::class)->provisionTrial($tenant);
+
+    $this->actingAs($user)->postJson('/api/v1/companies', [
+        'name' => 'Incomplete Co',
+        'code' => 'INCOMPLETE',
+    ], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
 });
 
 it('rejects company profile changes without an authorized role', function (): void {
