@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardFilterBar, type DashboardPeriod } from '../components/DashboardFilterBar';
 import { DashboardFoundation, DashboardFoundationLoading } from '../components/DashboardFoundation';
 import { clearActiveTenantId, getActiveTenantId, getDashboardBranches, getDashboardCompanies, getDashboardFinancialPerformance, getDashboardGrowth, getDashboardOverview, getDashboardRecentTransactions, getDashboardRevenueTrend, getDashboardTopProducts, getWorkspaceAccess, setActiveTenantId } from '../lib/api';
@@ -70,6 +70,14 @@ export function CompanyDashboard() {
   }, [companyId, companyRows, searchParams, setSearchParams]);
 
   useEffect(() => {
+    if (companies.isPending || companies.isError || companyId || companyRows.length !== 1) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('company_id', companyRows[0].id);
+    next.delete('branch_id');
+    setSearchParams(next, { replace: true });
+  }, [companies.isError, companies.isPending, companyId, companyRows, searchParams, setSearchParams]);
+
+  useEffect(() => {
     if (!branchId || branchRows.some((branch) => branch.id === branchId)) return;
     const next = new URLSearchParams(searchParams);
     next.delete('branch_id');
@@ -82,7 +90,10 @@ export function CompanyDashboard() {
     setSearchParams(next, { replace: true });
   };
 
-  const hasNoActiveCompany = tenantReady && !companies.isPending && !companies.isError && companyRows.length === 0;
+  const activeCompanyCount = companies.data?.meta?.active_count ?? companyRows.length;
+  const inactiveCompanyCount = companies.data?.meta?.inactive_count ?? 0;
+  const hasNoActiveCompany = tenantReady && !companies.isPending && !companies.isError && activeCompanyCount === 0 && inactiveCompanyCount === 0;
+  const hasInactiveCompany = tenantReady && !companies.isPending && !companies.isError && activeCompanyCount === 0 && inactiveCompanyCount > 0;
 
   return <section className="page-section dashboard-page foundation-page">
     <div className="dashboard-welcome"><div><p className="eyebrow">Company workspace</p><h1>Good morning</h1><p className="muted">A clear operating view for your company workspace.</p></div><div className="dashboard-meta"><span className="status-dot" />Live business data <span>·</span> {period === 'custom' ? 'Custom range' : 'Selected period'}</div></div>
@@ -91,10 +102,11 @@ export function CompanyDashboard() {
     {tenantError && <div className="alert alert-danger dashboard-alert" role="alert">Unable to verify your workspace access. {tenantError} <button className="table-action" onClick={() => void workspaceAccess.refetch()}>Retry</button></div>}
     {!workspaceAccess.isPending && access && tenantRows.length === 0 && <WorkspaceAccessPage access={access} onWorkspaceCreated={(id) => { void workspaceAccess.refetch().then(() => { setActiveTenantId(id); setTenantId(id); updateFilter({ tenant_id: id, company_id: undefined, branch_id: undefined }); }); }} />}
     {companies.isError && tenantReady && <div className="alert alert-danger dashboard-alert" role="alert">Unable to load companies for this workspace. {companies.error.message} <button className="table-action" onClick={() => void companies.refetch()}>Retry</button></div>}
-    {hasNoActiveCompany && <div className="workspace-access card"><p className="eyebrow">Workspace setup</p><h2>Create your first company</h2><p className="muted">This workspace is active, but it does not have an active company yet.</p><a className="primary inline-action" href="/company">Open Company Setup</a></div>}
-    {!hasNoActiveCompany && dashboard.isError && <div className="alert alert-danger dashboard-alert" role="alert">Unable to load dashboard data. {dashboard.error.message} <button className="table-action" onClick={() => void dashboard.refetch()}>Retry</button></div>}
-    {!hasNoActiveCompany && dashboard.isLoading && <DashboardFoundationLoading />}
-    {!hasNoActiveCompany && dashboard.data && !dashboard.isError && <DashboardFoundation data={dashboard.data.data} onNavigate={navigate} analytics={{ revenue: revenueAnalytics.data?.data, growth: growthAnalytics.data?.data, financial: financialAnalytics.data?.data, revenueError: revenueAnalytics.error instanceof Error ? revenueAnalytics.error : null, growthError: growthAnalytics.error instanceof Error ? growthAnalytics.error : null, financialError: financialAnalytics.error instanceof Error ? financialAnalytics.error : null, isLoading: revenueAnalytics.isLoading || growthAnalytics.isLoading || financialAnalytics.isLoading, year: analyticsYear, onYearChange: (value) => updateFilter({ analytics_year: value || undefined }), onRetry: () => { void revenueAnalytics.refetch(); void growthAnalytics.refetch(); void financialAnalytics.refetch(); } }} business={{ recent: recentTransactions.data?.data, sales: topProductsSales.data?.data, volume: topProductsVolume.data?.data, isLoading: recentTransactions.isLoading || topProductsSales.isLoading || topProductsVolume.isLoading, recentError: recentTransactions.error instanceof Error ? recentTransactions.error : null, salesError: topProductsSales.error instanceof Error ? topProductsSales.error : null, volumeError: topProductsVolume.error instanceof Error ? topProductsVolume.error : null, onRetry: () => { void recentTransactions.refetch(); void topProductsSales.refetch(); void topProductsVolume.refetch(); } }} />}
-    {!hasNoActiveCompany && !dashboard.isLoading && !dashboard.isError && !dashboard.data && period === 'custom' && <div className="dashboard-loading" role="status">Select both start and end dates to load dashboard data.</div>}
+    {hasNoActiveCompany && <div className="workspace-access card"><p className="eyebrow">Workspace setup</p><h2>Create your first company</h2><p className="muted">This workspace is active, but it does not have an active company yet.</p><Link className="primary inline-action" to="/company">Open Company Setup</Link></div>}
+    {hasInactiveCompany && <div className="workspace-access card"><p className="eyebrow">Company activation</p><h2>No active company is available</h2><p className="muted">Your account can see {inactiveCompanyCount === 1 ? 'a company' : 'companies'}, but all authorized company records are inactive. Contact a workspace administrator to activate one.</p></div>}
+    {!hasNoActiveCompany && !hasInactiveCompany && dashboard.isError && <div className="alert alert-danger dashboard-alert" role="alert">Unable to load dashboard data. {dashboard.error.message} <button className="table-action" onClick={() => void dashboard.refetch()}>Retry</button></div>}
+    {!hasNoActiveCompany && !hasInactiveCompany && dashboard.isLoading && <DashboardFoundationLoading />}
+    {!hasNoActiveCompany && !hasInactiveCompany && dashboard.data && !dashboard.isError && <DashboardFoundation data={dashboard.data.data} onNavigate={navigate} analytics={{ revenue: revenueAnalytics.data?.data, growth: growthAnalytics.data?.data, financial: financialAnalytics.data?.data, revenueError: revenueAnalytics.error instanceof Error ? revenueAnalytics.error : null, growthError: growthAnalytics.error instanceof Error ? growthAnalytics.error : null, financialError: financialAnalytics.error instanceof Error ? financialAnalytics.error : null, isLoading: revenueAnalytics.isLoading || growthAnalytics.isLoading || financialAnalytics.isLoading, year: analyticsYear, onYearChange: (value) => updateFilter({ analytics_year: value || undefined }), onRetry: () => { void revenueAnalytics.refetch(); void growthAnalytics.refetch(); void financialAnalytics.refetch(); } }} business={{ recent: recentTransactions.data?.data, sales: topProductsSales.data?.data, volume: topProductsVolume.data?.data, isLoading: recentTransactions.isLoading || topProductsSales.isLoading || topProductsVolume.isLoading, recentError: recentTransactions.error instanceof Error ? recentTransactions.error : null, salesError: topProductsSales.error instanceof Error ? topProductsSales.error : null, volumeError: topProductsVolume.error instanceof Error ? topProductsVolume.error : null, onRetry: () => { void recentTransactions.refetch(); void topProductsSales.refetch(); void topProductsVolume.refetch(); } }} />}
+    {!hasNoActiveCompany && !hasInactiveCompany && !dashboard.isLoading && !dashboard.isError && !dashboard.data && period === 'custom' && <div className="dashboard-loading" role="status">Select both start and end dates to load dashboard data.</div>}
   </section>;
 }

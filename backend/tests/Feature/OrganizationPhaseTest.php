@@ -2,6 +2,7 @@
 
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\CompanyMembership;
 use App\Models\CompanyDocument;
 use App\Models\Department;
 use App\Models\Permission;
@@ -10,6 +11,7 @@ use App\Models\RoleAssignment;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -54,6 +56,37 @@ it('updates a company profile only with organization permission and validates in
     $this->actingAs($user)->patchJson('/api/v1/companies/'.$company->id, ['legal_name' => 'Updated Legal', 'email' => 'invalid', 'website' => 'not-a-url', 'timezone' => 'UTC', 'default_locale' => 'en', 'date_format' => 'YYYY-MM-DD'], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
     $this->actingAs($user)->patchJson('/api/v1/companies/'.$company->id, ['legal_name' => 'Updated Legal', 'code' => $duplicate->code, 'timezone' => 'Asia/Yangon', 'default_locale' => 'my', 'date_format' => 'DD/MM/YYYY'], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
     $this->actingAs($user)->patchJson('/api/v1/companies/'.$company->id, ['legal_name' => 'Updated Legal', 'trading_name' => 'Updated', 'timezone' => 'Asia/Yangon', 'default_locale' => 'my', 'date_format' => 'DD/MM/YYYY'], ['X-Tenant-Id' => $tenant->id])->assertOk()->assertJsonPath('data.name', 'Updated Legal')->assertJsonPath('data.trading_name', 'Updated');
+});
+
+it('creates a complete active company with owner membership inside the current tenant', function (): void {
+    [$user, $tenant] = organizationUser('company.manage');
+    app(SubscriptionService::class)->provisionTrial($tenant);
+
+    $response = $this->actingAs($user)->postJson('/api/v1/companies', [
+        'name' => 'Northwind Legal',
+        'legal_name' => 'Northwind Legal',
+        'trading_name' => 'Northwind',
+        'code' => 'NW',
+        'business_type' => 'Retail',
+        'registration_number' => 'REG-001',
+        'tax_identifier' => 'TAX-001',
+        'email' => 'office@northwind.test',
+        'phone' => '+959123456789',
+        'country_code' => 'MM',
+        'region' => 'Yangon',
+        'city' => 'Yangon',
+        'base_currency' => 'MMK',
+        'timezone' => 'Asia/Yangon',
+        'default_locale' => 'my',
+        'date_format' => 'DD/MM/YYYY',
+    ], ['X-Tenant-Id' => $tenant->id]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.name', 'Northwind Legal')
+        ->assertJsonPath('data.trading_name', 'Northwind')
+        ->assertJsonPath('data.is_active', true);
+    $companyId = $response->json('data.id');
+    expect(CompanyMembership::where('company_id', $companyId)->where('user_id', $user->id)->where('status', 'active')->exists())->toBeTrue();
 });
 
 it('rejects company profile changes without an authorized role', function (): void {

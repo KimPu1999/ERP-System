@@ -85,6 +85,19 @@ it('only lists dashboard companies covered by the users report scope', function 
         ->assertJsonPath('data.data.0.id', $companyA->id);
 });
 
+it('reports active and inactive authorized companies for dashboard initialization', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    Company::create(['tenant_id' => $tenant->id, 'name' => 'Inactive Company', 'code' => 'INACTIVE', 'is_active' => false]);
+    $active = Company::create(['tenant_id' => $tenant->id, 'name' => 'Active Company', 'code' => 'ACTIVE', 'is_active' => true]);
+
+    $this->actingAs($user)->getJson('/api/v1/dashboard/companies', ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()
+        ->assertJsonCount(1, 'data.data')
+        ->assertJsonPath('data.data.0.id', $active->id)
+        ->assertJsonPath('meta.active_count', 1)
+        ->assertJsonPath('meta.inactive_count', 1);
+});
+
 it('requires dashboard permission and active tenant membership', function (): void {
     $user = User::factory()->create();
     $tenant = Tenant::factory()->create();

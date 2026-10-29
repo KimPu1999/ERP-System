@@ -11,6 +11,7 @@ use App\Services\SubscriptionService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -38,9 +39,15 @@ final class CompanyController
     {
         $tenantId = (string) $request->header('X-Tenant-Id');
         $ids = $authorization->accessibleCompanyIds($request->user(), $tenantId, 'reports.view');
-        $query = Company::query()->where('tenant_id', $tenantId)->where('is_active', true)->orderBy('name');
-        if (is_array($ids)) $query->whereIn('id', $ids);
-        return response()->json(['data' => $query->paginate(100)]);
+        $scope = Company::query()->where('tenant_id', $tenantId);
+        if (is_array($ids)) $scope->whereIn('id', $ids);
+        $activeCount = (clone $scope)->where('is_active', true)->count();
+        $inactiveCount = (clone $scope)->where('is_active', false)->count();
+        $query = (clone $scope)->where('is_active', true)->orderBy('name');
+        return response()->json(['data' => $query->paginate(100), 'meta' => [
+            'active_count' => $activeCount,
+            'inactive_count' => $inactiveCount,
+        ]]);
     }
 
     public function show(Request $request, Company $company, AuthorizationService $authorization): JsonResponse
@@ -54,10 +61,24 @@ final class CompanyController
     {
         $tenantId = app(TenantContext::class)->id();
         abort_unless($tenantId && $authorization->allows($request->user(), $tenantId, 'company.manage'), 403);
-        $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'code' => ['required', 'alpha_dash', 'max:40'], 'tenant_id' => ['prohibited']]);
+        $data = $request->validate($this->createRules($tenantId));
         $subscriptions->limit($tenantId, 'companies', Company::where('tenant_id', $tenantId)->count());
-        $company = Company::create([...$data, 'tenant_id' => $tenantId, 'legal_name' => $data['name']]);
-        CompanyMembership::firstOrCreate(['company_id' => $company->id, 'user_id' => $request->user()->id], ['tenant_id' => $tenantId, 'status' => 'active', 'joined_at' => now()]);
+        $company = DB::transaction(function () use ($data, $tenantId, $request): Company {
+            $company = Company::create([
+                ...collect($data)->except(['tenant_id', 'is_active'])->all(),
+                'tenant_id' => $tenantId,
+                'legal_name' => $data['legal_name'] ?? $data['name'],
+                'timezone' => $data['timezone'] ?? config('app.timezone', 'UTC'),
+                'default_locale' => $data['default_locale'] ?? 'en',
+                'date_format' => $data['date_format'] ?? 'YYYY-MM-DD',
+                'is_active' => true,
+            ]);
+            CompanyMembership::firstOrCreate(
+                ['company_id' => $company->id, 'user_id' => $request->user()->id],
+                ['tenant_id' => $tenantId, 'status' => 'active', 'joined_at' => now()],
+            );
+            return $company;
+        });
         $audit->record($request, 'company.created', $company->tenant_id, $company);
         return response()->json(['data' => $this->payload($company)], 201);
     }
@@ -123,6 +144,32 @@ final class CompanyController
         return [
             'name' => ['sometimes', 'string', 'max:200'], 'code' => ['sometimes', 'alpha_dash', 'max:40', Rule::unique('companies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))->ignore($company->id)],
             'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3'], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
+        ];
+    }
+
+    private function createRules(string $tenantId): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:200'],
+            'legal_name' => ['nullable', 'string', 'max:200'],
+            'trading_name' => ['nullable', 'string', 'max:200'],
+            'code' => ['required', 'alpha_dash', 'max:40', Rule::unique('companies', 'code')->where(fn ($query) => $query->where('tenant_id', $tenantId))],
+            'business_type' => ['nullable', 'string', 'max:120'],
+            'registration_number' => ['nullable', 'string', 'max:120'],
+            'tax_identifier' => ['nullable', 'string', 'max:120'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:60'],
+            'country_code' => ['nullable', 'alpha', 'size:2'],
+            'region' => ['nullable', 'string', 'max:120'],
+            'city' => ['nullable', 'string', 'max:120'],
+            'postal_code' => ['nullable', 'string', 'max:30'],
+            'street_address' => ['nullable', 'string', 'max:255'],
+            'base_currency' => ['nullable', 'alpha', 'size:3'],
+            'timezone' => ['nullable', 'timezone'],
+            'default_locale' => ['nullable', 'string', 'max:10'],
+            'date_format' => ['nullable', 'string', 'max:30'],
+            'tenant_id' => ['prohibited'],
+            'is_active' => ['prohibited'],
         ];
     }
 
