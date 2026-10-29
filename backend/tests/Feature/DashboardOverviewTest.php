@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{AccountingCurrency, Branch, Company, Customer, Permission, Role, RoleAssignment, SalesInvoice, Tenant, TenantMembership, User};
+use App\Models\{AccountingCurrency, Branch, Company, Customer, Permission, Role, RoleAssignment, SalesInvoice, SalesOrder, Tenant, TenantMembership, User};
 
 function dashboardUserWithReportAccess(): array
 {
@@ -21,7 +21,9 @@ it('returns a tenant-scoped dashboard overview with empty states', function (): 
         ->assertOk()
         ->assertJsonPath('data.currency.code', null)
         ->assertJsonPath('data.currency.configured', false)
-        ->assertJsonStructure(['data' => ['filters', 'currency', 'kpis', 'charts', 'recent_sales', 'top_products', 'inventory_alerts', 'pending_approvals']]);
+        ->assertJsonStructure(['data' => ['filters', 'currency', 'kpis', 'charts', 'recent_sales', 'top_products', 'top_products_by_volume', 'inventory_alerts', 'pending_approvals']])
+        ->assertJsonPath('data.kpis.pending_invoices.value', '0')
+        ->assertJsonPath('data.kpis.pending_deliveries.value', '0');
 });
 
 it('reconciles revenue to the selected company and branch', function (): void {
@@ -38,6 +40,22 @@ it('reconciles revenue to the selected company and branch', function (): void {
         ->assertOk()
         ->assertJsonPath('data.currency.code', 'MMK')
         ->assertJsonPath('data.kpis.revenue.value', '100.000000');
+});
+
+it('returns scoped pending invoice and delivery counts', function (): void {
+    [$user, $tenant] = dashboardUserWithReportAccess();
+    $companyA = Company::create(['tenant_id' => $tenant->id, 'name' => 'Company A', 'code' => 'A']);
+    $companyB = Company::create(['tenant_id' => $tenant->id, 'name' => 'Company B', 'code' => 'B']);
+    $customer = Customer::create(['tenant_id' => $tenant->id, 'name' => 'Customer', 'code' => 'C-1']);
+    SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $companyA->id, 'customer_id' => $customer->id, 'number' => 'INV-A', 'state' => 'issued', 'total' => '100']);
+    SalesInvoice::create(['tenant_id' => $tenant->id, 'company_id' => $companyB->id, 'customer_id' => $customer->id, 'number' => 'INV-B', 'state' => 'issued', 'total' => '900']);
+    SalesOrder::create(['tenant_id' => $tenant->id, 'company_id' => $companyA->id, 'customer_id' => $customer->id, 'created_by' => $user->id, 'number' => 'SO-A', 'state' => 'approved', 'total' => '100']);
+    SalesOrder::create(['tenant_id' => $tenant->id, 'company_id' => $companyB->id, 'customer_id' => $customer->id, 'created_by' => $user->id, 'number' => 'SO-B', 'state' => 'approved', 'total' => '900']);
+
+    $this->actingAs($user)->getJson('/api/v1/dashboard/overview?company_id='.$companyA->id, ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()
+        ->assertJsonPath('data.kpis.pending_invoices.value', '1')
+        ->assertJsonPath('data.kpis.pending_deliveries.value', '1');
 });
 
 it('requires dashboard permission and active tenant membership', function (): void {

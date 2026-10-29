@@ -22,10 +22,11 @@ export type DashboardKpi = { value: string; previous_value: string | null; chang
 export type DashboardOverview = {
   filters: { period: string; from: string; to: string; company_id?: string | null; branch_id?: string | null };
   currency: { code: string | null; decimal_places: number | null; configured: boolean };
-  kpis: { revenue: DashboardKpi; sales_orders: DashboardKpi; gross_profit: DashboardKpi; purchases: DashboardKpi; inventory_value: DashboardKpi; low_stock_products: DashboardKpi };
+  kpis: { revenue: DashboardKpi; sales_orders: DashboardKpi; pending_invoices: DashboardKpi; pending_deliveries: DashboardKpi; gross_profit: DashboardKpi; purchases: DashboardKpi; inventory_value: DashboardKpi; low_stock_products: DashboardKpi };
   charts: { revenue_expenses: Array<{ label: string; revenue: string; expenses: string }>; sales_trend: Array<{ label: string; value: string }>; sales_by_category: Array<{ label: string; value: string }> };
   recent_sales: Array<{ id: string; number: string; customer: string; date: string | null; amount: string; status: string }>;
   top_products: Array<{ product: string; sku: string; units_sold: string; revenue: string }>;
+  top_products_by_volume: Array<{ product: string; sku: string; units_sold: string; revenue: string }>;
   inventory_alerts: Array<{ id: string; product: string; warehouse: string; available_stock: string; reorder_level: string; status: string }>;
   pending_approvals: Array<{ id: string; document_type: string; reference: string; requested_by: string; date: string; amount: string; status: string }>;
 };
