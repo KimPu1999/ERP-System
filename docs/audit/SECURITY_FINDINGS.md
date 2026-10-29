@@ -2,21 +2,21 @@
 
 ## Critical / release-blocking findings
 
-### S-001 — Production mail configuration can expose verification/reset tokens (P1)
+### S-001 — Production mail configuration can expose verification/reset tokens (P1 — mitigated in application)
 
 Evidence: `backend/.env.example` sets `MAIL_MAILER=log`; auth routes include password reset and signed email verification in `backend/routes/api.php:60-67`.
 
 Impact: If the example/local mail configuration is carried into a shared or production environment, verification and reset URLs may be written to application logs. Anyone with log access could use a live token before expiry.
 
-Required action: enforce a real mail transport in deployment configuration, redact URLs from logs, rotate any tokens exposed in non-development logs, and add a release check that rejects `MAIL_MAILER=log` outside local/testing.
+Phase 1 action: `ValidateProductionConfiguration` now rejects `MAIL_MAILER=log` for production requests. Remaining action: enforce the same check in the deployment runner and redact/rotate any tokens exposed in non-development logs.
 
-### S-002 — Dashboard/company scope can produce incorrect business reporting (P1)
+### S-002 — Dashboard/company scope can produce incorrect business reporting (P1 — mitigated, verification remains)
 
 Evidence: `DashboardController.php:41-69` applies company/branch filters only to selected inventory/approval queries; `invoiceTotal`, `purchaseTotal`, `grossProfit`, `salesOrders`, chart, recent-sales, and top-product queries use tenant ID only. Sales/procurement migrations (`2026_10_29_000022`, `2026_10_29_000024`) lack consistent company/branch/currency fields on transaction headers.
 
 Impact: A user can receive a valid response containing numbers from other companies or branches in the same tenant. This is a data-integrity and authorization-boundary concern even if it does not expose another tenant.
 
-Required action: model and enforce transaction company/branch/currency scope, then add cross-company and cross-branch tests for every dashboard aggregate.
+Phase 1 action: migration `2026_10_29_000040_add_phase1_transaction_scope.php` adds nullable scope/currency/base-total fields; new sales/purchase writes validate scope; dashboard aggregates apply company/branch filters. Remaining action: reconcile all legacy null-scope rows and add full cross-company tests for every aggregate.
 
 ## High-priority findings
 
@@ -28,13 +28,13 @@ Risk: A read or mutation endpoint that forgets a controller-level permission che
 
 Required action: create an endpoint-to-permission map, use policies/middleware for default-deny behavior, and test unauthorized read and write access for every module.
 
-### S-004 — Deployment workflow does not deploy or verify the backend (P1)
+### S-004 — Deployment workflow does not deploy or verify the backend (P1 — gate improved)
 
 Evidence: `.github/workflows/deploy.yml:24-31` builds the web artifact and then prints “invoke the deployment runner”; no API/container/database migration/deploy step is present.
 
 Risk: A green/manual workflow can be mistaken for a deployed release. Backend configuration, migrations, secrets, health checks, and rollback are outside the controlled workflow.
 
-Required action: add a documented, authenticated deployment runner with migration safety, health checks, rollback, and audit output.
+Phase 1 action: `.github/workflows/deploy.yml` now validates the API artifact and requires `DEPLOYMENT_RUNNER_URL`; `docs/deployment-runner-contract.md` defines migration safety, health checks, rollback, and audit output. The actual provider-specific runner remains incomplete.
 
 ### S-005 — Dependency vulnerability status is unknown (P1)
 
@@ -53,6 +53,7 @@ Required action: rerun in CI or a networked release environment and retain the r
 - Most tenant tables have tenant RLS migrations; inventory/procurement/accounting/HR/optional/approval/billing RLS migrations are present.
 - Inventory movement and accounting posting services use transactions, idempotency keys, scoped lookups, and audit-related records in the inspected paths.
 - Security headers middleware is appended globally in `backend/bootstrap/app.php`.
+- Production request configuration guard is appended globally in `backend/bootstrap/app.php` and fails closed for unsafe production settings.
 
 ## Not verified
 

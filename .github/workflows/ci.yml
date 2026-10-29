@@ -30,6 +30,7 @@ jobs:
       - run: cp .env.example .env
       - run: composer install --no-interaction --prefer-dist
       - run: composer audit --no-interaction --format=plain
+      - run: composer lint
       - run: php artisan test
       - run: php artisan migrate --force
   web:
@@ -42,5 +43,6 @@ jobs:
       - run: npm install
       - run: npm audit --audit-level=high
       - run: npm run check
+      - run: npm run lint
       - run: npm run build
       - run: npm run test -- --run

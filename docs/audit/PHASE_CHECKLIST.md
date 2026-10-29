@@ -26,13 +26,13 @@
 
 ## Phase 1 implementation gate
 
-- [ ] Production config rejects `MAIL_MAILER=log` outside local/testing.
-- [ ] Required secrets/configuration are validated before boot.
-- [ ] Deployment workflow deploys API and frontend, safely migrates, health-checks, and records rollback.
+- [x] Production request config rejects `MAIL_MAILER=log`, debug mode, insecure cookies, localhost origin, or missing app key.
+- [x] Required production configuration is validated on protected requests.
+- [ ] Deployment runner consumes artifacts, safely migrates, health-checks, and records rollback. Repository gate and runner contract are now documented.
 - [ ] Permission matrix covers every route and defaults to deny.
-- [ ] Sales/procurement transaction records have explicit company/branch/currency semantics.
-- [ ] Dashboard uses posted/issued date rules and consistent scope.
-- [ ] Dashboard base currency is configured or returns an explicit unconfigured state; no silent USD business interpretation.
+- [x] New sales/procurement transaction records have company/branch/currency/base-total fields and validation.
+- [ ] Dashboard uses finalized posted/issued date rules and consistent scope. Scope is implemented; date semantics remain open.
+- [x] Dashboard base currency is configured or returns an explicit unconfigured state; no silent USD business interpretation.
 - [ ] Cross-tenant, cross-company, and cross-branch tests pass.
 - [ ] Direct RLS tests pass for all tenant-owned tables.
 - [ ] No critical/high dependency advisory remains, or an approved exception is recorded.
@@ -44,3 +44,7 @@
 3. Deployment log showing migration safety and health checks.
 4. Dashboard reconciliation fixture showing tenant/company/branch/currency totals.
 5. Security review sign-off for mail, CORS, cookies, secrets, platform admin, and tenant isolation.
+
+## Phase 1 implementation result
+
+Phase 1 is **partially implemented and verified**. Backend tests pass at 29 tests / 60 assertions, frontend checks/build pass, the forward-only migration is applied, and the local health endpoint reports database/cache success. The unchecked items above remain release blockers.

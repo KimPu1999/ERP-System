@@ -21,7 +21,7 @@ export const getHealth = () => api<HealthResponse>('/health');
 export type DashboardKpi = { value: string; previous_value: string | null; change_percent: string | null };
 export type DashboardOverview = {
   filters: { period: string; from: string; to: string; company_id?: string | null; branch_id?: string | null };
-  currency: { code: string; decimal_places: number };
+  currency: { code: string | null; decimal_places: number | null; configured: boolean };
   kpis: { revenue: DashboardKpi; sales_orders: DashboardKpi; gross_profit: DashboardKpi; purchases: DashboardKpi; inventory_value: DashboardKpi; low_stock_products: DashboardKpi };
   charts: { revenue_expenses: Array<{ label: string; revenue: string; expenses: string }>; sales_trend: Array<{ label: string; value: string }>; sales_by_category: Array<{ label: string; value: string }> };
   recent_sales: Array<{ id: string; number: string; customer: string; date: string | null; amount: string; status: string }>;

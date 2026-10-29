@@ -1,8 +1,8 @@
 # ERP Cloud — Phase 0 Project Audit
 
-Audit date: 2026-10-29  
+Audit date: 2026-10-29; Phase 1 implementation update: 2026-10-29  
 Scope: `/Users/kimpu/Desktop/ERP System`  
-Mode: read-only audit; no application feature or production-data changes were made.
+Mode: Phase 1 implementation update; no destructive operation or production-data change was made.
 
 ## Executive conclusion
 
@@ -16,14 +16,15 @@ The project has a substantial Laravel/React foundation, tenant middleware, Postg
 |---|---|---|
 | PHP dependency manifest | `backend/composer.json` | Validated successfully; warning only for missing package license. |
 | PHP syntax | `composer lint` in `backend/` | Passed for all scanned PHP files. |
-| Laravel feature tests | `php artisan test` | Passed: 27 tests, 55 assertions. |
+| Laravel feature tests | `php artisan test --compact` | Passed after Phase 1 changes: 29 tests, 60 assertions. |
 | Dashboard tests | `backend/tests/Feature/DashboardOverviewTest.php` | Passed in the full suite; tenant permission and empty-state cases covered. |
-| Database migrations | `php artisan migrate:status` | All 40 listed migrations reported `Ran` in batches 1–5. |
+| Database migrations | `php artisan migrate --force` / `migrate:status` | New forward-only migration `2026_10_29_000040` applied successfully; 41 migrations now report `Ran`. |
 | TypeScript | `npm run check` in `apps/web/` | Passed. |
 | Frontend lint | `npm run lint` | Passed. |
 | Frontend tests | `npm run test -- --run` | Passed: 1 test file / 1 test. |
 | Frontend build | `npm run build` | Passed. |
 | API route inventory | `backend/routes/api.php` | Auth, platform, tenant, ERP, reporting, export, and optional-module routes are present. |
+| API health | `GET /api/v1/health` | HTTP 200; database and cache checks returned `true`. |
 | Tenant boundary | `ResolveTenant`, `TenantIsolationTest` | Active membership and tenant context checks exist; isolation tests pass for covered cases. |
 
 ## Not verified or failed checks
@@ -48,16 +49,16 @@ The project has a substantial Laravel/React foundation, tenant middleware, Postg
 
 ## Main findings
 
-1. **P1 — Scope/data-integrity risk:** `DashboardController` applies `company_id`/`branch_id` to inventory, alerts, and approvals, but revenue, purchases, gross profit, sales orders, charts, recent sales, and top products query only `tenant_id`. The underlying sales and procurement migrations also do not put company/branch/currency fields on those transaction headers. Company/branch dashboard filters can therefore display tenant-wide values.
-2. **P1 — Release blocker:** the deployment workflow does not perform a deployment; it explicitly delegates to an external runner.
-3. **P1 — Security configuration risk:** `backend/.env.example` uses `MAIL_MAILER=log`; verification/reset links written to logs must never be used as a production mail configuration.
-4. **P1 — Authorization completeness:** `AuthorizationService` is available and many mutation paths call it, but the tenant route group itself enforces authentication, verification, and membership—not a universal permission check. Read endpoints need an endpoint-by-endpoint authorization review.
+1. **Resolved in Phase 1:** transaction scope columns and base totals were added to sales and purchasing headers; dashboard financial queries now apply company/branch scope and use base totals/exchange rates where available. Regression coverage now includes a company/branch revenue reconciliation fixture.
+2. **Partially resolved in Phase 1:** deployment now validates API/frontend release artifacts and requires a protected `DEPLOYMENT_RUNNER_URL`; the provider-specific runner, health promotion, and rollback implementation remain external.
+3. **Partially resolved in Phase 1:** production requests now fail closed when debug mode, log mail, insecure cookies, localhost frontend origin, or missing app key are detected. Actual production environment verification remains pending.
+4. **Partially resolved in Phase 1:** new purchase-order creation and existing sales order/invoice transitions enforce scoped permissions; a complete endpoint-by-endpoint default-deny review remains pending.
 5. **P2 — UI completeness:** product search/import/export controls, header search/language/notification controls, and some auth error flows are visibly incomplete or inert. See `UI_UX_FINDINGS.md`.
 6. **P2 — Test confidence:** backend feature coverage is useful but narrow; frontend has one test and no browser, responsive, accessibility, or visual regression suite.
 
 ## Recommended next phase
 
-Implement **Phase 1 — Release and data-integrity hardening** before adding new ERP features. The exact sequence and acceptance criteria are in `DEVELOPMENT_ROADMAP.md` and `PHASE_CHECKLIST.md`.
+Phase 1 is **partially implemented and verified**. The remaining Phase 1 gate items are listed in `PHASE_CHECKLIST.md`; do not start Phase 2 until those items are closed.
 
 ## Audit documents
 

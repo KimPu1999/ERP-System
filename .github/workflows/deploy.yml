@@ -27,5 +27,14 @@ jobs:
           npm install
           npm run check
           npm run build
-      - name: Deployment handoff
-        run: echo "Protected environment approved; invoke the deployment runner for ${{ inputs.environment }}."
+      - name: Validate API release artifact
+        working-directory: backend
+        run: |
+          composer validate --no-check-publish
+          composer install --no-interaction --no-progress --prefer-dist
+          composer lint
+          php artisan route:list --json > /tmp/erp-routes.json
+      - name: Deployment contract
+        run: |
+          test -n "${{ secrets.DEPLOYMENT_RUNNER_URL }}"
+          echo "Release artifacts verified for ${{ inputs.environment }}; the protected deployment runner must consume this workflow's artifact and report health/rollback status."

@@ -2,7 +2,7 @@
 
 ## Verified schema state
 
-`php artisan migrate:status` was run against the local PostgreSQL instance. All migrations `2026_10_29_000000` through `2026_10_29_000039` reported **Ran**, in batches 1 through 5. No migration, reset, wipe, or destructive database command was run.
+`php artisan migrate --force` applied the forward-only Phase 1 migration `2026_10_29_000040_add_phase1_transaction_scope.php` successfully. `php artisan migrate:status` previously showed migrations `2026_10_29_000000` through `2026_10_29_000039` as **Ran**; the new migration is now also applied. No reset, wipe, or destructive database command was run.
 
 The migration set includes:
 
@@ -14,19 +14,19 @@ The migration set includes:
 
 ## Findings
 
-### D-001 — Transaction scope is inconsistent (P1)
+### D-001 — Transaction scope was inconsistent (P1 — partially resolved)
 
 `2026_10_29_000022_create_procurement_tables.php` and `2026_10_29_000024_create_crm_sales_tables.php` put `tenant_id` on purchase and sales records but do not consistently include `company_id`, `branch_id`, or transaction currency. Accounting journal records do include company and currency in `2026_10_29_000028_create_accounting_tables.php`.
 
-This prevents reliable company/branch and multi-currency reporting for the dashboard and creates ambiguity when a tenant owns multiple companies.
+Phase 1 adds nullable `company_id`, `branch_id`, `currency_id`, `exchange_rate`, and `base_total` fields to sales quotations/orders/invoices and purchase orders. New sales and purchase writes populate/validate these fields. Existing records remain nullable and require a controlled backfill policy before being considered fully reconciled.
 
-### D-002 — Dashboard fallback currency is synthetic (P1)
+### D-002 — Dashboard fallback currency was synthetic (P1 — resolved in API contract)
 
-`DashboardController.php:38-39` falls back to USD when no base accounting currency exists. This is a display fallback, not a verified business currency. It must not be used to imply that existing amounts are USD.
+The dashboard now returns `currency.configured=false` and a null code when no tenant base currency exists. The frontend shows an explicit configuration warning instead of formatting business data as USD.
 
 Required action: require an initialized tenant base currency for financial KPIs, or return an explicit “currency not configured” state.
 
-### D-003 — Dashboard aggregate date semantics need confirmation (P1)
+### D-003 — Dashboard aggregate date semantics need confirmation (P1 — remains open)
 
 Several dashboard queries filter `created_at` rather than document issue/posting dates (`DashboardController.php:86-105`, `119-138`). Financial reporting generally needs posted/issued dates and documented exclusion rules. The current tests cover empty structure and permission, not accounting reconciliation.
 

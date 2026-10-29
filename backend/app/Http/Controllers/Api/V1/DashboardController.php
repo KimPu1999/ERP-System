@@ -31,40 +31,39 @@ final class DashboardController
 
         abort_unless($authorization->allows($request->user(), $tenantId, 'reports.view', $companyId, $branchId), 403);
         if ($companyId) abort_unless(Company::where('tenant_id', $tenantId)->whereKey($companyId)->exists(), 404);
-        if ($branchId) abort_unless(Branch::where('tenant_id', $tenantId)->whereKey($branchId)->where('company_id', $companyId)->exists(), 404);
+        if ($branchId) abort_unless($companyId && Branch::where('tenant_id', $tenantId)->whereKey($branchId)->where('company_id', $companyId)->exists(), 404);
 
         $previousTo = $from->subDay()->endOfDay();
         $previousFrom = $previousTo->subDays($from->diffInDays($to))->startOfDay();
-        $currency = AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places'])
-            ?? (object) ['code' => 'USD', 'decimal_places' => 2];
+        $currency = AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places']);
 
-        $revenue = $this->invoiceTotal($tenantId, $from, $to);
-        $previousRevenue = $this->invoiceTotal($tenantId, $previousFrom, $previousTo);
-        $purchases = $this->purchaseTotal($tenantId, $from, $to);
-        $previousPurchases = $this->purchaseTotal($tenantId, $previousFrom, $previousTo);
-        $grossProfit = $this->grossProfit($tenantId, $from, $to);
-        $previousGrossProfit = $this->grossProfit($tenantId, $previousFrom, $previousTo);
+        $revenue = $this->invoiceTotal($tenantId, $companyId, $branchId, $from, $to);
+        $previousRevenue = $this->invoiceTotal($tenantId, $companyId, $branchId, $previousFrom, $previousTo);
+        $purchases = $this->purchaseTotal($tenantId, $companyId, $branchId, $from, $to);
+        $previousPurchases = $this->purchaseTotal($tenantId, $companyId, $branchId, $previousFrom, $previousTo);
+        $grossProfit = $this->grossProfit($tenantId, $companyId, $branchId, $from, $to);
+        $previousGrossProfit = $this->grossProfit($tenantId, $companyId, $branchId, $previousFrom, $previousTo);
         $inventoryValue = $this->inventoryValue($tenantId, $companyId, $branchId);
         $lowStock = $this->lowStockCount($tenantId, $companyId, $branchId);
 
         return response()->json(['data' => [
             'filters' => ['period' => $period, 'from' => $from->toDateString(), 'to' => $to->toDateString(), 'company_id' => $companyId, 'branch_id' => $branchId],
-            'currency' => ['code' => $currency->code, 'decimal_places' => $currency->decimal_places],
+            'currency' => ['code' => $currency?->code, 'decimal_places' => $currency?->decimal_places, 'configured' => $currency !== null],
             'kpis' => [
                 'revenue' => $this->kpi($revenue, $previousRevenue),
-                'sales_orders' => $this->kpi((string) $this->salesOrders($tenantId, $from, $to), (string) $this->salesOrders($tenantId, $previousFrom, $previousTo)),
+                'sales_orders' => $this->kpi((string) $this->salesOrders($tenantId, $companyId, $branchId, $from, $to), (string) $this->salesOrders($tenantId, $companyId, $branchId, $previousFrom, $previousTo)),
                 'gross_profit' => $this->kpi($grossProfit, $previousGrossProfit),
                 'purchases' => $this->kpi($purchases, $previousPurchases),
                 'inventory_value' => ['value' => $inventoryValue, 'previous_value' => null, 'change_percent' => null],
                 'low_stock_products' => ['value' => (string) $lowStock, 'previous_value' => null, 'change_percent' => null],
             ],
             'charts' => [
-                'revenue_expenses' => $this->dailySeries($tenantId, $from, $to),
-                'sales_trend' => $this->monthlySeries($tenantId, $from, $to),
-                'sales_by_category' => $this->salesByCategory($tenantId, $from, $to),
+                'revenue_expenses' => $this->dailySeries($tenantId, $companyId, $branchId, $from, $to),
+                'sales_trend' => $this->monthlySeries($tenantId, $companyId, $branchId, $from, $to),
+                'sales_by_category' => $this->salesByCategory($tenantId, $companyId, $branchId, $from, $to),
             ],
-            'recent_sales' => $this->recentSales($tenantId),
-            'top_products' => $this->topProducts($tenantId, $from, $to),
+            'recent_sales' => $this->recentSales($tenantId, $companyId, $branchId),
+            'top_products' => $this->topProducts($tenantId, $companyId, $branchId, $from, $to),
             'inventory_alerts' => $this->inventoryAlerts($tenantId, $companyId, $branchId),
             'pending_approvals' => $this->pendingApprovals($tenantId, $companyId),
         ]]);
@@ -83,26 +82,30 @@ final class DashboardController
         };
     }
 
-    private function invoiceTotal(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): string
+    private function invoiceTotal(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): string
     {
-        return (string) (SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to])->sum('total') ?: '0');
+        $query = SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]);
+        return (string) ($this->scope($query, $companyId, $branchId)->sum(DB::raw('COALESCE(base_total, total)')) ?: '0');
     }
 
-    private function purchaseTotal(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): string
+    private function purchaseTotal(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): string
     {
-        $value = DB::table('purchase_order_items as poi')->join('purchase_orders as po', 'po.id', '=', 'poi.purchase_order_id')->where('po.tenant_id', $tenantId)->whereNotIn('po.state', ['draft', 'cancelled', 'rejected'])->whereBetween('po.created_at', [$from, $to])->sum(DB::raw('poi.ordered_quantity * poi.unit_price'));
+        $query = DB::table('purchase_orders as po')->where('po.tenant_id', $tenantId)->whereNotIn('po.state', ['draft', 'cancelled', 'rejected'])->whereBetween('po.created_at', [$from, $to]);
+        $value = $this->scope($query, $companyId, $branchId, 'po')->sum(DB::raw('COALESCE(po.base_total, (SELECT COALESCE(SUM(poi.ordered_quantity * poi.unit_price), 0) FROM purchase_order_items poi WHERE poi.purchase_order_id = po.id))'));
         return (string) ($value ?: '0');
     }
 
-    private function grossProfit(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): string
+    private function grossProfit(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): string
     {
-        $value = DB::table('sales_invoice_items as sii')->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')->where('si.tenant_id', $tenantId)->whereNotIn('si.state', ['draft', 'cancelled', 'void'])->whereBetween('si.created_at', [$from, $to])->sum(DB::raw('sii.line_total - (sii.quantity * pv.cost)'));
+        $query = DB::table('sales_invoice_items as sii')->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')->where('si.tenant_id', $tenantId)->whereNotIn('si.state', ['draft', 'cancelled', 'void'])->whereBetween('si.created_at', [$from, $to]);
+        $query = $this->scope($query, $companyId, $branchId, 'si');
+        $value = $query->sum(DB::raw('(sii.line_total - (sii.quantity * pv.cost)) * COALESCE(si.exchange_rate, 1)'));
         return (string) ($value ?: '0');
     }
 
-    private function salesOrders(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): int
+    private function salesOrders(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): int
     {
-        return SalesOrder::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to])->count();
+        return $this->scope(SalesOrder::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->count();
     }
 
     private function inventoryValue(string $tenantId, ?string $companyId, ?string $branchId): string
@@ -116,36 +119,45 @@ final class DashboardController
         return DB::table('inventory_alerts as ia')->join('warehouse_locations as wl', 'wl.id', '=', 'ia.location_id')->join('warehouses as w', 'w.id', '=', 'wl.warehouse_id')->where('ia.tenant_id', $tenantId)->whereNull('ia.resolved_at')->when($companyId, fn ($q) => $q->where('w.company_id', $companyId))->when($branchId, fn ($q) => $q->where('w.branch_id', $branchId))->distinct('ia.variant_id')->count('ia.variant_id');
     }
 
-    private function dailySeries(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function dailySeries(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $revenue = SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to])->selectRaw('DATE(created_at) as day, SUM(total) as value')->groupBy('day')->pluck('value', 'day');
-        $expenses = DB::table('purchase_order_items as poi')->join('purchase_orders as po', 'po.id', '=', 'poi.purchase_order_id')->where('po.tenant_id', $tenantId)->whereNotIn('po.state', ['draft', 'cancelled', 'rejected'])->whereBetween('po.created_at', [$from, $to])->selectRaw('DATE(po.created_at) as day, SUM(poi.ordered_quantity * poi.unit_price) as value')->groupBy('day')->pluck('value', 'day');
+        $revenue = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw('DATE(created_at) as day, SUM(COALESCE(base_total, total)) as value')->groupBy('day')->pluck('value', 'day');
+        $expenses = $this->scope(DB::table('purchase_orders as po')->where('po.tenant_id', $tenantId)->whereNotIn('po.state', ['draft', 'cancelled', 'rejected'])->whereBetween('po.created_at', [$from, $to]), $companyId, $branchId, 'po')->selectRaw('DATE(po.created_at) as day, SUM(COALESCE(po.base_total, (SELECT COALESCE(SUM(poi.ordered_quantity * poi.unit_price), 0) FROM purchase_order_items poi WHERE poi.purchase_order_id = po.id))) as value')->groupBy('day')->pluck('value', 'day');
         $result = [];
         for ($date = $from->startOfDay(); $date->lte($to); $date = $date->addDay()) $result[] = ['label' => $date->format('M j'), 'revenue' => (string) ($revenue[$date->toDateString()] ?? '0'), 'expenses' => (string) ($expenses[$date->toDateString()] ?? '0')];
         return $this->sampleSeries($result, 14);
     }
 
-    private function monthlySeries(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function monthlySeries(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $rows = SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to])->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month, SUM(total) as value")->groupBy('month')->pluck('value', 'month');
+        $rows = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month, SUM(COALESCE(base_total, total)) as value")->groupBy('month')->pluck('value', 'month');
         $result = [];
         for ($date = $from->startOfMonth(); $date->lte($to); $date = $date->addMonth()) { $key = $date->format('Y-m'); $result[] = ['label' => $date->format('M Y'), 'value' => (string) ($rows[$key] ?? '0')]; }
         return $this->sampleSeries($result, 12);
     }
 
-    private function salesByCategory(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function salesByCategory(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        return DB::table('sales_invoice_items as sii')->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')->join('products as p', 'p.id', '=', 'pv.product_id')->leftJoin('product_categories as pc', 'pc.id', '=', 'p.category_id')->where('si.tenant_id', $tenantId)->whereNotIn('si.state', ['draft', 'cancelled', 'void'])->whereBetween('si.created_at', [$from, $to])->selectRaw("COALESCE(pc.name, 'Uncategorized') as label, SUM(sii.line_total) as value")->groupBy('label')->orderByDesc('value')->limit(6)->get()->map(fn ($row) => ['label' => $row->label, 'value' => (string) $row->value])->all();
+        $query = DB::table('sales_invoice_items as sii')->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')->join('products as p', 'p.id', '=', 'pv.product_id')->leftJoin('product_categories as pc', 'pc.id', '=', 'p.category_id')->where('si.tenant_id', $tenantId)->whereNotIn('si.state', ['draft', 'cancelled', 'void'])->whereBetween('si.created_at', [$from, $to]);
+        return $this->scope($query, $companyId, $branchId, 'si')->selectRaw("COALESCE(pc.name, 'Uncategorized') as label, SUM(sii.line_total * COALESCE(si.exchange_rate, 1)) as value")->groupBy('label')->orderByDesc('value')->limit(6)->get()->map(fn ($row) => ['label' => $row->label, 'value' => (string) $row->value])->all();
     }
 
-    private function recentSales(string $tenantId): array
+    private function recentSales(string $tenantId, ?string $companyId, ?string $branchId): array
     {
-        return SalesOrder::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->with('customer')->latest()->limit(8)->get()->map(fn (SalesOrder $order) => ['id' => $order->id, 'number' => $order->number, 'customer' => $order->customer?->name ?? '—', 'date' => $order->created_at?->toDateString(), 'amount' => (string) $order->total, 'status' => $order->state])->all();
+        return $this->scope(SalesOrder::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->with('customer')->latest()->limit(8), $companyId, $branchId)->get()->map(fn (SalesOrder $order) => ['id' => $order->id, 'number' => $order->number, 'customer' => $order->customer?->name ?? '—', 'date' => $order->created_at?->toDateString(), 'amount' => (string) ($order->base_total ?? $order->total), 'status' => $order->state])->all();
     }
 
-    private function topProducts(string $tenantId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function topProducts(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        return DB::table('sales_invoice_items as sii')->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')->join('products as p', 'p.id', '=', 'pv.product_id')->where('si.tenant_id', $tenantId)->whereNotIn('si.state', ['draft', 'cancelled', 'void'])->whereBetween('si.created_at', [$from, $to])->select('p.name as product', 'pv.sku')->selectRaw('SUM(sii.quantity) as units_sold, SUM(sii.line_total) as revenue')->groupBy('p.name', 'pv.sku')->orderByDesc('revenue')->limit(8)->get()->map(fn ($row) => ['product' => $row->product, 'sku' => $row->sku, 'units_sold' => (string) $row->units_sold, 'revenue' => (string) $row->revenue])->all();
+        $query = DB::table('sales_invoice_items as sii')->join('sales_invoices as si', 'si.id', '=', 'sii.invoice_id')->join('product_variants as pv', 'pv.id', '=', 'sii.variant_id')->join('products as p', 'p.id', '=', 'pv.product_id')->where('si.tenant_id', $tenantId)->whereNotIn('si.state', ['draft', 'cancelled', 'void'])->whereBetween('si.created_at', [$from, $to]);
+        return $this->scope($query, $companyId, $branchId, 'si')->select('p.name as product', 'pv.sku')->selectRaw('SUM(sii.quantity) as units_sold, SUM(sii.line_total * COALESCE(si.exchange_rate, 1)) as revenue')->groupBy('p.name', 'pv.sku')->orderByDesc('revenue')->limit(8)->get()->map(fn ($row) => ['product' => $row->product, 'sku' => $row->sku, 'units_sold' => (string) $row->units_sold, 'revenue' => (string) $row->revenue])->all();
+    }
+
+    private function scope($query, ?string $companyId, ?string $branchId, string $prefix = '')
+    {
+        $companyColumn = $prefix !== '' ? $prefix.'.company_id' : 'company_id';
+        $branchColumn = $prefix !== '' ? $prefix.'.branch_id' : 'branch_id';
+        return $query->when($companyId, fn ($builder) => $builder->where($companyColumn, $companyId))->when($branchId, fn ($builder) => $builder->where($branchColumn, $branchId));
     }
 
     private function inventoryAlerts(string $tenantId, ?string $companyId, ?string $branchId): array

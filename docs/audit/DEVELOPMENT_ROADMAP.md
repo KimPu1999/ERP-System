@@ -2,17 +2,30 @@
 
 The roadmap is ordered by dependency. Do not begin broad feature expansion until Phase 1 acceptance criteria pass.
 
-## Phase 1 — Release, security, and scope hardening (P0/P1)
+## Phase 1 — Release, security, and scope hardening (P0/P1) — in progress
 
 Dependencies: none.
 
-Work:
+Completed in this implementation:
+
+- Added forward-only transaction scope/currency/base-total migration `backend/database/migrations/2026_10_29_000040_add_phase1_transaction_scope.php`.
+- Added scoped sales/purchase writes and dashboard aggregate filtering.
+- Added explicit unconfigured-currency API/UI state.
+- Added production request configuration guard.
+- Added API release validation and deployment-runner contract.
+- Added dashboard company/branch reconciliation regression coverage.
+
+Remaining work:
 
 - Make production mail, cookie, CORS, queue, cache, storage, TLS, and secret configuration explicit and environment-validated.
 - Replace the deployment handoff with a real controlled deployment or document and test the external runner contract.
 - Build a route-to-permission matrix and default-deny tests for all tenant/platform endpoints.
 - Fix company/branch/currency scope in sales, purchasing, and dashboard queries.
 - Add direct RLS and cross-tenant tests.
+- Complete endpoint-by-endpoint permission/default-deny review.
+- Backfill and reconcile legacy transaction rows with null scope/currency fields.
+- Implement/connect the provider-specific deployment runner.
+- Re-run dependency audits in a networked CI/release environment.
 
 Acceptance criteria:
 
@@ -92,4 +105,4 @@ Acceptance criteria: platform-only health access, alerting with ownership, measu
 
 ## Exactly what should be implemented next
 
-**Phase 1, starting with transaction scope and production security configuration.** The immediate implementation ticket should be: “Make sales/procurement/dashboard company, branch, currency, and posting-date semantics explicit; enforce endpoint permissions; and make the deployment/mail configuration release-safe.”
+**Remain in Phase 1.** The next ticket is to close the remaining permission matrix, legacy-row backfill/reconciliation, direct RLS verification, and provider deployment-runner acceptance criteria. Phase 2 must not start yet.
