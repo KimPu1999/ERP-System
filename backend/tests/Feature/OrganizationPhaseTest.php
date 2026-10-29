@@ -59,6 +59,31 @@ it('updates a company profile only with organization permission and validates in
     $this->actingAs($user)->patchJson('/api/v1/companies/'.$company->id, ['legal_name' => 'Updated Legal', 'trading_name' => 'Updated', 'timezone' => 'Asia/Yangon', 'default_locale' => 'my', 'date_format' => 'DD/MM/YYYY'], ['X-Tenant-Id' => $tenant->id])->assertOk()->assertJsonPath('data.name', 'Updated Legal')->assertJsonPath('data.trading_name', 'Updated');
 });
 
+it('persists company profile preferences and exposes an authorized activity timeline', function (): void {
+    [$user, $tenant] = organizationUser();
+    $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Preferences Co', 'code' => 'PREF', 'base_currency' => 'MMK']);
+
+    $this->actingAs($user)->patchJson('/api/v1/companies/'.$company->id, [
+        'legal_name' => 'Preferences Legal',
+        'industry' => 'Manufacturing',
+        'alternative_phone' => '+959111111111',
+        'township' => 'Dagon',
+        'number_format' => '1.234,56',
+        'invoice_prefix' => 'INV',
+        'purchase_order_prefix' => 'PO',
+        'brand_color' => '#1D4ED8',
+        'timezone' => 'Asia/Yangon',
+        'default_locale' => 'en',
+        'date_format' => 'YYYY-MM-DD',
+    ], ['X-Tenant-Id' => $tenant->id])->assertOk()
+        ->assertJsonPath('data.industry', 'Manufacturing')
+        ->assertJsonPath('data.number_format', '1.234,56')
+        ->assertJsonPath('data.brand_color', '#1D4ED8');
+
+    $this->actingAs($user)->getJson('/api/v1/companies/'.$company->id.'/activity', ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('data.0.action', 'company.updated');
+});
+
 it('creates a complete active company with owner membership inside the current tenant', function (): void {
     [$user, $tenant] = organizationUser('company.manage');
     app(SubscriptionService::class)->provisionTrial($tenant);

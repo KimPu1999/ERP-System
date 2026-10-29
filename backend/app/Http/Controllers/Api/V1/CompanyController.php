@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\CompanyDocument;
+use App\Models\JournalEntry;
+use App\Models\PlatformAuditLog;
+use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\AuthorizationService;
 use App\Services\SubscriptionService;
@@ -14,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 final class CompanyController
 {
@@ -99,6 +103,12 @@ final class CompanyController
         $data = $request->validate($this->profileRules($company));
         $payload = collect($data)->except(['tenant_id', 'id'])->all();
         if (array_key_exists('legal_name', $payload) && filled($payload['legal_name'])) $payload['name'] = $payload['legal_name'];
+        if (array_key_exists('base_currency', $payload) && filled($payload['base_currency'])) {
+            $payload['base_currency'] = strtoupper($payload['base_currency']);
+            if ($payload['base_currency'] !== strtoupper((string) $company->base_currency) && JournalEntry::where('tenant_id', $company->tenant_id)->where('company_id', $company->id)->where('state', 'posted')->exists()) {
+                throw ValidationException::withMessages(['base_currency' => ['The base currency cannot be changed after posted financial transactions exist. Use an approved financial conversion procedure.']]);
+            }
+        }
         $company->update($payload);
         $audit->record($request, 'company.updated', $company->tenant_id, $company);
         return response()->json(['data' => $this->payload($company->fresh())]);
@@ -113,7 +123,19 @@ final class CompanyController
     {
         $this->assertCompany($company);
         abort_unless($this->allowed($authorization, $request, $company, ['organization.manage', 'company.manage', 'reports.view']), 403);
-        return response()->json(['data' => $company->documents()->latest()->get(['id', 'name', 'category', 'mime_type', 'size', 'created_at'])->map(fn (CompanyDocument $document) => [...$document->toArray(), 'download_path' => "/companies/{$company->id}/documents/{$document->id}"]) ]);
+        $documents = $company->documents()->with('uploader:id,name')->latest()->get(['id', 'name', 'category', 'mime_type', 'size', 'uploaded_by', 'created_at']);
+        return response()->json(['data' => $documents->map(fn (CompanyDocument $document) => [...$document->toArray(), 'uploaded_by_name' => $document->uploader?->name, 'download_path' => "/companies/{$company->id}/documents/{$document->id}"]) ]);
+    }
+
+    public function activity(Request $request, Company $company, AuthorizationService $authorization): JsonResponse
+    {
+        $this->assertCompany($company);
+        abort_unless($this->allowed($authorization, $request, $company, ['organization.manage', 'company.manage', 'reports.view']), 403);
+        $activity = PlatformAuditLog::query()->where('tenant_id', $company->tenant_id)->where(function ($query) use ($company): void {
+            $query->where('auditable_id', $company->id)->orWhereJsonContains('metadata->company_id', $company->id);
+        })->latest()->limit(50)->get(['id', 'action', 'actor_user_id', 'auditable_type', 'auditable_id', 'metadata', 'created_at']);
+        $actorNames = User::whereIn('id', $activity->pluck('actor_user_id')->filter()->unique())->pluck('name', 'id');
+        return response()->json(['data' => $activity->map(fn (PlatformAuditLog $item) => [...$item->toArray(), 'actor_name' => $item->actor_user_id ? ($actorNames[$item->actor_user_id] ?? 'Authorized user') : 'System'])]);
     }
 
     public function uploadDocument(Request $request, Company $company, AuthorizationService $authorization, AuditLogger $audit): JsonResponse
@@ -152,7 +174,7 @@ final class CompanyController
     {
         return [
             'name' => ['sometimes', 'string', 'max:200'], 'code' => ['sometimes', 'alpha_dash', 'max:40', Rule::unique('companies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))->ignore($company->id)],
-            'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'industry' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'alternative_phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'township' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3'], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'fiscal_year_start' => ['nullable', 'date'], 'document_number_prefix' => ['nullable', 'string', 'max:40'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
+            'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'industry' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'alternative_phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'township' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3'], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'fiscal_year_start' => ['nullable', 'date'], 'document_number_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'number_format' => ['nullable', Rule::in(['1,234.56', '1.234,56', '1 234,56'])], 'invoice_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'purchase_order_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'brand_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
         ];
     }
 
@@ -182,7 +204,11 @@ final class CompanyController
             'date_format' => ['required', 'string', 'max:30'],
             'registration_date' => ['nullable', 'date'],
             'fiscal_year_start' => ['nullable', 'date'],
-            'document_number_prefix' => ['nullable', 'string', 'max:40'],
+            'document_number_prefix' => ['nullable', 'alpha_dash', 'max:40'],
+            'number_format' => ['nullable', Rule::in(['1,234.56', '1.234,56', '1 234,56'])],
+            'invoice_prefix' => ['nullable', 'alpha_dash', 'max:40'],
+            'purchase_order_prefix' => ['nullable', 'alpha_dash', 'max:40'],
+            'brand_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'tenant_id' => ['prohibited'],
             'is_active' => ['prohibited'],
         ];

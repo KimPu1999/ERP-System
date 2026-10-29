@@ -117,6 +117,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/companies/{company}/documents', [CompanyController::class, 'uploadDocument']);
         Route::get('/companies/{company}/documents/{document}', [CompanyController::class, 'downloadDocument']);
         Route::delete('/companies/{company}/documents/{document}', [CompanyController::class, 'deleteDocument']);
+        Route::get('/companies/{company}/activity', [CompanyController::class, 'activity']);
         Route::post('/companies/{company}/invitations', [InvitationController::class, 'store']);
         Route::get('/companies/{company}/members', [StaffMembershipController::class, 'index']);
         Route::get('/companies/{company}/members/{member}', [StaffMembershipController::class, 'show']);
