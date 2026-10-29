@@ -177,8 +177,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/rfqs/{rfq}/quotes', [RfqController::class, 'quote']);
         Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
         Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
+        Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show']);
+        Route::patch('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update']);
         Route::post('/purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit']);
         Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve']);
+        Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
         Route::get('/purchase-orders/{purchaseOrder}/print', [PurchaseOrderDocumentController::class, 'show']);
         Route::post('/purchase-orders/{purchaseOrder}/receipts', [GoodsReceiptController::class, 'store']);
         Route::post('/purchase-orders/{purchaseOrder}/returns', [PurchaseReturnController::class, 'post']);
