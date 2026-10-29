@@ -52,6 +52,7 @@ final class WorkspaceAccessController
                     'company:id,tenant_id,name,code,is_active',
                 ])
                 ->whereRaw('LOWER(email) = LOWER(?)', [$user->email])
+                ->where('status', 'pending')
                 ->whereNull('accepted_at')
                 ->where('expires_at', '>', now())
                 ->orderBy('expires_at')

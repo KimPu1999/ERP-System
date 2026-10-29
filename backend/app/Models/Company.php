@@ -13,4 +13,6 @@ class Company extends Model
     public function tenant() { return $this->belongsTo(Tenant::class); }
     public function branches() { return $this->hasMany(Branch::class); }
     public function documents() { return $this->hasMany(CompanyDocument::class); }
+    public function memberships() { return $this->hasMany(CompanyMembership::class); }
+    public function teams() { return $this->hasMany(Team::class); }
 }

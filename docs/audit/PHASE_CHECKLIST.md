@@ -93,3 +93,21 @@ Phase 1 is **partially implemented and verified**. Backend tests pass at 29 test
 - [x] Branch feature tests pass: 6 tests / 26 assertions; full Laravel suite passes: 56 tests / 182 assertions.
 - [ ] Complete browser-level responsive/accessibility verification when the in-app browser connector is available.
 - [ ] Implement Organization Phase 3 — Department Management separately.
+
+## Organization Phase 5 — staff, memberships, and invitations
+
+- [x] Added company-scoped memberships with active, suspended, and revoked lifecycle states.
+- [x] Added staff assignment history for branch, department, team, reporting manager, and effective dates.
+- [x] Added company teams as a tenant/company-scoped assignment reference.
+- [x] Added secure invitation status, expiry, revocation, accepted-user tracking, scoped assignments, and personal message fields.
+- [x] Invitation tokens are cryptographically random, stored only as SHA-256 hashes, rotated on resend, invalidated after acceptance/revocation, and never returned by APIs.
+- [x] Added authenticated company member directory with server-side search, filters, sorting, pagination, summary cards, details, and activity history.
+- [x] Added invitation creation, pending invitation listing, resend, revoke, public-safe preview, and verified authenticated acceptance endpoints.
+- [x] Added company/tenant/role/branch/department/team validation and privilege-escalation protection for invitations and assignments.
+- [x] Added last-login tracking without exposing credentials, MFA secrets, or tokens.
+- [x] Added last-company-owner protection for suspension/revocation and preserved global user accounts when a company membership changes.
+- [x] Added frontend staff directory, invitation form/table, membership status controls, member details page, loading/error/empty states, and responsive styling.
+- [x] Added Phase 5 feature tests: 4 tests / 15 assertions; full Laravel suite passes: 60 tests / 197 assertions.
+- [x] Frontend TypeScript check, lint, and production build pass.
+- [ ] Add browser-level responsive/accessibility verification when the in-app browser connector is available.
+- [ ] Implement Organization Phase 6 separately.

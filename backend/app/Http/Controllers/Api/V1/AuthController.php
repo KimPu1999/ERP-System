@@ -31,7 +31,7 @@ final class AuthController
         if (! $user || ! Hash::check($data['password'], $user->password)) { $events->record($request, 'auth.login_failed', $user?->id, null, ['reason' => 'invalid_credentials']); throw ValidationException::withMessages(['email' => ['The credentials are invalid.']]); }
         if ($user->status !== 'active' || $user->suspended_at) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'account_suspended']); abort(423, 'Account is suspended.'); }
         if ($user->mfa_enabled_at) { $request->session()->put(['auth.mfa_user_id' => $user->id, 'auth.mfa_remember' => (bool) ($data['remember'] ?? false)]); return response()->json(['mfa_required' => true], 202); }
-        Auth::login($user, (bool) ($data['remember'] ?? false)); $request->session()->regenerate(); $events->record($request, 'auth.login_succeeded', $user->id);
+        Auth::login($user, (bool) ($data['remember'] ?? false)); $request->session()->regenerate(); $user->forceFill(['last_login_at' => now()])->saveQuietly(); $events->record($request, 'auth.login_succeeded', $user->id);
         return response()->json(['data' => $user->only(['id', 'name', 'email', 'status'])]);
     }
 

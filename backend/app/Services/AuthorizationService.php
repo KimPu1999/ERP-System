@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\RoleAssignment;
+use App\Models\CompanyMembership;
 use App\Models\User;
 
 final class AuthorizationService
@@ -11,6 +12,7 @@ final class AuthorizationService
     {
         if (! $tenantId) return false;
         if (! $user->tenantMemberships()->where('tenant_id', $tenantId)->where('status', 'active')->exists()) return false;
+        if ($companyId && CompanyMembership::where('company_id', $companyId)->where('user_id', $user->id)->exists() && ! CompanyMembership::where('company_id', $companyId)->where('user_id', $user->id)->where('status', 'active')->exists()) return false;
         return $this->permissionAssignments($user, $tenantId, $permission)->where(function ($query) use ($companyId): void {
             $query->whereNull('company_id')->orWhere('company_id', $companyId);
         })->where(function ($query) use ($branchId): void {
@@ -24,7 +26,9 @@ final class AuthorizationService
     {
         $assignments = $this->permissionAssignments($user, $tenantId, $permission);
         if ((clone $assignments)->whereNull('company_id')->whereNull('branch_id')->exists()) return null;
-        return $assignments->whereNotNull('company_id')->pluck('company_id')->unique()->values()->all();
+        $companyIds = $assignments->whereNotNull('company_id')->pluck('company_id')->unique()->values()->all();
+        $blocked = CompanyMembership::where('user_id', $user->id)->whereIn('company_id', $companyIds)->where('status', '!=', 'active')->pluck('company_id')->all();
+        return array_values(array_diff($companyIds, $blocked));
     }
 
     public function accessibleBranchIds(User $user, string $tenantId, string $permission): ?array

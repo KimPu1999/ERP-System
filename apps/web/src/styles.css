@@ -197,8 +197,39 @@ tr:last-child td { border-bottom: 0; }
 .document-list { max-height: 220px; overflow: auto; }
 .empty-state { margin-top: 18px; text-align: center; }
 .empty-state h2 { margin: 10px 0 6px; }
-@media (max-width: 980px) { .organization-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .organization-grid, .organization-grid-bottom, .profile-media-grid { grid-template-columns: 1fr; } }
-@media (max-width: 680px) { .context-select { display: grid; align-items: start; margin-top: 14px; } .context-select select { min-width: 0; width: 100%; } .form-grid, .summary-list { grid-template-columns: 1fr; } .form-span-2 { grid-column: auto; } .organization-kpi-grid { grid-template-columns: 1fr 1fr; } .organization-nav { margin-right: -16px; } .workspace-create-form { display: grid; align-items: stretch; } }
+.staff-page .page-heading-actions { display: flex; align-items: center; gap: 10px; }
+.staff-summary-grid { margin-bottom: 14px; }
+.staff-summary-grid .metric span { display: inline-flex; align-items: center; gap: 7px; }
+.staff-filter-bar { margin-top: 14px; }
+.staff-search { min-width: 220px !important; flex: 1 1 220px; }
+.staff-search .input-wrap { min-height: 35px; height: 35px; }
+.filter-reset { display: inline-flex; align-items: center; gap: 5px; min-height: 35px; }
+.staff-tabs { display: flex; gap: 5px; margin: 14px 0 0; border-bottom: 1px solid var(--border); }
+.staff-tabs button { padding: 10px 13px; border: 0; border-bottom: 2px solid transparent; color: var(--muted); background: transparent; font-size: 12px; font-weight: 650; }
+.staff-tabs button:hover, .staff-tabs button.active { color: var(--blue); border-bottom-color: var(--blue); }
+.staff-table-card { margin-top: 10px; }
+.staff-table-card table { min-width: 1180px; }
+.member-cell { display: inline-flex; align-items: center; gap: 9px; }
+.member-cell strong, .member-cell small { display: block; }
+.member-cell strong { font-size: 12px; }
+.member-cell small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.member-actions { display: inline-flex; gap: 4px; }
+.danger-action { color: var(--danger) !important; }
+.invite-form { margin-top: 14px; }
+.invite-form input, .invite-form select, .invite-form textarea, .member-detail-grid select { width: 100%; padding: 10px 11px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface); font-size: 12px; }
+.invite-form textarea { resize: vertical; }
+.invite-form .field > span { color: var(--text); font-size: 12px; font-weight: 650; }
+.avatar-large { width: 42px; height: 42px; font-size: 16px; }
+.member-detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.member-detail-header h2 { margin: 0 0 4px; font-size: 17px; }
+.member-detail-header .profile-actions { margin-left: auto; }
+.member-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.member-detail-grid .card { min-width: 0; }
+.member-detail-grid .card h2 { margin: 4px 0 8px; font-size: 16px; }
+.assignment-panel select[multiple] { min-height: 76px; }
+.member-detail-wide { grid-column: span 2; }
+@media (max-width: 980px) { .organization-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .organization-grid, .organization-grid-bottom, .profile-media-grid, .member-detail-grid { grid-template-columns: 1fr; } .member-detail-wide { grid-column: auto; } }
+@media (max-width: 680px) { .context-select { display: grid; align-items: start; margin-top: 14px; } .context-select select { min-width: 0; width: 100%; } .form-grid, .summary-list { grid-template-columns: 1fr; } .form-span-2 { grid-column: auto; } .organization-kpi-grid { grid-template-columns: 1fr 1fr; } .organization-nav { margin-right: -16px; } .workspace-create-form { display: grid; align-items: stretch; } .staff-page .page-heading-actions, .member-detail-header { align-items: stretch; flex-direction: column; } .member-detail-header .profile-actions { margin-left: 0; } }
 .dashboard-kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .dashboard-kpi { min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 .kpi-top { display: flex; align-items: center; gap: 7px; min-height: 22px; }

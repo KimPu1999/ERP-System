@@ -54,11 +54,13 @@ use App\Http\Controllers\Api\V1\SupportController;
 use App\Http\Controllers\Api\V1\TenantExportController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\WorkspaceAccessController;
+use App\Http\Controllers\Api\V1\StaffMembershipController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class);
     Route::post('/billing/webhooks/{provider}', [PlatformBillingController::class, 'webhook']);
+    Route::get('/invitations/{token}/preview', [InvitationController::class, 'preview'])->where('token', '[A-Za-z0-9]+')->middleware('throttle:30,1');
     Route::middleware('throttle:10,1')->prefix('auth')->group(function (): void {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
@@ -77,6 +79,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/auth/sessions', [SessionController::class, 'index']);
         Route::delete('/auth/sessions/{session}', [SessionController::class, 'destroy']);
         Route::post('/invitations/accept', [InvitationController::class, 'accept'])->middleware('verified');
+        Route::post('/invitations/{token}/accept', [InvitationController::class, 'acceptToken'])->middleware('verified')->where('token', '[A-Za-z0-9]+');
         Route::get('/workspace-access', WorkspaceAccessController::class);
         Route::get('/tenants', [TenantContextController::class, 'index']);
         Route::post('/tenants', [TenantOnboardingController::class, 'store'])->middleware('verified');
@@ -115,6 +118,15 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/companies/{company}/documents/{document}', [CompanyController::class, 'downloadDocument']);
         Route::delete('/companies/{company}/documents/{document}', [CompanyController::class, 'deleteDocument']);
         Route::post('/companies/{company}/invitations', [InvitationController::class, 'store']);
+        Route::get('/companies/{company}/members', [StaffMembershipController::class, 'index']);
+        Route::get('/companies/{company}/members/{member}', [StaffMembershipController::class, 'show']);
+        Route::patch('/companies/{company}/members/{member}', [StaffMembershipController::class, 'update']);
+        Route::patch('/companies/{company}/members/{member}/status', [StaffMembershipController::class, 'status']);
+        Route::get('/companies/{company}/members/{member}/activity', [StaffMembershipController::class, 'activity']);
+        Route::get('/companies/{company}/teams', [StaffMembershipController::class, 'teams']);
+        Route::get('/companies/{company}/invitations', [InvitationController::class, 'index']);
+        Route::post('/companies/{company}/invitations/{invitation}/resend', [InvitationController::class, 'resend'])->middleware('throttle:10,1');
+        Route::post('/companies/{company}/invitations/{invitation}/revoke', [InvitationController::class, 'revoke']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
         Route::post('/companies/{company}/branches', [BranchController::class, 'store']);
         Route::get('/companies/{company}/branch-manager-candidates', [BranchController::class, 'managerCandidates']);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Company;
+use App\Models\CompanyMembership;
 use App\Models\CompanyDocument;
 use App\Services\AuditLogger;
 use App\Services\AuthorizationService;
@@ -56,6 +57,7 @@ final class CompanyController
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'code' => ['required', 'alpha_dash', 'max:40'], 'tenant_id' => ['prohibited']]);
         $subscriptions->limit($tenantId, 'companies', Company::where('tenant_id', $tenantId)->count());
         $company = Company::create([...$data, 'tenant_id' => $tenantId, 'legal_name' => $data['name']]);
+        CompanyMembership::firstOrCreate(['company_id' => $company->id, 'user_id' => $request->user()->id], ['tenant_id' => $tenantId, 'status' => 'active', 'joined_at' => now()]);
         $audit->record($request, 'company.created', $company->tenant_id, $company);
         return response()->json(['data' => $this->payload($company)], 201);
     }
