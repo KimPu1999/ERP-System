@@ -38,9 +38,18 @@ final class CompanyController
     public function dashboardIndex(Request $request, AuthorizationService $authorization): JsonResponse
     {
         $tenantId = (string) $request->header('X-Tenant-Id');
-        $ids = $authorization->accessibleCompanyIds($request->user(), $tenantId, 'reports.view');
+        $ids = [];
+        $allCompanies = false;
+        foreach (['reports.view', 'organization.manage', 'company.manage'] as $permission) {
+            $accessible = $authorization->accessibleCompanyIds($request->user(), $tenantId, $permission);
+            if ($accessible === null) {
+                $allCompanies = true;
+                break;
+            }
+            $ids = array_merge($ids, $accessible);
+        }
         $scope = Company::query()->where('tenant_id', $tenantId);
-        if (is_array($ids)) $scope->whereIn('id', $ids);
+        if (! $allCompanies) $scope->whereIn('id', array_values(array_unique($ids)));
         $activeCount = (clone $scope)->where('is_active', true)->count();
         $inactiveCount = (clone $scope)->where('is_active', false)->count();
         $query = (clone $scope)->where('is_active', true)->orderBy('name');

@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\RoleAssignment;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
+use App\Models\Team;
 use App\Models\User;
 use App\Services\SubscriptionService;
 use Illuminate\Http\UploadedFile;
@@ -118,13 +119,15 @@ it('rejects company profile changes without an authorized role', function (): vo
     expect($owner->id)->not->toBe($user->id);
 });
 
-it('returns accurate organization overview counts and unavailable team state', function (): void {
+it('returns accurate company-scoped organization overview counts', function (): void {
     [$user, $tenant] = organizationUser();
     $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Overview Co', 'code' => 'OV']);
+    CompanyMembership::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'user_id' => $user->id, 'status' => 'active']);
     $branch = Branch::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'name' => 'Main', 'code' => 'MAIN', 'is_active' => true]);
     Department::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'branch_id' => $branch->id, 'name' => 'Finance', 'code' => 'FIN']);
+    Team::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'name' => 'Operations', 'code' => 'OPS', 'is_active' => true]);
 
-    $this->actingAs($user)->getJson('/api/v1/organization/overview?company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])->assertOk()->assertJsonPath('data.kpis.active_branches.value', 1)->assertJsonPath('data.kpis.departments.value', 1)->assertJsonPath('data.kpis.active_members.value', 1)->assertJsonPath('data.kpis.teams.available', false);
+    $this->actingAs($user)->getJson('/api/v1/organization/overview?company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])->assertOk()->assertJsonPath('data.kpis.total_branches.value', 1)->assertJsonPath('data.kpis.active_departments.value', 1)->assertJsonPath('data.kpis.active_members.value', 1)->assertJsonPath('data.kpis.teams.value', 1)->assertJsonPath('data.kpis.pending_invitations.value', 0);
 });
 
 it('validates branding and keeps company documents private', function (): void {
