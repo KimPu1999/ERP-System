@@ -10,4 +10,5 @@ class Role extends Model
     use HasUuids;
     protected $fillable = ['tenant_id', 'name', 'slug'];
     public function permissions() { return $this->belongsToMany(Permission::class); }
+    public function assignments() { return $this->hasMany(RoleAssignment::class); }
 }

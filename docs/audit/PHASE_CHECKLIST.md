@@ -94,6 +94,21 @@ Phase 1 is **partially implemented and verified**. Backend tests pass at 29 test
 - [ ] Complete browser-level responsive/accessibility verification when the in-app browser connector is available.
 - [ ] Implement Organization Phase 3 — Department Management separately.
 
+## Organization Phase 3 — departments, branches, and roles/permissions redesign
+
+- [x] Reworked Branch Management company-context resolution to use authorized active companies and distinct no-company, inactive, API-error, and read-only states.
+- [x] Preserved Branch Management server-side search, filtering, pagination, lifecycle actions, manager validation, tenant/company isolation, and permission-gated controls.
+- [x] Added additive department schema support for parent departments, managers, descriptions, status, and company/status indexes in migration `2026_10_29_000049`.
+- [x] Added department CRUD, detail/activity, status lifecycle, company-scoped code uniqueness, circular-hierarchy prevention, manager validation, pagination, summaries, and audit logging.
+- [x] Replaced the department page with a responsive KPI/filter/table/form/detail workflow using real API data and explicit unavailable states for Business Units, Staff assignment, and Warehouse management where no verified source exists.
+- [x] Replaced comma-separated role permissions with a permission matrix grouped from the backend catalog, custom-role editor, effective-permission preview, role assignment panel, and protected system-role presentation.
+- [x] Added role and role-assignment API authorization that prevents permission escalation, cross-tenant access, invalid company/branch/department scopes, duplicate assignments, and system-role modification.
+- [x] Added feature coverage for department hierarchy/duplicate codes, role permission escalation, and system-role protection; full Laravel suite passes with 66 tests / 229 assertions.
+- [x] Frontend TypeScript check, lint, Vitest, and production build pass.
+- [ ] Add browser-level responsive/accessibility verification for all three pages.
+- [ ] Implement the separate Business Unit module before replacing the explicit Business Unit unavailable state.
+- [ ] Extend role-assignment UI for effective dates and branch/department scope controls if those fields become part of the supported authorization product.
+
 ## Organization Phase 5 — staff, memberships, and invitations
 
 - [x] Added company-scoped memberships with active, suspended, and revoked lifecycle states.

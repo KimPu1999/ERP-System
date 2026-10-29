@@ -102,8 +102,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/roles', [RoleController::class, 'store']);
         Route::patch('/roles/{role}', [RoleController::class, 'update']);
         Route::post('/role-assignments', [RoleAssignmentController::class, 'store']);
+        Route::get('/role-assignments', [RoleAssignmentController::class, 'index']);
+        Route::delete('/role-assignments/{assignment}', [RoleAssignmentController::class, 'destroy']);
         Route::get('/departments', [DepartmentController::class, 'index']);
         Route::post('/departments', [DepartmentController::class, 'store']);
+        Route::get('/departments/{department}', [DepartmentController::class, 'show']);
+        Route::patch('/departments/{department}', [DepartmentController::class, 'update']);
+        Route::patch('/departments/{department}/status', [DepartmentController::class, 'status']);
+        Route::get('/departments/{department}/activity', [DepartmentController::class, 'activity']);
         Route::get('/dashboard/companies', [CompanyController::class, 'dashboardIndex']);
         Route::get('/dashboard/companies/{company}/branches', [BranchController::class, 'dashboardIndex']);
         Route::get('/organization/overview', [OrganizationController::class, 'overview']);

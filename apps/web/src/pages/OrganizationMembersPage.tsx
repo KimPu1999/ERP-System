@@ -13,9 +13,9 @@ export function OrganizationMembersPage() {
   const companies = useQuery({ queryKey: ['companies', 'staff'], queryFn: getCompanies });
   const companyId = searchParams.get('company_id') ?? companies.data?.data.data[0]?.id ?? '';
   const [tab, setTab] = useState<'members' | 'invitations'>('members'); const [inviteOpen, setInviteOpen] = useState(() => searchParams.get('invite') === '1'); const [filters, setFilters] = useState<MemberListParams>({ per_page: 25 });
-  const roles = useQuery({ queryKey: ['roles', 'staff'], queryFn: getRoles, enabled: Boolean(companyId) });
+  const roles = useQuery({ queryKey: ['roles', 'staff'], queryFn: () => getRoles(), enabled: Boolean(companyId) });
   const branches = useQuery({ queryKey: ['branches', 'staff', companyId], queryFn: () => getBranches(companyId, { per_page: 100 }), enabled: Boolean(companyId) });
-  const departments = useQuery({ queryKey: ['departments', 'staff'], queryFn: getDepartments, enabled: Boolean(companyId) });
+  const departments = useQuery({ queryKey: ['departments', 'staff'], queryFn: () => getDepartments({ company_id: companyId }), enabled: Boolean(companyId) });
   const teams = useQuery({ queryKey: ['teams', companyId], queryFn: () => getCompanyTeams(companyId), enabled: Boolean(companyId) });
   const members = useQuery({ queryKey: ['company-members', companyId, filters], queryFn: () => getCompanyMembers(companyId, filters), enabled: Boolean(companyId) });
   const invitations = useQuery({ queryKey: ['company-invitations', companyId], queryFn: () => getCompanyInvitations(companyId, { per_page: 100 }), enabled: Boolean(companyId) });

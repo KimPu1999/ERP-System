@@ -6,9 +6,9 @@ These are missing or materially incomplete capabilities found from source inspec
 |---|---|---|---|
 | Platform Console | Full tenant lifecycle actions, platform user administration, and audited super-admin provisioning workflow | `apps/web/src/pages/TenantManagement.tsx`, `PlatformTenantController`, no setup command/seed | P1 |
 | Platform Billing | Complete provider-backed subscription checkout, webhook reconciliation UI, and plan mutation workflow | `PlatformControlPage.tsx`, `PlatformBillingController` are primarily read/report surfaces | P2 |
-| Roles & Permissions | Role/permission editor and assignment management UI | `RoleManagementPage.tsx` only reads roles and permissions | P1 |
+| Roles & Permissions | Access-review workflow, effective-date assignment UI, and broader browser coverage | `RoleManagementPage.tsx` now provides role editing, backend-backed permission matrix, and assignment management; access reviews remain unavailable | P1 |
 | Organization | Complete organization-chart editor and team management UX | `OrganizationPage.tsx`; teams metric can return unavailable; no dedicated team page | P1 |
-| Departments | Edit/archive/detail workflows and server-side table controls | `DepartmentManagementPage.tsx` primarily creates/lists | P1 |
+| Departments | Business Unit integration and browser-level verification | Department CRUD, hierarchy, status, detail/activity, manager validation, filters, and pagination are now implemented; Business Units have no verified source | P1 |
 | Products | Product create/edit/detail, variant management, barcode management, CSV import/export | `ProductCatalogPage.tsx` only lists variants; Import/Export buttons have no handlers | P1 |
 | Inventory | Stock operation forms, warehouse/location management UX, transfers, adjustments, counts and audit views | `InventoryPage.tsx` only reads balances/report; backend controllers exist | P1 |
 | Purchasing | Full supplier, RFQ, purchase request/order, receiving and bill lifecycle pages | `PurchasingPage.tsx`, `SuppliersPage.tsx` are summary/list surfaces | P1 |

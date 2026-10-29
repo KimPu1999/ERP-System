@@ -166,3 +166,60 @@ it('validates branding and keeps company documents private', function (): void {
     $this->actingAs($user)->post('/api/v1/companies/'.$company->id.'/documents', ['category' => 'tax_document', 'file' => UploadedFile::fake()->create('tax.pdf', 20, 'application/pdf')], ['X-Tenant-Id' => $tenant->id])->assertCreated();
     expect(CompanyDocument::where('company_id', $company->id)->count())->toBe(1);
 });
+
+it('supports company-scoped department hierarchy and rejects invalid relationships', function (): void {
+    [$user, $tenant] = organizationUser();
+    $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Structure Co', 'code' => 'STRUCT']);
+
+    $parent = $this->actingAs($user)->postJson('/api/v1/departments', [
+        'company_id' => $company->id,
+        'name' => 'Operations',
+        'code' => 'OPS',
+        'status' => 'active',
+    ], ['X-Tenant-Id' => $tenant->id])->assertCreated()->json('data');
+
+    $child = $this->actingAs($user)->postJson('/api/v1/departments', [
+        'company_id' => $company->id,
+        'name' => 'Logistics',
+        'code' => 'LOG',
+        'parent_department_id' => $parent['id'],
+    ], ['X-Tenant-Id' => $tenant->id])->assertCreated()->json('data');
+
+    $this->actingAs($user)->patchJson('/api/v1/departments/'.$child['id'], [
+        'parent_department_id' => $child['id'],
+    ], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
+
+    $this->actingAs($user)->postJson('/api/v1/departments', [
+        'company_id' => $company->id,
+        'name' => 'Duplicate Operations',
+        'code' => 'OPS',
+    ], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
+
+    $list = $this->actingAs($user)->getJson('/api/v1/departments?company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])
+        ->assertOk()->assertJsonPath('summary.total', 2)->json();
+    expect(collect($list['data']['data'])->firstWhere('id', $child['id'])['parent']['id'])->toBe($parent['id']);
+});
+
+it('prevents role permission escalation and protects system roles', function (): void {
+    [$user, $tenant] = organizationUser('roles.manage');
+    $held = Permission::where('name', 'roles.manage')->firstOrFail();
+    $unheld = Permission::firstOrCreate(['name' => 'accounting.post']);
+
+    $this->actingAs($user)->postJson('/api/v1/roles', [
+        'name' => 'Unsafe role',
+        'slug' => 'unsafe-role',
+        'permission_ids' => [$held->id, $unheld->id],
+    ], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
+
+    $role = $this->actingAs($user)->postJson('/api/v1/roles', [
+        'name' => 'Safe role',
+        'slug' => 'safe-role',
+        'permission_ids' => [$held->id],
+    ], ['X-Tenant-Id' => $tenant->id])->assertCreated()->json('data');
+
+    $systemRole = Role::create(['tenant_id' => null, 'name' => 'System role', 'slug' => 'system-role']);
+    $systemRole->permissions()->sync([$held->id]);
+    $this->actingAs($user)->patchJson('/api/v1/roles/'.$systemRole->id, ['name' => 'Changed'], ['X-Tenant-Id' => $tenant->id])->assertForbidden();
+
+    expect($role['slug'])->toBe('safe-role');
+});
