@@ -12,7 +12,7 @@ const purchasingNavItems: PurchasingNavItem[] = [
   { label: 'Purchase Requests', icon: ClipboardList, unavailable: 'Purchase request management UI is planned for the next purchasing phase.' },
   { label: 'Purchase Orders', to: '/purchasing', icon: ShoppingCart },
   { label: 'Purchase Approvals', to: '/purchasing/approvals', icon: ClipboardCheck },
-  { label: 'Goods Receipts', icon: PackageCheck, unavailable: 'Goods receipt posting is available through the API; a dedicated UI is planned.' },
+  { label: 'Goods Receipts', to: '/purchasing/goods-receipts', icon: PackageCheck },
   { label: 'Supplier Bills', icon: Receipt, unavailable: 'Supplier bill UI is planned for the next purchasing phase.' },
   { label: 'Purchase Returns', icon: RotateCcw, unavailable: 'Purchase return UI is planned for the next purchasing phase.' },
   { label: 'Reports', icon: FileCheck2, unavailable: 'A dedicated purchasing reports workspace is not implemented.' },

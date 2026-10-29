@@ -152,6 +152,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/products/import', [ProductController::class, 'import']);
         Route::post('/products/{product}/media', [ProductMediaController::class, 'store']);
         Route::get('/warehouses', [WarehouseController::class, 'index']);
+        Route::get('/warehouses/{warehouse}/locations', [WarehouseController::class, 'locations']);
         Route::post('/warehouses', [WarehouseController::class, 'store']);
         Route::post('/warehouses/{warehouse}/locations', [WarehouseController::class, 'locationStore']);
         Route::get('/inventory/balances', [InventoryController::class, 'balances']);
@@ -178,6 +179,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/rfqs/{rfq}/quotes', [RfqController::class, 'quote']);
         Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
         Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
+        Route::get('/purchase-orders/receivable', [GoodsReceiptController::class, 'receivablePurchaseOrders']);
         Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show']);
         Route::patch('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update']);
         Route::post('/purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit']);
@@ -188,7 +190,15 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
         Route::get('/purchase-orders/{purchaseOrder}/approvals', [PurchaseApprovalController::class, 'show']);
         Route::get('/purchase-orders/{purchaseOrder}/print', [PurchaseOrderDocumentController::class, 'show']);
-        Route::post('/purchase-orders/{purchaseOrder}/receipts', [GoodsReceiptController::class, 'store']);
+        Route::get('/goods-receipts', [GoodsReceiptController::class, 'index']);
+        Route::post('/goods-receipts', [GoodsReceiptController::class, 'store']);
+        Route::get('/goods-receipts/{goodsReceipt}', [GoodsReceiptController::class, 'show']);
+        Route::patch('/goods-receipts/{goodsReceipt}', [GoodsReceiptController::class, 'update']);
+        Route::post('/goods-receipts/{goodsReceipt}/post', [GoodsReceiptController::class, 'post']);
+        Route::get('/goods-receipts/{goodsReceipt}/print', [GoodsReceiptController::class, 'print']);
+        Route::get('/goods-receipts/{goodsReceipt}/movements', [GoodsReceiptController::class, 'movements']);
+        Route::get('/purchase-orders/{purchaseOrder}/receiving-summary', [GoodsReceiptController::class, 'receivingSummary']);
+        Route::post('/purchase-orders/{purchaseOrder}/receipts', [GoodsReceiptController::class, 'legacyStore']);
         Route::post('/purchase-orders/{purchaseOrder}/returns', [PurchaseReturnController::class, 'post']);
         Route::get('/supplier-bills', [SupplierBillController::class, 'index']);
         Route::post('/supplier-bills', [SupplierBillController::class, 'store']);
