@@ -1,9 +1,8 @@
 # enterprise-erp
 
 Enterprise ERP Cloud is a modular-monolith SaaS foundation. Phase 11 adds separate platform subscriptions, entitlements, trials, provider webhooks, support access, tenant exports, and platform controls over the existing ERP domains. Commercial subscriptions and unrelated business modules are intentionally excluded.
-
-## Structure
-
+ructure
+adfafadf
 ```text
 apps/web        React, TypeScript, Vite, Tailwind, shadcn/ui-compatible components
 backend         Laravel 13 API, Sanctum, PostgreSQL, Redis
