@@ -35,6 +35,7 @@ import { OrganizationMembersPage } from './pages/OrganizationMembersPage';
 import { AcceptInvitationPage } from './pages/AcceptInvitationPage';
 import { MemberDetailsPage } from './pages/MemberDetailsPage';
 import { OrganizationLayout } from './layouts/OrganizationLayout';
+import { SalesWorkspaceLayout } from './layouts/SalesWorkspaceLayout';
 
 const client = new QueryClient();
 
@@ -62,7 +63,9 @@ export default function App() {
         <Route path="members/:memberId" element={<MemberDetailsPage />} />
         <Route path="roles" element={<RoleManagementPage />} />
       </Route>
-      <Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingPage />} /><Route path="/crm-sales" element={<CrmSalesPage />} /><Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
+      <Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingPage />} />
+      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /></Route>
+      <Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></AuthProvider></BrowserRouter></QueryClientProvider>;
