@@ -7,8 +7,9 @@ use App\Models\User;
 
 final class AuthorizationService
 {
-    public function allows(User $user, string $tenantId, string $permission, ?string $companyId = null, ?string $branchId = null, ?string $departmentId = null): bool
+    public function allows(User $user, ?string $tenantId, string $permission, ?string $companyId = null, ?string $branchId = null, ?string $departmentId = null): bool
     {
+        if (! $tenantId) return false;
         if (! $user->tenantMemberships()->where('tenant_id', $tenantId)->where('status', 'active')->exists()) return false;
         return $this->permissionAssignments($user, $tenantId, $permission)->where(function ($query) use ($companyId): void {
             $query->whereNull('company_id')->orWhere('company_id', $companyId);

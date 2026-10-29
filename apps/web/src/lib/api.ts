@@ -66,12 +66,18 @@ const dashboardBusiness = <T>(path: string, params: DashboardBusinessParams, ext
 export const getDashboardRecentTransactions = (params: DashboardBusinessParams) => dashboardBusiness<DashboardRecentTransactions>('/dashboard/recent-transactions', params);
 export const getDashboardTopProducts = (params: DashboardBusinessParams, ranking: 'sales' | 'volume') => dashboardBusiness<DashboardProductRanking>('/dashboard/top-products', params, { ranking });
 export type Tenant = { id: string; name: string; slug: string; status?: string };
+export type WorkspaceAccessWorkspace = Tenant & { tenant_status: string; membership_status: string; has_active_company: boolean };
+export type WorkspaceInvitation = { id: string; tenant_id: string; tenant_name: string | null; company_id: string; company_name: string | null; expires_at: string };
+export type WorkspaceAccess = { platform_admin: boolean; active_workspaces: Array<WorkspaceAccessWorkspace & { status: 'active' }>; restricted_workspaces: Array<WorkspaceAccessWorkspace & { status: string }>; pending_invitations: WorkspaceInvitation[]; can_create_workspace: boolean };
 export type Company = { id: string; tenant_id: string; name: string; code: string; is_active: boolean };
 export type Branch = { id: string; company_id: string; name: string; code: string; is_active: boolean };
 export const getTenants = () => api<{ data: Tenant[] }>('/tenants');
+export const getWorkspaceAccess = () => api<{ data: WorkspaceAccess }>('/workspace-access');
+export const getPlatformTenants = () => api<{ data: { data: Tenant[]; current_page: number; last_page: number; total: number } }>('/platform/tenants');
 export const getCompanies = () => api<{ data: { data: Company[] } }>('/companies');
 export const getDashboardCompanies = () => api<{ data: { data: Company[] } }>('/dashboard/companies');
 export const createTenant = (data: Pick<Tenant, 'name' | 'slug'>) => api<{ data: Tenant }>('/tenants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const acceptInvitation = (invitationId: string, token: string) => api<{ status: string; tenant_id: string; company_id: string }>('/invitations/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invitation_id: invitationId, token }) });
 export const createCompany = (data: Pick<Company, 'name' | 'code'>) => api<{ data: Company }>('/companies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const getBranches = (companyId: string) => api<{ data: { data: Branch[] } }>(`/companies/${companyId}/branches`);
 export const getDashboardBranches = (companyId: string) => api<{ data: { data: Branch[] } }>(`/dashboard/companies/${companyId}/branches`);

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\Tenant;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +19,7 @@ final class ResolveTenant
         try {
             $context->set($tenantId);
             abort_unless($user->tenantMemberships()->where('tenant_id', $tenantId)->where('status', 'active')->exists(), 403, 'Tenant access denied.');
+            abort_unless(Tenant::whereKey($tenantId)->where('status', 'active')->exists(), 403, 'Workspace is inactive.');
             return $next($request);
         } finally {
             $context->clear();

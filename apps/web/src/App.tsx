@@ -28,6 +28,7 @@ import { OptionalModulesPage } from './pages/OptionalModulesPage';
 import { WorkflowPage } from './pages/WorkflowPage';
 import { PlatformControlPage } from './pages/PlatformControlPage';
 import { CompanyDashboard } from './pages/CompanyDashboard';
+import { AcceptInvitationPage } from './pages/AcceptInvitationPage';
 
 const client = new QueryClient();
 
@@ -39,7 +40,7 @@ function HealthPage() {
 export default function App() {
   return <QueryClientProvider client={client}><BrowserRouter><AuthProvider><Routes>
     <Route element={<AuthLayout />}>
-      <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} />
+      <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} />
     </Route>
     <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
     <Route element={<AuthenticatedRoute />}><Route element={<CompanyLayout />}>

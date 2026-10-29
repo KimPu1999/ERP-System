@@ -27,7 +27,22 @@ final class InvitationController
 
     public function accept(Request $request, SecurityEventLogger $events): JsonResponse
     {
-        $data = $request->validate(['invitation_id' => ['required', 'uuid'], 'token' => ['required', 'string']]); $invitation = Invitation::whereKey($data['invitation_id'])->firstOrFail(); abort_if($invitation->accepted_at || $invitation->expires_at->isPast(), 410, 'Invitation is no longer valid.'); abort_unless(hash_equals($invitation->token_hash, hash('sha256', $data['token'])), 403, 'Invitation token is invalid.'); abort_unless(strtolower($request->user()->email) === strtolower($invitation->email), 403, 'Invitation email does not match the authenticated account.');
-        $invitation->load('role'); \Illuminate\Support\Facades\DB::transaction(function () use ($invitation, $request): void { TenantMembership::firstOrCreate(['tenant_id' => $invitation->tenant_id, 'user_id' => $request->user()->id], ['status' => 'active']); if ($invitation->role_id) \App\Models\RoleAssignment::firstOrCreate(['tenant_id' => $invitation->tenant_id, 'role_id' => $invitation->role_id, 'user_id' => $request->user()->id, 'company_id' => $invitation->company_id]); $invitation->update(['accepted_at' => now()]); }); $events->record($request, 'company.invitation.accepted', $request->user()->id, $invitation->tenant_id, ['invitation_id' => $invitation->id]); return response()->json(['status' => 'accepted', 'tenant_id' => $invitation->tenant_id, 'company_id' => $invitation->company_id]);
+        $data = $request->validate(['invitation_id' => ['required', 'uuid'], 'token' => ['required', 'string']]);
+        $context = app(TenantContext::class);
+        $context->setUserEmail((string) $request->user()->email);
+        try {
+            $invitation = Invitation::whereKey($data['invitation_id'])->firstOrFail();
+            abort_if($invitation->accepted_at || $invitation->expires_at->isPast(), 410, 'Invitation is no longer valid.');
+            abort_unless(hash_equals($invitation->token_hash, hash('sha256', $data['token'])), 403, 'Invitation token is invalid.');
+            abort_unless(strtolower($request->user()->email) === strtolower($invitation->email), 403, 'Invitation email does not match the authenticated account.');
+            abort_unless(\App\Models\Tenant::whereKey($invitation->tenant_id)->where('status', 'active')->exists(), 403, 'The invited workspace is inactive.');
+            $context->set($invitation->tenant_id);
+            $invitation->load('role');
+            \Illuminate\Support\Facades\DB::transaction(function () use ($invitation, $request): void { TenantMembership::firstOrCreate(['tenant_id' => $invitation->tenant_id, 'user_id' => $request->user()->id], ['status' => 'active']); if ($invitation->role_id) \App\Models\RoleAssignment::firstOrCreate(['tenant_id' => $invitation->tenant_id, 'role_id' => $invitation->role_id, 'user_id' => $request->user()->id, 'company_id' => $invitation->company_id]); $invitation->update(['accepted_at' => now()]); });
+            $events->record($request, 'company.invitation.accepted', $request->user()->id, $invitation->tenant_id, ['invitation_id' => $invitation->id]);
+            return response()->json(['status' => 'accepted', 'tenant_id' => $invitation->tenant_id, 'company_id' => $invitation->company_id]);
+        } finally {
+            $context->clear();
+        }
     }
 }

@@ -18,6 +18,20 @@ final class TenantContext
 
     public function id(): ?string { return $this->tenantId; }
 
+    public function setUserEmail(string $email): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT set_config('app.user_email', ?, false)", [$email]);
+        }
+    }
+
+    public function clearUserEmail(): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT set_config('app.user_email', '', false)");
+        }
+    }
+
     public function setPlatformAdmin(bool $enabled): void
     {
         if (DB::getDriverName() === 'pgsql') {
@@ -31,6 +45,7 @@ final class TenantContext
         if (DB::getDriverName() === 'pgsql') {
             DB::statement("SELECT set_config('app.tenant_id', '', false)");
             DB::statement("SELECT set_config('app.platform_admin', 'false', false)");
+            DB::statement("SELECT set_config('app.user_email', '', false)");
         }
     }
 }

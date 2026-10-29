@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\V1\PlatformBillingController;
 use App\Http\Controllers\Api\V1\TenantSubscriptionController;
 use App\Http\Controllers\Api\V1\SupportController;
 use App\Http\Controllers\Api\V1\TenantExportController;
+use App\Http\Controllers\Api\V1\WorkspaceAccessController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -74,7 +75,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/auth/mfa/disable', [MfaController::class, 'disable']);
         Route::get('/auth/sessions', [SessionController::class, 'index']);
         Route::delete('/auth/sessions/{session}', [SessionController::class, 'destroy']);
-        Route::post('/invitations/accept', [InvitationController::class, 'accept']);
+        Route::post('/invitations/accept', [InvitationController::class, 'accept'])->middleware('verified');
+        Route::get('/workspace-access', WorkspaceAccessController::class);
         Route::get('/tenants', [TenantContextController::class, 'index']);
         Route::post('/tenants', [TenantOnboardingController::class, 'store'])->middleware('verified');
         Route::middleware(['verified', 'platform.admin'])->prefix('platform')->group(function (): void {
