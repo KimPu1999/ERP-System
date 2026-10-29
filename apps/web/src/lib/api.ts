@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+export const API_BASE_URL = API_URL;
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? 'http://localhost:8000';
 const CONFIGURED_TENANT_ID = import.meta.env.VITE_TENANT_ID;
 const TENANT_STORAGE_KEY = 'erp_cloud.tenant_id';
@@ -69,12 +70,21 @@ export type Tenant = { id: string; name: string; slug: string; status?: string }
 export type WorkspaceAccessWorkspace = Tenant & { tenant_status: string; membership_status: string; has_active_company: boolean };
 export type WorkspaceInvitation = { id: string; tenant_id: string; tenant_name: string | null; company_id: string; company_name: string | null; expires_at: string };
 export type WorkspaceAccess = { platform_admin: boolean; active_workspaces: Array<WorkspaceAccessWorkspace & { status: 'active' }>; restricted_workspaces: Array<WorkspaceAccessWorkspace & { status: string }>; pending_invitations: WorkspaceInvitation[]; can_create_workspace: boolean };
-export type Company = { id: string; tenant_id: string; name: string; code: string; is_active: boolean };
+export type Company = { id: string; tenant_id: string; name: string; code: string; is_active: boolean; legal_name?: string | null; trading_name?: string | null; business_type?: string | null; registration_number?: string | null; tax_identifier?: string | null; tax_registration_details?: string | null; registration_date?: string | null; description?: string | null; email?: string | null; phone?: string | null; website?: string | null; country_code?: string | null; region?: string | null; city?: string | null; postal_code?: string | null; street_address?: string | null; logo_path?: string | null; cover_image_path?: string | null; logo_url?: string | null; cover_image_url?: string | null; base_currency?: string | null; timezone?: string; default_locale?: string; date_format?: string };
+export type OrganizationMetric = { value: number | null; available: boolean; reason?: string };
+export type OrganizationOverview = { company: Company; kpis: { active_branches: OrganizationMetric; departments: OrganizationMetric; active_members: OrganizationMetric; teams: OrganizationMetric }; branches: Array<Branch>; departments: Array<{ id: string; name: string; code: string; branch_id: string | null }>; hierarchy: { company: { id: string; name: string }; branches: Array<{ id: string; name: string; departments: Array<{ id: string; name: string }> }> }; recent_activity: Array<{ id: string; action: string; created_at: string; metadata: Record<string, unknown> | null }> };
 export type Branch = { id: string; company_id: string; name: string; code: string; is_active: boolean };
 export const getTenants = () => api<{ data: Tenant[] }>('/tenants');
 export const getWorkspaceAccess = () => api<{ data: WorkspaceAccess }>('/workspace-access');
 export const getPlatformTenants = () => api<{ data: { data: Tenant[]; current_page: number; last_page: number; total: number } }>('/platform/tenants');
 export const getCompanies = () => api<{ data: { data: Company[] } }>('/companies');
+export const getCompany = (companyId: string) => api<{ data: Company }>(`/companies/${companyId}`);
+export const updateCompany = (companyId: string, data: Partial<Company>) => api<{ data: Company }>(`/companies/${companyId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const uploadCompanyAsset = (companyId: string, kind: 'logo' | 'cover', file: File) => { const form = new FormData(); form.append('file', file); return api<{ data: Company }>(`/companies/${companyId}/${kind}`, { method: 'POST', body: form }); };
+export const deleteCompanyAsset = (companyId: string, kind: 'logo' | 'cover') => api<{ data: Company }>(`/companies/${companyId}/${kind}`, { method: 'DELETE' });
+export const getCompanyDocuments = (companyId: string) => api<{ data: Array<{ id: string; name: string; category: string; mime_type: string; size: number; created_at: string; download_path: string }> }>(`/companies/${companyId}/documents`);
+export const uploadCompanyDocument = (companyId: string, category: string, file: File) => { const form = new FormData(); form.append('file', file); form.append('category', category); return api<{ data: { id: string } }>(`/companies/${companyId}/documents`, { method: 'POST', body: form }); };
+export const getOrganizationOverview = (companyId: string) => api<{ data: OrganizationOverview }>(`/organization/overview?company_id=${encodeURIComponent(companyId)}`);
 export const getDashboardCompanies = () => api<{ data: { data: Company[] } }>('/dashboard/companies');
 export const createTenant = (data: Pick<Tenant, 'name' | 'slug'>) => api<{ data: Tenant }>('/tenants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const acceptInvitation = (invitationId: string, token: string) => api<{ status: string; tenant_id: string; company_id: string }>('/invitations/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invitation_id: invitationId, token }) });
@@ -82,6 +92,12 @@ export const createCompany = (data: Pick<Company, 'name' | 'code'>) => api<{ dat
 export const getBranches = (companyId: string) => api<{ data: { data: Branch[] } }>(`/companies/${companyId}/branches`);
 export const getDashboardBranches = (companyId: string) => api<{ data: { data: Branch[] } }>(`/dashboard/companies/${companyId}/branches`);
 export const createBranch = (companyId: string, data: Pick<Branch, 'name' | 'code'>) => api<{ data: Branch }>(`/companies/${companyId}/branches`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export type Department = { id: string; tenant_id?: string; company_id: string; branch_id: string | null; name: string; code: string };
+export const getDepartments = () => api<{ data: { data: Department[] } }>('/departments');
+export const createDepartment = (data: Pick<Department, 'name' | 'code' | 'company_id' | 'branch_id'>) => api<{ data: Department }>('/departments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export type Member = { id: string; name: string; email: string; status?: string };
+export const getMembers = () => api<{ data: { data: Member[] } }>('/members');
+export const getMe = () => api<{ data: { id: string; name: string; email: string; permissions: string[] } }>('/me');
 export async function csrf(): Promise<void> { try { const response = await fetch(`${API_ORIGIN}/sanctum/csrf-cookie`, { credentials: 'include' }); if (!response.ok) throw new Error(`HTTP ${response.status}`); } catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend before signing in.`); } }
 export const login = async (data: { email: string; password: string; remember?: boolean }) => { await csrf(); return api<{ data?: User; mfa_required?: boolean }>('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); };
 export const logout = async () => { await api('/auth/logout', { method: 'POST' }); };

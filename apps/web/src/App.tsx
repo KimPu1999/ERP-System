@@ -28,6 +28,9 @@ import { OptionalModulesPage } from './pages/OptionalModulesPage';
 import { WorkflowPage } from './pages/WorkflowPage';
 import { PlatformControlPage } from './pages/PlatformControlPage';
 import { CompanyDashboard } from './pages/CompanyDashboard';
+import { CompanyProfilePage } from './pages/CompanyProfilePage';
+import { DepartmentManagementPage } from './pages/DepartmentManagementPage';
+import { OrganizationMembersPage } from './pages/OrganizationMembersPage';
 import { AcceptInvitationPage } from './pages/AcceptInvitationPage';
 
 const client = new QueryClient();
@@ -44,7 +47,7 @@ export default function App() {
     </Route>
     <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
     <Route element={<AuthenticatedRoute />}><Route element={<CompanyLayout />}>
-      <Route path="/" element={<CompanyDashboard />} /><Route path="/organization" element={<OrganizationPage />} /><Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingPage />} /><Route path="/crm-sales" element={<CrmSalesPage />} /><Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<RoleManagementPage />} />
+      <Route path="/" element={<CompanyDashboard />} /><Route path="/organization" element={<OrganizationPage />} /><Route path="/organization/profile" element={<CompanyProfilePage />} /><Route path="/organization/branches" element={<BranchManagement />} /><Route path="/organization/departments" element={<DepartmentManagementPage />} /><Route path="/organization/structure" element={<OrganizationPage />} /><Route path="/organization/members" element={<OrganizationMembersPage />} /><Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingPage />} /><Route path="/crm-sales" element={<CrmSalesPage />} /><Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<RoleManagementPage />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></AuthProvider></BrowserRouter></QueryClientProvider>;

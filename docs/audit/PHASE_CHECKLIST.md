@@ -62,3 +62,18 @@ Phase 1 is **partially implemented and verified**. Backend tests pass at 29 test
 - [x] Documented data-source and accounting assumptions in docs/dashboard-phase-4-business-performance-assumptions.md.
 - [ ] Add verified transaction detail routes before enabling per-row View details actions.
 - [ ] Add browser-level responsive/accessibility verification.
+
+## Organization Phase 1 — company profile and overview
+
+- [x] Added tenant-scoped company profile fields for legal identity, registration/tax details, contact/address, localization, and branding paths.
+- [x] Added private company document storage with category validation, bounded file types/sizes, authenticated download, and tenant/company ownership checks.
+- [x] Added GET `/api/v1/organization/overview` with active branch, department, active member, hierarchy, and recent organization activity data.
+- [x] Added GET/PATCH company profile APIs plus logo/cover upload and delete endpoints.
+- [x] Added organization overview, company profile, department, and staff/membership routes without implementing Branch Management Phase 2.
+- [x] Preserved tenant/company authorization and fail-closed permission checks for profile changes and document operations.
+- [x] Added explicit unavailable state for Teams because no Teams entity or verified source exists in the current schema.
+- [x] Added feature tests for profile access, cross-tenant isolation, update validation, permission denial, overview counts, branding validation, and private documents.
+- [x] Fixed `TenantContext` registration so middleware and controllers share the same request context.
+- [x] Applied forward-only migrations `2026_10_29_000043` and `2026_10_29_000044` locally.
+- [ ] Add browser-level responsive/accessibility verification for the organization pages.
+- [ ] Implement Branch Management Phase 2 separately, including branch CRUD and branch-specific permissions.

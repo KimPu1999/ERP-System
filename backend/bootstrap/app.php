@@ -22,5 +22,5 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Keep Laravel's default exception handler binding and rendering pipeline.
     })
-    ->withBindings([TenantContext::class => fn (): TenantContext => new TenantContext()])
+    ->withSingletons([TenantContext::class => fn (): TenantContext => new TenantContext()])
     ->create();

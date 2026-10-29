@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\V1\PlatformBillingController;
 use App\Http\Controllers\Api\V1\TenantSubscriptionController;
 use App\Http\Controllers\Api\V1\SupportController;
 use App\Http\Controllers\Api\V1\TenantExportController;
+use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\WorkspaceAccessController;
 use Illuminate\Support\Facades\Route;
 
@@ -102,7 +103,17 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/departments', [DepartmentController::class, 'store']);
         Route::get('/dashboard/companies', [CompanyController::class, 'dashboardIndex']);
         Route::get('/dashboard/companies/{company}/branches', [BranchController::class, 'dashboardIndex']);
+        Route::get('/organization/overview', [OrganizationController::class, 'overview']);
         Route::apiResource('companies', CompanyController::class)->only(['index', 'show', 'store']);
+        Route::patch('/companies/{company}', [CompanyController::class, 'update']);
+        Route::post('/companies/{company}/logo', [CompanyController::class, 'uploadLogo']);
+        Route::delete('/companies/{company}/logo', [CompanyController::class, 'deleteLogo']);
+        Route::post('/companies/{company}/cover', [CompanyController::class, 'uploadCover']);
+        Route::delete('/companies/{company}/cover', [CompanyController::class, 'deleteCover']);
+        Route::get('/companies/{company}/documents', [CompanyController::class, 'documents']);
+        Route::post('/companies/{company}/documents', [CompanyController::class, 'uploadDocument']);
+        Route::get('/companies/{company}/documents/{document}', [CompanyController::class, 'downloadDocument']);
+        Route::delete('/companies/{company}/documents/{document}', [CompanyController::class, 'deleteDocument']);
         Route::post('/companies/{company}/invitations', [InvitationController::class, 'store']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
         Route::post('/companies/{company}/branches', [BranchController::class, 'store']);
