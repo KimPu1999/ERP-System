@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class SupplierCreditNote extends Model { use HasUuids; protected $fillable=['tenant_id','company_id','branch_id','supplier_id','supplier_bill_id','currency_id','number','credit_date','reason','state','total','accounting_entry_id','created_by','posted_by','posted_at']; protected function casts():array{return ['credit_date'=>'date','total'=>'decimal:6','posted_at'=>'datetime'];} public function supplier(){return $this->belongsTo(Supplier::class);} public function bill(){return $this->belongsTo(SupplierBill::class,'supplier_bill_id');} public function currency(){return $this->belongsTo(AccountingCurrency::class,'currency_id');} }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, ClipboardCheck, ClipboardList, FileCheck2, PackageCheck, Receipt, RotateCcw, Settings2, ShoppingCart, Truck, Users, type LucideIcon } from 'lucide-react';
+import { BarChart3, Banknote, ClipboardCheck, ClipboardList, FileCheck2, FileMinus2, PackageCheck, Receipt, RotateCcw, Settings2, ShoppingCart, Truck, Users, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 
@@ -13,7 +13,10 @@ const purchasingNavItems: PurchasingNavItem[] = [
   { label: 'Purchase Orders', to: '/purchasing', icon: ShoppingCart },
   { label: 'Purchase Approvals', to: '/purchasing/approvals', icon: ClipboardCheck },
   { label: 'Goods Receipts', to: '/purchasing/goods-receipts', icon: PackageCheck },
-  { label: 'Supplier Bills', icon: Receipt, unavailable: 'Supplier bill UI is planned for the next purchasing phase.' },
+  { label: 'Supplier Bills', to: '/purchasing/supplier-bills', icon: Receipt },
+  { label: 'Accounts Payable', to: '/purchasing/accounts-payable', icon: FileCheck2 },
+  { label: 'Payments', to: '/purchasing/payments', icon: Banknote },
+  { label: 'Supplier Credits', to: '/purchasing/supplier-credits', icon: FileMinus2 },
   { label: 'Purchase Returns', icon: RotateCcw, unavailable: 'Purchase return UI is planned for the next purchasing phase.' },
   { label: 'Reports', icon: FileCheck2, unavailable: 'A dedicated purchasing reports workspace is not implemented.' },
   { label: 'Settings', icon: Settings2, unavailable: 'Purchasing settings UI is not implemented.' },

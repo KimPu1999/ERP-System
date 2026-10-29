@@ -31,7 +31,21 @@
 - [x] Frontend typecheck, lint, unit test, and production build pass.
 - [x] Full Laravel suite passes: 76 tests / 299 assertions.
 
-## Explicitly deferred to Phase 5
+## Phase 5 — Supplier Bills, Accounts Payable & Payments
+
+- [x] Added additive supplier-bill fields for company/branch, invoice/accounting/due dates, currency, totals, approval, posting, and accounting references.
+- [x] Added supplier bill lines and auditable 2-way/3-way matching results against purchase-order and posted goods-receipt quantities.
+- [x] Added draft, submit, approve, and post lifecycle with server-side recalculation, duplicate supplier-invoice protection, and posted-document safeguards.
+- [x] Added explicit company `accounts_payable` mapping and open-period checks; bill posting fails closed when accounting configuration is missing.
+- [x] Added separate supplier payment records, idempotent AP settlement journal posting, payment allocation locking, and over-allocation protection.
+- [x] Added AP register with posted-bill-only liabilities, payment allocations, supplier credits, currency-aware output, and aging buckets.
+- [x] Added supplier credit-note draft/post workflow with accounting mapping and immutable source-bill preservation.
+- [x] Added Supplier Bills, Accounts Payable, Payments, and Supplier Credits pages with filters, real API data, loading/error/empty states, and posting-rule explanations.
+- [x] Added Laravel feature coverage for bill lifecycle, duplicate invoice rejection, accounting posting, payment posting, tenant/company authorization, and allocation limits.
+- [x] Frontend typecheck, lint, and production build pass.
+- [x] Full Laravel suite passes: 78 tests / 317 assertions.
+
+## Explicitly deferred to later phases
 
 - [ ] Full batch/lot and serial master tracking, expiry enforcement, and global serial ledger.
 - [ ] Configurable quality/quarantine release workflow and inspection policy administration.
@@ -39,6 +53,11 @@
 - [ ] Authorized reversal/correction workflow with compensating inventory movements.
 - [ ] UOM conversion catalog and mixed-unit KPI aggregation.
 - [ ] Browser-level responsive/accessibility verification.
+- [ ] Supplier bill/payment attachment storage and private download management.
+- [ ] Configurable bill approval policies and matching tolerance administration UI.
+- [ ] Multi-currency exchange-rate conversion for AP aggregation and allocations.
+- [ ] Supplier payment verification/authorization queue and provider integrations.
+- [ ] Full supplier credit allocation/reversal history and credit-note line-item workflow.
 
 ## Explicitly deferred to Phase 4
 
