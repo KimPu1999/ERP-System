@@ -19,6 +19,18 @@ final class BranchController
         return response()->json(['data' => $company->branches()->orderBy('name')->paginate(25)]);
     }
 
+    public function dashboardIndex(Request $request, Company $company, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = (string) $request->header('X-Tenant-Id');
+        abort_unless($company->tenant_id === $tenantId, 404);
+        $hasCompanyScope = $authorization->allows($request->user(), $tenantId, 'reports.view', $company->id);
+        $branchIds = $authorization->accessibleBranchIds($request->user(), $tenantId, 'reports.view');
+        $query = $company->branches()->where('is_active', true)->orderBy('name');
+        if (! $hasCompanyScope && is_array($branchIds)) $query->whereIn('id', $branchIds);
+        if (! $hasCompanyScope && $branchIds === []) $query->whereRaw('1 = 0');
+        return response()->json(['data' => $query->paginate(100)]);
+    }
+
     public function store(Request $request, Company $company, AuthorizationService $authorization, AuditLogger $audit, SubscriptionService $subscriptions): JsonResponse
     {
         $this->assertCompany($company);
@@ -41,5 +53,5 @@ final class BranchController
         return response()->json(['data' => $branch->fresh()]);
     }
 
-    private function assertCompany(Company $company): void { abort_unless($company->tenant_id === app(TenantContext::class)->id(), 404); abort_unless(request()->user()->can('view', $company), 403); }
+    private function assertCompany(Company $company): void { abort_unless($company->tenant_id === (string) request()->header('X-Tenant-Id'), 404); abort_unless(request()->user()->can('view', $company), 403); }
 }

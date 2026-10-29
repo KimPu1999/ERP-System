@@ -98,6 +98,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/role-assignments', [RoleAssignmentController::class, 'store']);
         Route::get('/departments', [DepartmentController::class, 'index']);
         Route::post('/departments', [DepartmentController::class, 'store']);
+        Route::get('/dashboard/companies', [CompanyController::class, 'dashboardIndex']);
+        Route::get('/dashboard/companies/{company}/branches', [BranchController::class, 'dashboardIndex']);
         Route::apiResource('companies', CompanyController::class)->only(['index', 'show', 'store']);
         Route::post('/companies/{company}/invitations', [InvitationController::class, 'store']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);

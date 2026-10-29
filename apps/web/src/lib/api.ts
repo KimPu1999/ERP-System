@@ -1,7 +1,21 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? 'http://localhost:8000';
-const TENANT_ID = import.meta.env.VITE_TENANT_ID;
+const CONFIGURED_TENANT_ID = import.meta.env.VITE_TENANT_ID;
+const TENANT_STORAGE_KEY = 'erp_cloud.tenant_id';
 const xsrfToken = () => document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=');
+
+export const getActiveTenantId = (): string | undefined => {
+  if (typeof window !== 'undefined') return window.localStorage.getItem(TENANT_STORAGE_KEY) ?? CONFIGURED_TENANT_ID;
+  return CONFIGURED_TENANT_ID;
+};
+
+export const setActiveTenantId = (tenantId: string): void => {
+  window.localStorage.setItem(TENANT_STORAGE_KEY, tenantId);
+};
+
+export const clearActiveTenantId = (): void => {
+  window.localStorage.removeItem(TENANT_STORAGE_KEY);
+};
 
 export class ApiError extends Error {
   constructor(public readonly status: number, message: string) { super(message); }
@@ -9,7 +23,8 @@ export class ApiError extends Error {
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
-  try { response = await fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(TENANT_ID ? { 'X-Tenant-Id': TENANT_ID } : {}), ...init?.headers } }); }
+  const tenantId = getActiveTenantId();
+  try { response = await fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}), ...init?.headers } }); }
   catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend and check the API URL.`); }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new ApiError(response.status, body.message ?? `Request failed (${response.status}).`);
@@ -18,7 +33,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export type HealthResponse = { status: 'ok' | 'degraded'; service: string; checks: { database: boolean; cache: boolean } };
 export const getHealth = () => api<HealthResponse>('/health');
-export type DashboardKpi = { value: string; previous_value: string | null; change_percent: string | null };
+export type DashboardKpi = { value: string; previous_value: string | null; change_percent: string | null; available?: boolean; reason?: string | null };
 export type DashboardOverview = {
   filters: { period: string; from: string; to: string; company_id?: string | null; branch_id?: string | null };
   currency: { code: string | null; decimal_places: number | null; configured: boolean };
@@ -36,9 +51,11 @@ export type Company = { id: string; tenant_id: string; name: string; code: strin
 export type Branch = { id: string; company_id: string; name: string; code: string; is_active: boolean };
 export const getTenants = () => api<{ data: Tenant[] }>('/tenants');
 export const getCompanies = () => api<{ data: { data: Company[] } }>('/companies');
+export const getDashboardCompanies = () => api<{ data: { data: Company[] } }>('/dashboard/companies');
 export const createTenant = (data: Pick<Tenant, 'name' | 'slug'>) => api<{ data: Tenant }>('/tenants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const createCompany = (data: Pick<Company, 'name' | 'code'>) => api<{ data: Company }>('/companies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const getBranches = (companyId: string) => api<{ data: { data: Branch[] } }>(`/companies/${companyId}/branches`);
+export const getDashboardBranches = (companyId: string) => api<{ data: { data: Branch[] } }>(`/dashboard/companies/${companyId}/branches`);
 export const createBranch = (companyId: string, data: Pick<Branch, 'name' | 'code'>) => api<{ data: Branch }>(`/companies/${companyId}/branches`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export async function csrf(): Promise<void> { try { const response = await fetch(`${API_ORIGIN}/sanctum/csrf-cookie`, { credentials: 'include' }); if (!response.ok) throw new Error(`HTTP ${response.status}`); } catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend before signing in.`); } }
 export const login = async (data: { email: string; password: string; remember?: boolean }) => { await csrf(); return api<{ data?: User; mfa_required?: boolean }>('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); };

@@ -17,6 +17,15 @@ final class CompanyController
         return response()->json(['data' => Company::query()->where('tenant_id', app(TenantContext::class)->id())->orderBy('name')->paginate(25)]);
     }
 
+    public function dashboardIndex(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = (string) $request->header('X-Tenant-Id');
+        $ids = $authorization->accessibleCompanyIds($request->user(), $tenantId, 'reports.view');
+        $query = Company::query()->where('tenant_id', $tenantId)->where('is_active', true)->orderBy('name');
+        if (is_array($ids)) $query->whereIn('id', $ids);
+        return response()->json(['data' => $query->paginate(100)]);
+    }
+
     public function show(Company $company): JsonResponse
     {
         abort_unless($company->tenant_id === app(TenantContext::class)->id(), 404);
