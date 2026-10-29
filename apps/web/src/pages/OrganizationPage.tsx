@@ -1,20 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, CheckCircle2, ChevronRight, CircleAlert, ClipboardList, FileText, Landmark, MapPin, Network, Pencil, RefreshCw, ShieldCheck, UserPlus, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { Building2, CheckCircle2, ChevronRight, CircleAlert, ClipboardList, FileText, MapPin, Network, Pencil, RefreshCw, ShieldCheck, UserPlus, Users, Warehouse, type LucideIcon } from 'lucide-react';
 import { NavLink, useSearchParams } from 'react-router-dom';
 import { ApiError, getDashboardCompanies, getMe, getOrganizationOverview, type OrganizationMetric, type OrganizationOverview } from '../lib/api';
-
-type OrganizationNavItem = { label: string; to: string; permission: string; icon: LucideIcon };
-
-const navItems: OrganizationNavItem[] = [
-  { label: 'Overview', to: '/organization', permission: 'overview', icon: Landmark },
-  { label: 'Company Profile', to: '/organization/profile', permission: 'profile', icon: Building2 },
-  { label: 'Branches', to: '/organization/branches', permission: 'organization.manage', icon: Warehouse },
-  { label: 'Departments', to: '/organization/departments', permission: 'organization.manage', icon: Network },
-  { label: 'Organization Structure', to: '/organization/structure', permission: 'structure', icon: Network },
-  { label: 'Staff & Memberships', to: '/organization/members', permission: 'members.invite', icon: Users },
-  { label: 'Roles & Permissions', to: '/roles', permission: 'roles.manage', icon: ShieldCheck },
-];
 
 function MetricCard({ label, metric, icon: Icon, description }: { label: string; metric?: OrganizationMetric; icon: LucideIcon; description: string }) {
   return <article className="metric organization-overview-metric">
@@ -22,10 +10,6 @@ function MetricCard({ label, metric, icon: Icon, description }: { label: string;
     <strong>{metric?.available ? metric.value : '—'}</strong>
     <small>{metric?.available ? description : metric?.reason ?? 'This metric is not available yet.'}</small>
   </article>;
-}
-
-function OrganizationNav({ companyId, allowed }: { companyId: string; allowed: (permission: string) => boolean }) {
-  return <nav className="organization-nav" aria-label="Organization navigation">{navItems.filter((item) => allowed(item.permission)).map(({ label, to, permission, icon: Icon }) => <NavLink key={to} end={permission === 'overview'} to={companyId && to !== '/roles' ? `${to}?company_id=${encodeURIComponent(companyId)}` : to} className={({ isActive }) => `organization-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{label}</span></NavLink>)}</nav>;
 }
 
 function SetupState({ inactive, onRetry }: { inactive: boolean; onRetry?: () => void }) {
@@ -107,7 +91,6 @@ export function OrganizationPage() {
 
   return <section className="page-section organization-page organization-overview-page">
     <div className="organization-overview-header"><div><div className="breadcrumb-line"><span>Organization</span><ChevronRight size={13} /><span>Overview</span></div><h1>Company overview</h1><p className="muted">A clear operating view of your company identity, structure and authorized access.</p></div>{companyList.length > 0 && <div className="organization-header-context"><label className="context-select">Company<select aria-label="Select company" value={companyId} onChange={(event) => selectCompany(event.target.value)}>{companyList.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label>{data && <span className="status-pill success">Active</span>}</div>}</div>
-    <OrganizationNav companyId={companyId} allowed={allowed} />
     {companies.isLoading && <div className="dashboard-loading" role="status">Loading authorized companies…</div>}
     {companies.isError && <div className="alert alert-danger" role="alert">{companies.error instanceof ApiError && companies.error.status === 403 ? 'You do not have access to an active company in this workspace. Ask an authorized administrator to grant company access.' : `Unable to load company access. ${companies.error.message}`}<button className="table-action" type="button" onClick={() => void companies.refetch()}>Retry</button></div>}
     {noActiveCompany && !companies.isError && <SetupState inactive={inactiveCompany} onRetry={() => void companies.refetch()} />}
@@ -116,7 +99,7 @@ export function OrganizationPage() {
     {data && <>
       <div className="organization-kpi-grid organization-overview-kpi-grid">{metricCards.map(([label, metric, Icon, description]) => <MetricCard key={label} label={label} metric={metric} icon={Icon} description={description} />)}</div>
       <div className="organization-overview-grid"><CompanySummary data={data} canEdit={allowed('profile')} /><AccessPanel data={data} /><BranchPanel data={data} /><DepartmentPanel data={data} /><StructurePanel data={data} /><ActivityPanel data={data} /></div>
-      <article className="card organization-quick-actions"><div className="panel-heading"><div><p className="eyebrow">Quick actions</p><h2>Organization tasks</h2></div><span className="muted">Only authorized destinations are shown</span></div><div className="quick-action-grid organization-quick-action-grid">{allowed('profile') && <NavLink to={`/organization/profile?company_id=${data.company.id}`} className="quick-action"><Pencil size={14} /> Edit company profile <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/branches?company_id=${data.company.id}`} className="quick-action"><PlusIcon /> Add branch <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/departments?company_id=${data.company.id}`} className="quick-action"><Network size={14} /> Add department <ChevronRight size={14} /></NavLink>}{allowed('members.invite') && <NavLink to={`/organization/members?company_id=${data.company.id}&invite=1`} className="quick-action"><UserPlus size={14} /> Invite member <ChevronRight size={14} /></NavLink>}{allowed('roles.manage') && <NavLink to="/roles" className="quick-action"><ShieldCheck size={14} /> Manage permissions <ChevronRight size={14} /></NavLink>}</div></article>
+      <article className="card organization-quick-actions"><div className="panel-heading"><div><p className="eyebrow">Quick actions</p><h2>Organization tasks</h2></div><span className="muted">Only authorized destinations are shown</span></div><div className="quick-action-grid organization-quick-action-grid">{allowed('profile') && <NavLink to={`/organization/profile?company_id=${data.company.id}`} className="quick-action"><Pencil size={14} /> Edit company profile <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/branches?company_id=${data.company.id}`} className="quick-action"><PlusIcon /> Add branch <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/departments?company_id=${data.company.id}`} className="quick-action"><Network size={14} /> Add department <ChevronRight size={14} /></NavLink>}{allowed('members.invite') && <NavLink to={`/organization/members?company_id=${data.company.id}&invite=1`} className="quick-action"><UserPlus size={14} /> Invite member <ChevronRight size={14} /></NavLink>}{allowed('roles.manage') && <NavLink to={`/organization/roles?company_id=${data.company.id}`} className="quick-action"><ShieldCheck size={14} /> Manage permissions <ChevronRight size={14} /></NavLink>}</div></article>
     </>}
   </section>;
 }

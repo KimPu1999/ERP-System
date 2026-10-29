@@ -14,7 +14,7 @@ const companyGroups: Array<{ label: string; items: Item[] }> = [
   { label: 'HR & Payroll', items: [{ label: 'HR & payroll', to: '/hr', icon: Users }] },
   { label: 'POS · Projects · Assets', items: [{ label: 'Optional modules', to: '/optional-modules', icon: Building2 }] },
   { label: 'Approvals & Reports', items: [{ label: 'Approvals', to: '/workflow', icon: ClipboardCheck }, { label: 'Reports', to: '/workflow', icon: FileBarChart2 }] },
-  { label: 'Settings', items: [{ label: 'Access & settings', to: '/roles', icon: Settings }] },
+  { label: 'Settings', items: [{ label: 'Access & settings', to: '/organization/roles', icon: Settings }] },
 ];
 const platformItems: Item[] = [{ label: 'Overview', to: '/platform', icon: LayoutDashboard }, { label: 'Tenant Management', to: '/platform/tenants', icon: Building2 }, { label: 'Monitoring · System Health', to: '/platform/monitoring', icon: ClipboardCheck }, { label: 'Subscriptions & Billing', to: '/platform/control', icon: WalletCards }];
 
