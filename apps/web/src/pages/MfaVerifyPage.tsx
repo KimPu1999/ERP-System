@@ -1,0 +1,4 @@
+import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
+export function MfaVerifyPage() { const { register, handleSubmit } = useForm<{ code: string }>(); const navigate = useNavigate(); const submit = async (data: { code: string }) => { try { await api('/auth/mfa/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); navigate('/'); } catch (error) { window.alert(error instanceof Error ? error.message : 'Invalid MFA code.'); } }; return <section className="auth-page"><div className="auth-card"><p className="eyebrow">Multi-factor authentication</p><h1>Verify sign-in</h1><form className="form" onSubmit={handleSubmit(submit)}><label>Authenticator code<input inputMode="numeric" maxLength={6} {...register('code', { required: true })} /></label><button className="primary">Verify</button></form></div></section>; }

@@ -1,0 +1,4 @@
+<?php
+namespace App\Jobs;
+use App\Jobs\Concerns\HasTenantContext; use App\Models\{AutomationRule,AutomationRun}; use Illuminate\Contracts\Queue\ShouldQueue; use Illuminate\Bus\Queueable; use Illuminate\Support\Facades\DB;
+final class RunAutomationRule implements ShouldQueue { use Queueable,HasTenantContext; public function __construct(string $tenantId,public readonly string $ruleId,public readonly string $idempotencyKey){$this->tenantId=$tenantId;} public function handle():void{DB::transaction(function(){if(AutomationRun::where('tenant_id',$this->tenantId)->where('idempotency_key',$this->idempotencyKey)->exists())return;$rule=AutomationRule::where('tenant_id',$this->tenantId)->where('is_active',true)->findOrFail($this->ruleId);AutomationRun::create(['tenant_id'=>$this->tenantId,'rule_id'=>$rule->id,'idempotency_key'=>$this->idempotencyKey,'state'=>'completed','attempts'=>1,'completed_at'=>now()]);});} }

@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment protected by GitHub environment approvals
+        required: true
+        type: choice
+        options: [staging, production]
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release documentation exists
+        run: test -f docs/release-checklist.md && test -f docs/backup-restore.md
+      - name: Build web artifact
+        working-directory: apps/web
+        run: |
+          npm install
+          npm run check
+          npm run build
+      - name: Deployment handoff
+        run: echo "Protected environment approved; invoke the deployment runner for ${{ inputs.environment }}."

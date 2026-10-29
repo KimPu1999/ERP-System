@@ -1,0 +1,19 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('stock_adjustments', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('created_by')->constrained('users'); $table->string('status')->default('posted'); $table->string('idempotency_key', 100); $table->text('reason'); $table->timestamps(); $table->unique(['tenant_id', 'idempotency_key']); });
+        Schema::create('stock_transfers', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('from_location_id')->constrained('warehouse_locations'); $table->foreignUuid('to_location_id')->constrained('warehouse_locations'); $table->foreignUuid('created_by')->constrained('users'); $table->string('status')->default('posted'); $table->string('idempotency_key', 100); $table->text('reason')->nullable(); $table->timestamps(); $table->unique(['tenant_id', 'idempotency_key']); });
+        Schema::create('stock_transfer_lines', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('transfer_id')->constrained('stock_transfers')->cascadeOnDelete(); $table->foreignUuid('variant_id')->constrained('product_variants'); $table->decimal('quantity', 20, 6); $table->timestamps(); });
+        Schema::create('stock_counts', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('location_id')->constrained('warehouse_locations'); $table->foreignUuid('created_by')->constrained('users'); $table->string('status')->default('draft'); $table->string('idempotency_key', 100)->nullable(); $table->timestamp('posted_at')->nullable(); $table->timestamps(); $table->unique(['tenant_id', 'idempotency_key']); });
+        Schema::create('stock_count_lines', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('count_id')->constrained('stock_counts')->cascadeOnDelete(); $table->foreignUuid('variant_id')->constrained('product_variants'); $table->decimal('counted_quantity', 20, 6); $table->timestamps(); $table->unique(['count_id', 'variant_id']); });
+        Schema::create('reorder_rules', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('variant_id')->constrained('product_variants')->cascadeOnDelete(); $table->foreignUuid('location_id')->constrained('warehouse_locations')->cascadeOnDelete(); $table->decimal('reorder_point', 20, 6); $table->decimal('reorder_quantity', 20, 6); $table->timestamps(); $table->unique(['variant_id', 'location_id']); });
+        Schema::create('inventory_alerts', function (Blueprint $table): void { $table->uuid('id')->primary(); $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete(); $table->foreignUuid('variant_id')->constrained('product_variants')->cascadeOnDelete(); $table->foreignUuid('location_id')->constrained('warehouse_locations')->cascadeOnDelete(); $table->string('type'); $table->timestamp('resolved_at')->nullable(); $table->timestamps(); $table->index(['tenant_id', 'resolved_at']); });
+    }
+    public function down(): void { foreach (['inventory_alerts', 'reorder_rules', 'stock_count_lines', 'stock_counts', 'stock_transfer_lines', 'stock_transfers', 'stock_adjustments'] as $table) Schema::dropIfExists($table); }
+};

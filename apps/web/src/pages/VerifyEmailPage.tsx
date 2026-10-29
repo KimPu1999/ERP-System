@@ -1,0 +1,3 @@
+import { useMutation } from '@tanstack/react-query';
+import { api } from '../lib/api';
+export function VerifyEmailPage() { const mutation = useMutation({ mutationFn: () => api<{ status: string }>('/auth/email/resend', { method: 'POST' }) }); return <section className="auth-page"><div className="auth-card"><p className="eyebrow">Account security</p><h1>Verify your email</h1><p className="muted">Check your inbox for the verification link.</p><button className="primary" onClick={() => mutation.mutate()}>Resend verification email</button>{mutation.isSuccess && <p>Email sent.</p>}{mutation.isError && <p className="error-text">{mutation.error.message}</p>}</div></section>; }

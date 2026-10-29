@@ -1,0 +1,3 @@
+<?php
+namespace App\Models; use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class FixedAsset extends Model { use HasUuids; protected $fillable=['tenant_id','company_id','category_id','asset_number','name','acquired_on','capitalized_on','acquisition_cost','residual_value','useful_life_months','depreciation_method','accumulated_depreciation','state']; protected function casts():array{return ['acquired_on'=>'date','capitalized_on'=>'date','acquisition_cost'=>'decimal:6','residual_value'=>'decimal:6','accumulated_depreciation'=>'decimal:6'];} public function transactions(){return $this->hasMany(AssetTransaction::class,'asset_id');} }

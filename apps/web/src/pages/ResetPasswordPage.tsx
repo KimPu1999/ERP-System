@@ -1,0 +1,4 @@
+import { useForm } from 'react-hook-form';
+import { requestPasswordReset } from '../lib/api';
+type Form = { email: string };
+export function ResetPasswordPage() { const { register, handleSubmit } = useForm<Form>(); const submit = async ({ email }: Form) => { try { await requestPasswordReset(email); window.alert('If the account exists, a reset email has been sent.'); } catch (error) { window.alert(error instanceof Error ? error.message : 'Unable to request reset.'); } }; return <section className="auth-page"><div className="auth-card"><p className="eyebrow">Account recovery</p><h1>Reset password</h1><form className="form" onSubmit={handleSubmit(submit)}><label>Email<input type="email" {...register('email', { required: true })} /></label><button className="primary">Send reset link</button></form></div></section>; }

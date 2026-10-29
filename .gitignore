@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+vendor/
+node_modules/
+dist/
+storage/*.key
+storage/logs/*
+coverage/
+.DS_Store

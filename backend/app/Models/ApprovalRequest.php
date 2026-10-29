@@ -1,0 +1,3 @@
+<?php
+namespace App\Models; use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class ApprovalRequest extends Model { use HasUuids; protected $fillable=['tenant_id','definition_id','requester_id','company_id','department_id','document_type','document_id','amount','current_level','state','completed_at']; protected function casts():array{return ['amount'=>'decimal:6','completed_at'=>'datetime'];} public function definition(){return $this->belongsTo(ApprovalDefinition::class,'definition_id');} public function actions(){return $this->hasMany(ApprovalAction::class);} }

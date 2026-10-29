@@ -1,0 +1,3 @@
+<?php
+namespace App\Models; use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class PayrollItem extends Model { use HasUuids; protected $fillable=['tenant_id','payroll_run_id','employee_id','gross_pay','allowances','deductions','net_pay','calculation_breakdown']; protected function casts():array{return ['gross_pay'=>'decimal:6','allowances'=>'decimal:6','deductions'=>'decimal:6','net_pay'=>'decimal:6','calculation_breakdown'=>'array'];} public function payslip(){return $this->hasOne(Payslip::class);} public function employee(){return $this->belongsTo(Employee::class);} }
