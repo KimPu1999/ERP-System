@@ -62803,3 +62803,28 @@ into your web browser: <span class="break-all" style="box-sizing: border-box; fo
 </html>
 --FL2o4SmR--
   
+[2026-10-30 14:01:29] local.ERROR: Command "run" is not defined.
+
+Did you mean one of these?
+    cache:prune-stale-tags
+    model:prune
+    queue:prune-batches
+    queue:prune-failed
+    sanctum:prune-expired
+    schedule:run {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"run\" is not defined.
+
+Did you mean one of these?
+    cache:prune-stale-tags
+    model:prune
+    queue:prune-batches
+    queue:prune-failed
+    sanctum:prune-expired
+    schedule:run at /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php:786)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(322): Symfony\\Component\\Console\\Application->find('run')
+#1 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(219): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(205): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#5 {main}
+"} 
