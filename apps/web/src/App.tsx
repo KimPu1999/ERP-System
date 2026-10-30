@@ -30,6 +30,7 @@ import { GoodsReceiptFormPage } from './pages/GoodsReceiptFormPage';
 import { GoodsReceiptDetailsPage } from './pages/GoodsReceiptDetailsPage';
 import { PurchasingLayout } from './layouts/PurchasingLayout';
 import { CrmSalesPage } from './pages/CrmSalesPage';
+import { SalesQuotationsPage } from './pages/SalesQuotationsPage';
 import { AccountingPage } from './pages/AccountingPage';
 import { HrPage } from './pages/HrPage';
 import { OptionalModulesPage } from './pages/OptionalModulesPage';
@@ -85,7 +86,7 @@ export default function App() {
       <Route path="/purchasing/returns/:returnId" element={<PurchasingLayout />}><Route index element={<PurchaseReturnDetailsPage />} /></Route>
       <Route path="/purchasing/settings" element={<PurchasingLayout />}><Route index element={<PurchasingSettingsPage />} /></Route>
       <Route path="/purchasing/supplier-credits" element={<PurchasingLayout />}><Route index element={<SupplierCreditsPage />} /></Route>
-      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
+      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />

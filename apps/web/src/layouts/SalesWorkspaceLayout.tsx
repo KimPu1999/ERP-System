@@ -13,7 +13,7 @@ const salesNavItems: SalesNavItem[] = [
   { label: 'Opportunities', to: '/crm-sales/opportunities', icon: Target },
   { label: 'Pipeline', to: '/crm-sales/pipeline', icon: BarChart3 },
   { label: 'Activities', to: '/crm-sales/activities', icon: ClipboardList },
-  { label: 'Quotations', icon: FileText, permission: 'sales.manage', unavailable: 'Quotation management UI is planned for Sales Phase 2.' },
+  { label: 'Quotations', to: '/crm-sales/quotations', icon: FileText, permission: 'sales.manage' },
   { label: 'Sales Orders', icon: ShoppingCart, permission: 'sales.manage', unavailable: 'Sales order management UI is planned for Sales Phase 2.' },
   { label: 'Deliveries', icon: Truck, permission: 'sales.manage', unavailable: 'Delivery management UI is planned for Sales Phase 3.' },
   { label: 'Invoices', icon: Receipt, permission: 'sales.manage', unavailable: 'Invoice management UI is planned for Sales Phase 3.' },

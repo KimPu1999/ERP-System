@@ -313,9 +313,16 @@ export const createCrmActivity = (data: Record<string, unknown>) => api<{ data: 
 export const completeCrmActivity = (id: string, outcome?: string) => api<{ data: CrmActivity }>(`/sales/activities/${id}/complete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcome }) });
 export type CrmDashboard = { filters: { from: string; to: string }; kpis: { active_customers: number; new_leads: number; open_opportunities: number; pipeline_value: string; followups_due: number; won_opportunities: number; lead_conversion_rate: number | null }; stages: Array<{ stage: string; count: number; total: string }> };
 export const getCrmDashboard = (params: Record<string, string | number | undefined> = {}) => api<{ data: CrmDashboard }>(`/sales/crm/dashboard${crmQuery(params)}`);
-export const getSalesQuotations = () => api<{ data: { data: SalesDocument[] } }>('/sales/quotations');
 export const getSalesOrders = () => api<{ data: { data: SalesDocument[] } }>('/sales/orders');
 export const getSalesInvoices = () => api<{ data: { data: SalesDocument[] } }>('/sales/invoices');
+export type SalesQuotation = { id: string; number: string; state: string; version_number?: number; approval_status?: string; response_status?: string; conversion_status?: string; valid_until?: string; quotation_date?: string; subtotal?: string; discount_total?: string; tax_total?: string; total?: string; customer?: Customer; opportunity?: { id: string; name: string } };
+export const getSalesQuotations = (params: Record<string, string | number | undefined> = {}) => { const q = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)])); return api<{ data: { data: SalesQuotation[]; current_page: number; last_page: number; total: number } }>(`/sales/quotations${q.toString() ? `?${q}` : ''}`); };
+export const getSalesQuotationSummary = (company_id?: string) => api<{ data: Record<string, number> }>(`/sales/quotations/summary${company_id ? `?company_id=${encodeURIComponent(company_id)}` : ''}`);
+export const createSalesQuotation = (data: Record<string, unknown>) => api<{ data: SalesQuotation }>('/sales/quotations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const submitSalesQuotation = (id: string) => api<{ data: SalesQuotation }>(`/sales/quotations/${id}/submit`, { method: 'POST' });
+export const approveSalesQuotation = (id: string, remarks?: string) => api<{ data: SalesQuotation }>(`/sales/quotations/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ remarks }) });
+export const transitionSalesQuotation = (id: string, state: string) => api<{ data: SalesQuotation }>(`/sales/quotations/${id}/transition`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }) });
+export const convertSalesQuotation = (id: string) => api<{ data: { id: string; number: string; state: string } }>(`/sales/quotations/${id}/convert`, { method: 'POST' });
 export type LedgerAccount = { id: string; code: string; name: string; type: string; normal_balance: string; is_active: boolean };
 export const getLedgerAccounts = () => api<{ data: { data: LedgerAccount[] } }>('/accounting/accounts');
 export const getFiscalPeriods = () => api<{ data: { data: Array<{ id: string; name: string; state: string; starts_on: string; ends_on: string }> } }>('/accounting/periods');

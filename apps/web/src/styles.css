@@ -1000,6 +1000,8 @@ tr:last-child td { border-bottom: 0; }
 .crm-search { display: flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 11px; background: #fff; min-width: 280px; }
 .crm-search input { border: 0; outline: 0; width: 100%; background: transparent; }
 .crm-inline-form input { border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 11px; min-width: 240px; }
+.quotation-form label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.quotation-form label input { color: var(--text); }
 .crm-empty { padding: 28px 12px; text-align: center; color: #64748b; }
 .crm-skeleton { height: 100px; background: linear-gradient(90deg,#f8fafc,#e2e8f0,#f8fafc); animation: crm-pulse 1.4s infinite; }
 .crm-stage-list { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }

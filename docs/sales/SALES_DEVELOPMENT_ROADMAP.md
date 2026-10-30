@@ -34,7 +34,24 @@ Acceptance criteria:
 
 Verification: frontend TypeScript, ESLint and production build passed; database-backed CRM verification is blocked until an isolated PostgreSQL service is available.
 
-## Phase 3B — Customer, quotation, and sales-order workspaces
+## Phase 4 — Quotation management (implemented)
+
+- Company/branch-scoped quotation register and summary KPIs.
+- Server-authoritative line pricing, fixed/percentage discounts and configured tax-code lookup.
+- Approval, customer response and conversion states kept separate.
+- Version snapshots, approval history, response history and printable quotation document.
+- Idempotent accepted-quotation to draft Sales Order conversion without stock or accounting postings.
+
+Verification: PHP syntax, route registration, frontend TypeScript, lint and production build passed; database-backed quotation verification remains blocked pending isolated PostgreSQL availability.
+
+## Phase 4B — Advanced quotation operations
+
+- Full price-list administration and conflict resolution.
+- Queued customer email with delivery-state tracking.
+- Secure expiring customer response links.
+- Binary PDF generation, attachments and configurable approval thresholds.
+
+## Phase 5 — Customer, quotation, and sales-order workspaces
 - Quotation create/detail/transition/convert flows.
 - Sales order create/detail/submit/approve flow with product, unit, tax, discount, and stock-location validation.
 - No cross-tenant or cross-company records in list/detail APIs.
