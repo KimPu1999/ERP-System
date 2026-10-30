@@ -14,7 +14,7 @@ return new class extends Migration {
             });
             Schema::table($tableName, function (Blueprint $table) use ($tableName): void {
                 $table->index(['tenant_id', 'company_id', 'branch_id']);
-                $table->index(['tenant_id', 'state']);
+                $table->index(['tenant_id', $tableName === 'customers' ? 'status' : 'state']);
             });
         }
 

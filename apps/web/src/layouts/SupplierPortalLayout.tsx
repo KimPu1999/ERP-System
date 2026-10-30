@@ -1,13 +1,9 @@
-import { Bell, FileText, LayoutDashboard, MessageSquare, PackageCheck, ShieldCheck, Users } from 'lucide-react';
+import { Bell, FileText, LayoutDashboard } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const links = [
   ['/supplier-portal/dashboard', 'Dashboard', LayoutDashboard],
   ['/supplier-portal/purchase-orders', 'Purchase Orders', FileText],
-  ['/supplier-portal/shipments', 'Shipments', PackageCheck],
-  ['/supplier-portal/documents', 'Documents', ShieldCheck],
-  ['/supplier-portal/messages', 'Messages', MessageSquare],
-  ['/supplier-portal/team', 'My Team', Users],
 ];
 
 export function SupplierPortalLayout() {
