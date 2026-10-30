@@ -1369,6 +1369,163 @@ table { min-width: 0; }
   .supplier-catalog-pagination .secondary { flex: 1; }
 }
 
+/* Sales overview: full-width dashboard grid and compact filter controls */
+.sales-page {
+  width: 100%;
+  max-width: none;
+}
+.sales-page-heading {
+  align-items: center;
+  min-height: 34px;
+  margin-bottom: 14px;
+}
+.sales-page-heading h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 25px;
+  letter-spacing: -.035em;
+}
+.sales-filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.45fr) minmax(160px, 1fr) minmax(180px, 1.1fr) minmax(140px, .85fr) minmax(140px, .85fr) 40px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 0;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .035);
+}
+.sales-filter-control {
+  display: block;
+  min-width: 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+}
+.sales-filter-control select,
+.sales-filter-control input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: 0;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 13px;
+}
+.sales-filter-control select {
+  padding-right: 30px;
+  cursor: pointer;
+}
+.sales-filter-control select:focus,
+.sales-filter-control input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(191, 219, 254, .55);
+}
+.sales-date-control {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.sales-refresh {
+  grid-column: -1;
+  width: 40px;
+  height: 42px;
+}
+.sales-refresh.is-loading svg {
+  animation: supplier-catalog-spin .8s linear infinite;
+}
+.sales-kpi-grid,
+.sales-loading-grid {
+  width: 100%;
+}
+.sales-kpi-card {
+  min-height: 112px;
+  border-radius: 11px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .035);
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.sales-kpi-card:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, .08);
+  transform: translateY(-1px);
+}
+.sales-kpi-blue .sales-kpi-icon { color: #2563eb; background: #dbeafe; }
+.sales-kpi-indigo .sales-kpi-icon { color: #4f46e5; background: #e0e7ff; }
+.sales-kpi-purple .sales-kpi-icon { color: #7c3aed; background: #ede9fe; }
+.sales-kpi-emerald .sales-kpi-icon { color: #059669; background: #d1fae5; }
+.sales-kpi-cyan .sales-kpi-icon { color: #0891b2; background: #cffafe; }
+.sales-kpi-orange .sales-kpi-icon { color: #d97706; background: #fef3c7; }
+.sales-analytics-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  width: 100%;
+}
+.sales-analytics-grid > .sales-panel:first-child { grid-column: span 6; }
+.sales-analytics-grid > .sales-panel:nth-child(2),
+.sales-analytics-grid > .sales-panel:nth-child(3) { grid-column: span 3; }
+.sales-analytics-grid .sales-panel {
+  min-height: 286px;
+}
+.sales-business-grid {
+  width: 100%;
+}
+.sales-business-grid .sales-panel {
+  min-height: 248px;
+}
+:root.dark .sales-filter-toolbar {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .16);
+}
+:root.dark .sales-kpi-blue .sales-kpi-icon { color: #93c5fd; background: rgba(37, 99, 235, .18); }
+:root.dark .sales-kpi-indigo .sales-kpi-icon { color: #a5b4fc; background: rgba(79, 70, 229, .18); }
+:root.dark .sales-kpi-purple .sales-kpi-icon { color: #c4b5fd; background: rgba(124, 58, 237, .18); }
+:root.dark .sales-kpi-emerald .sales-kpi-icon { color: #6ee7b7; background: rgba(16, 185, 129, .16); }
+:root.dark .sales-kpi-cyan .sales-kpi-icon { color: #67e8f9; background: rgba(8, 145, 178, .16); }
+:root.dark .sales-kpi-orange .sales-kpi-icon { color: #fcd34d; background: rgba(245, 158, 11, .16); }
+@media (max-width: 1279px) {
+  .sales-kpi-grid,
+  .sales-loading-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1180px) {
+  .sales-filter-toolbar {
+    grid-template-columns: minmax(0, 1.2fr) minmax(150px, 1fr) minmax(160px, 1fr) 40px;
+  }
+}
+@media (max-width: 900px) {
+  .sales-analytics-grid,
+  .sales-business-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sales-analytics-grid > .sales-panel:first-child,
+  .sales-business-grid > .sales-panel:first-child { grid-column: span 2; }
+}
+@media (max-width: 680px) {
+  .sales-page-heading h1 { font-size: 23px; }
+  .sales-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+  .sales-filter-control { width: 100%; }
+  .sales-refresh {
+    grid-column: auto;
+    width: 100%;
+  }
+  .sales-kpi-grid,
+  .sales-loading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sales-analytics-grid,
+  .sales-business-grid { grid-template-columns: 1fr; }
+  .sales-analytics-grid > .sales-panel:first-child,
+  .sales-business-grid > .sales-panel:first-child { grid-column: auto; }
+  .sales-analytics-grid .sales-panel,
+  .sales-business-grid .sales-panel { min-height: 220px; }
+}
+
 /* Departments: compact horizontal filter toolbar */
 .department-filter-bar {
   display: grid;
