@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{AccountMapping, Branch, Company, FiscalPeriod, GoodsReceiptItem, PurchaseOrder, SupplierBill, SupplierBillLine};
+use App\Models\{AccountMapping, Branch, Company, FiscalPeriod, GoodsReceiptItem, PurchaseOrder, PurchasingSetting, SupplierBill, SupplierBillLine};
 use App\Support\Decimal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -46,13 +46,17 @@ final class SupplierBillService
                 if ($line->purchase_order_item_id) {
                     $poi = $line->purchaseOrderItem;
                     abort_unless($poi && $poi->tenant_id === $bill->tenant_id && $poi->purchaseOrder?->supplier_id === $bill->supplier_id, 422, 'The purchase order line does not belong to this supplier bill.');
+                    $settings = $this->settingsFor($bill->tenant_id, $bill->company_id, $bill->branch_id);
                     $type = $line->goods_receipt_item_id ? 'three_way' : 'two_way';
+                    if ($settings?->matching_type === 'three_way' && ! $line->goods_receipt_item_id) {
+                        $status = 'exception'; $reason = 'The active matching policy requires a posted goods receipt.';
+                    }
                     $prior = $this->postedBilledQuantity($bill->tenant_id, $poi->id, $bill->id);
                     $available = $line->goods_receipt_item_id ? $this->acceptedReceivedQuantity($bill->tenant_id, $poi->id) : (string) $poi->ordered_quantity;
-                    $eligible = Decimal::sub($available, $prior);
+                    $eligible = Decimal::sub($this->matchableQuantity($available, $settings), $prior);
                     if (Decimal::compare($line->quantity, $eligible) > 0) { $status = 'exception'; $reason = "Billed quantity exceeds remaining eligible quantity ({$eligible})."; }
                     if ($bill->purchaseOrder && $bill->purchaseOrder->currency_id && $bill->currency_id && $bill->purchaseOrder->currency_id !== $bill->currency_id) { $status = 'exception'; $reason = 'Purchase order and supplier bill currencies do not match.'; }
-                    if (Decimal::compare((string) $line->unit_price, (string) $poi->unit_price) !== 0 && $status === 'matched') { $status = 'exception'; $reason = 'Unit price differs from the purchase order.'; }
+                    if ($status === 'matched' && ! $this->withinPriceTolerance((string) $line->unit_price, (string) $poi->unit_price, $settings)) { $status = 'exception'; $reason = 'Unit price exceeds the configured purchase price tolerance.'; }
                 } else {
                     $status = 'pending_review'; $reason = 'This service or non-PO line requires an authorized review before posting.';
                 }
@@ -153,4 +157,7 @@ final class SupplierBillService
     private function assertDuplicateFree(string $tenantId, ?string $companyId, string $supplierId, ?string $reference, ?string $ignore = null): void { if ($reference && SupplierBill::where('tenant_id',$tenantId)->where('company_id',$companyId)->where('supplier_id',$supplierId)->where('supplier_reference',$reference)->whereNotIn('state',['cancelled','reversed'])->when($ignore,fn($q)=>$q->where('id','!=',$ignore))->exists()) throw ValidationException::withMessages(['supplier_reference'=>['This supplier invoice reference already exists for this company and supplier.']]); }
     private function postedBilledQuantity(string $tenantId, string $purchaseOrderItemId, string $ignoreBillId): string { return (string) SupplierBillLine::where('tenant_id',$tenantId)->where('purchase_order_item_id',$purchaseOrderItemId)->whereHas('bill',fn($q)=>$q->where('state','posted')->where('id','!=',$ignoreBillId))->sum('quantity'); }
     private function acceptedReceivedQuantity(string $tenantId, string $purchaseOrderItemId): string { return (string) GoodsReceiptItem::where('tenant_id',$tenantId)->where('purchase_order_item_id',$purchaseOrderItemId)->whereHas('receipt',fn($q)=>$q->where('state','posted'))->sum('accepted_quantity'); }
+    private function settingsFor(string $tenantId, ?string $companyId, ?string $branchId): ?PurchasingSetting { if (! $companyId) return null; return PurchasingSetting::where('tenant_id',$tenantId)->where('company_id',$companyId)->where(function($q)use($branchId){$q->where('branch_id',$branchId)->orWhereNull('branch_id');})->orderByRaw('CASE WHEN branch_id IS NULL THEN 1 ELSE 0 END')->first(); }
+    private function matchableQuantity(string $available, ?PurchasingSetting $settings): string { if (! $settings || Decimal::compare((string)$settings->quantity_tolerance,'0')<=0) return $available; $extra=$settings->quantity_tolerance_unit==='percent'?Decimal::div(Decimal::mul($available,(string)$settings->quantity_tolerance),'100'):(string)$settings->quantity_tolerance; return Decimal::add($available,$extra); }
+    private function withinPriceTolerance(string $actual, string $expected, ?PurchasingSetting $settings): bool { $difference=Decimal::compare($actual,$expected)>=0?Decimal::sub($actual,$expected):Decimal::sub($expected,$actual); if (! $settings || Decimal::compare((string)$settings->price_tolerance,'0')<=0) return Decimal::compare($difference,'0')===0; $allowed=$settings->price_tolerance_unit==='percent'?Decimal::div(Decimal::mul($expected,(string)$settings->price_tolerance),'100'):(string)$settings->price_tolerance; return Decimal::compare($difference,$allowed)<=0; }
 }

@@ -10,6 +10,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Warehouse;
 use App\Models\WarehouseLocation;
+use App\Models\PurchasingSetting;
 use App\Support\Decimal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -75,7 +76,12 @@ final class GoodsReceiptService
             foreach ($aggregates as $itemId => $physicalQuantity) {
                 $orderItem = PurchaseOrderItem::whereKey($itemId)->where('tenant_id', $tenantId)->where('purchase_order_id', $order->id)->lockForUpdate()->firstOrFail();
                 $remaining = Decimal::sub((string) $orderItem->ordered_quantity, (string) $orderItem->received_quantity);
-                if (Decimal::compare($physicalQuantity, $remaining) > 0) throw ValidationException::withMessages(['lines' => ['Receipt quantity exceeds the current remaining purchase order quantity. Refresh before posting.']]);
+                $settings = $this->settingsFor($tenantId, $order->company_id, $order->branch_id);
+                $allowed = $this->receivableQuantity($remaining, $settings);
+                if ($settings && ! $settings->partial_receiving_allowed && Decimal::compare($physicalQuantity, $remaining) < 0) {
+                    throw ValidationException::withMessages(['lines' => ['Partial receiving is disabled by the active purchasing policy.']]);
+                }
+                if (Decimal::compare($physicalQuantity, $allowed) > 0) throw ValidationException::withMessages(['lines' => ['Receipt quantity exceeds the current remaining purchase order quantity and configured tolerance. Refresh before posting.']]);
             }
             foreach ($items as $line) {
                 $accepted = Decimal::normalize((string) $line->accepted_quantity);
@@ -143,5 +149,22 @@ final class GoodsReceiptService
         if (Decimal::compare($total, '0') <= 0 || Decimal::compare($accepted, '0') < 0 || Decimal::compare($rejected, '0') < 0 || Decimal::compare($damaged, '0') < 0) throw ValidationException::withMessages(['lines' => ['Receipt quantities must be positive and non-negative by classification.']]);
         if (! empty($line['serial_number']) && Decimal::compare($total, '1') !== 0) throw ValidationException::withMessages(['lines' => ['A serial-tracked line must represent exactly one unit.']]);
         return ['accepted' => $accepted, 'rejected' => $rejected, 'damaged' => $damaged, 'total' => $total];
+    }
+
+    private function settingsFor(string $tenantId, ?string $companyId, ?string $branchId): ?PurchasingSetting
+    {
+        if (! $companyId) return null;
+        return PurchasingSetting::where('tenant_id', $tenantId)->where('company_id', $companyId)
+            ->where(function ($query) use ($branchId): void { $query->where('branch_id', $branchId)->orWhereNull('branch_id'); })
+            ->orderByRaw('CASE WHEN branch_id IS NULL THEN 1 ELSE 0 END')->first();
+    }
+
+    private function receivableQuantity(string $remaining, ?PurchasingSetting $settings): string
+    {
+        if (! $settings || Decimal::compare((string) $settings->over_receiving_tolerance, '0') <= 0) return $remaining;
+        $extra = $settings->over_receiving_tolerance_unit === 'percent'
+            ? Decimal::div(Decimal::mul($remaining, (string) $settings->over_receiving_tolerance), '100')
+            : (string) $settings->over_receiving_tolerance;
+        return Decimal::add($remaining, $extra);
     }
 }
