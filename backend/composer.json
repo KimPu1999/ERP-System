@@ -2,7 +2,7 @@
   "name": "enterprise-erp-cloud/api",
   "type": "project",
   "require": {
-    "php": "^8.3",
+    "php": "^8.4.1",
     "ext-bcmath": "*",
     "laravel/framework": "^13.0",
     "laravel/sanctum": "^4.0"
