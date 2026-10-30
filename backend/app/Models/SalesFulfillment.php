@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class SalesFulfillment extends Model { use HasUuids; protected $fillable=['tenant_id','company_id','branch_id','sales_order_id','warehouse_id','created_by','assigned_to','number','state','priority','requested_delivery_date','shipping_address','delivery_notes','picked_at','packed_at']; protected function casts():array{return ['requested_delivery_date'=>'date','picked_at'=>'datetime','packed_at'=>'datetime'];} public function order(){return $this->belongsTo(SalesOrder::class,'sales_order_id');} public function warehouse(){return $this->belongsTo(Warehouse::class);} public function lines(){return $this->hasMany(SalesFulfillmentLine::class,'fulfillment_id');} public function shipments(){return $this->hasMany(DeliveryOrder::class,'fulfillment_id');} }

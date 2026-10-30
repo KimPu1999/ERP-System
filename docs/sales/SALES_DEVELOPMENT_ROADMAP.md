@@ -60,6 +60,15 @@ Verification: PHP syntax, route registration, frontend TypeScript, lint and prod
 
 Verification: PHP syntax, route registration, frontend TypeScript, ESLint and production build passed. PostgreSQL-backed reservation, concurrency and isolation tests remain blocked until an isolated test database is available.
 
+## Phase 6 — Fulfillment, picking, packing and delivery (implemented foundation)
+- Fulfillment drafts from confirmed orders with reserved-quantity validation.
+- Picking and packing state transitions that do not alter physical inventory.
+- Existing delivery orders extended as shipment records with explicit dispatch posting.
+- Dispatch uses the existing inventory ledger service, consumes matching reservations, and is idempotent by shipment/line source reference.
+- Tracking events, proof-of-delivery records and delivery exceptions.
+
+Verification: PHP syntax, route registration, frontend TypeScript, ESLint and production build passed. Database-backed inventory, concurrency, POD and tenant-isolation tests remain blocked pending PostgreSQL availability. Package-level packing, carrier callbacks, barcode scanning and export reporting remain future hardening work.
+
 ## Phase 3 — Fulfillment and invoicing
 
 - Delivery detail and partial fulfillment UI.
