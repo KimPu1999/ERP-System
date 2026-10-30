@@ -38,6 +38,21 @@ const optionalEnglish = {
   'accounting.close': 'Close',
   'accounting.reopen': 'Reopen',
   'accounting.lock': 'Lock',
+  'accounting.parentAccount': 'Parent account',
+  'accounting.rootAccount': 'Root account',
+  'accounting.createAccount': 'Create account',
+  'accounting.searchAccounts': 'Search accounts',
+  'accounting.typeFilter': 'Account type',
+  'accounting.allTypes': 'All types',
+  'accounting.allStatuses': 'All statuses',
+  'accounting.accountError': 'Unable to save the account. Check the code, parent and company access.',
+  'accounting.activate': 'Activate',
+  'accounting.deactivate': 'Deactivate',
+  'accounting.asset': 'Assets',
+  'accounting.liability': 'Liabilities',
+  'accounting.equity': 'Equity',
+  'accounting.revenue': 'Revenue',
+  'accounting.expense': 'Expenses',
 } as const;
 
 const optionalBurmese = {
@@ -72,6 +87,21 @@ const optionalBurmese = {
   'accounting.close': 'ပိတ်ရန်',
   'accounting.reopen': 'ပြန်ဖွင့်ရန်',
   'accounting.lock': 'လော့ခ်ချရန်',
+  'accounting.parentAccount': 'မိခင်စာရင်း',
+  'accounting.rootAccount': 'အမြစ်စာရင်း',
+  'accounting.createAccount': 'စာရင်း ဖန်တီးရန်',
+  'accounting.searchAccounts': 'စာရင်းများ ရှာရန်',
+  'accounting.typeFilter': 'စာရင်းအမျိုးအစား',
+  'accounting.allTypes': 'အမျိုးအစားအားလုံး',
+  'accounting.allStatuses': 'အခြေအနေအားလုံး',
+  'accounting.accountError': 'စာရင်း သိမ်း၍ မရပါ။ ကုဒ်၊ မိခင်စာရင်းနှင့် ကုမ္ပဏီအသုံးပြုခွင့်ကို စစ်ဆေးပါ။',
+  'accounting.activate': 'အသက်သွင်းရန်',
+  'accounting.deactivate': 'ပိတ်ရန်',
+  'accounting.asset': 'ပိုင်ဆိုင်မှုများ',
+  'accounting.liability': 'ပေးရန်တာဝန်များ',
+  'accounting.equity': 'ပိုင်ရှင်အစုရှယ်ယာတန်ဖိုး',
+  'accounting.revenue': 'ဝင်ငွေ',
+  'accounting.expense': 'အသုံးစရိတ်များ',
 } as const;
 
 const messages = {

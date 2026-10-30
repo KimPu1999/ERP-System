@@ -441,9 +441,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/sales/payments/{payment}/allocate', [PaymentController::class, 'allocate']);
         Route::get('/sales/analytics/customer-balances', [SalesAnalyticsController::class, 'customerBalances']);
         Route::get('/accounting/accounts', [AccountingController::class, 'accounts']);
+        Route::get('/accounting/accounts/summary', [AccountingController::class, 'accountSummary']);
+        Route::get('/accounting/accounts/hierarchy', [AccountingController::class, 'accountHierarchy']);
         Route::get('/accounting/currencies', [AccountingController::class, 'currencies']);
         Route::get('/accounting/bank-accounts', [AccountingController::class, 'bankAccounts']);
         Route::post('/accounting/accounts', [AccountingController::class, 'storeAccount']);
+        Route::get('/accounting/accounts/{account}', [AccountingController::class, 'account']);
+        Route::patch('/accounting/accounts/{account}', [AccountingController::class, 'updateAccount']);
+        Route::patch('/accounting/accounts/{account}/status', [AccountingController::class, 'accountStatus']);
         Route::get('/accounting/periods', [AccountingController::class, 'periods']);
         Route::post('/accounting/periods', [AccountingController::class, 'storePeriod']);
         Route::get('/accounting/fiscal-years', [AccountingController::class, 'fiscalYears']);
