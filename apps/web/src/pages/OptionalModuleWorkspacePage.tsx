@@ -19,10 +19,11 @@ export function OptionalModulesPage() {
   const { t } = useI18n();
   const modules = useQuery({ queryKey: ['modules'], queryFn: getModules });
   const flags = modules.data?.data ?? [];
-  const enabled = (key: OptionalModuleKey) => flags.find((item) => item.module_key === key)?.enabled === true;
-  const pos = useQuery({ queryKey: ['optional-overview', 'pos'], queryFn: () => getPosRegisters(), enabled: enabled('pos') });
-  const projects = useQuery({ queryKey: ['optional-overview', 'projects'], queryFn: () => getProjects(), enabled: enabled('projects') });
-  const assets = useQuery({ queryKey: ['optional-overview', 'fixed_assets'], queryFn: () => getAssets(), enabled: enabled('fixed_assets') });
+  const flagFor = (key: OptionalModuleKey) => flags.find((item) => item.module_key === key);
+  const statusFor = (key: OptionalModuleKey) => flagFor(key)?.status ?? (flagFor(key)?.enabled ? 'unavailable' : 'disabled');
+  const pos = useQuery({ queryKey: ['optional-overview', 'pos'], queryFn: () => getPosRegisters(), enabled: statusFor('pos') === 'available' });
+  const projects = useQuery({ queryKey: ['optional-overview', 'projects'], queryFn: () => getProjects(), enabled: statusFor('projects') === 'available' });
+  const assets = useQuery({ queryKey: ['optional-overview', 'fixed_assets'], queryFn: () => getAssets(), enabled: statusFor('fixed_assets') === 'available' });
   const refresh = () => { void modules.refetch(); void pos.refetch(); void projects.refetch(); void assets.refetch(); };
   const counts: Record<OptionalModuleKey, number | null> = { pos: pos.data?.data.total ?? null, projects: projects.data?.data.total ?? null, fixed_assets: assets.data?.data.total ?? null };
   const errors = [modules.error, pos.error, projects.error, assets.error].filter(Boolean);
@@ -36,11 +37,11 @@ export function OptionalModulesPage() {
     {errors.length > 0 && <div className="alert alert-danger optional-alert" role="alert"><CircleAlert size={16} /> <span>{t('optional.error')} {errorText(errors[0])}</span><button className="table-action" type="button" onClick={refresh}>{t('common.retry')}</button></div>}
     <div className="optional-module-grid">
       {(Object.keys(config) as OptionalModuleKey[]).map((key) => {
-        const item = config[key]; const Icon = item.icon; const isEnabled = enabled(key); const queryError = key === 'pos' ? pos.error : key === 'projects' ? projects.error : assets.error;
+        const item = config[key]; const Icon = item.icon; const status = statusFor(key); const isAvailable = status === 'available'; const queryError = key === 'pos' ? pos.error : key === 'projects' ? projects.error : assets.error;
         return <article className="optional-module-card" key={key}>
           <div className="optional-module-icon"><Icon size={21} /></div>
-          <div className="optional-module-content"><div className="optional-module-title"><h2>{t(item.labelKey)}</h2><span className={`optional-status ${queryError ? 'error' : isEnabled ? 'enabled' : 'disabled'}`}>{queryError ? t('optional.unavailable') : isEnabled ? t('common.active') : t('common.inactive')}</span></div><p>{t(item.descriptionKey)}</p><small>{isEnabled && !queryError ? `${counts[key] ?? 0} ${key === 'pos' ? t('optional.registers') : key === 'projects' ? t('optional.projects') : t('optional.assets')}` : t('optional.enableToOpen')}</small></div>
-          {isEnabled && !queryError && <Link className="primary optional-open" to={item.path}>{t('optional.open')}</Link>}
+          <div className="optional-module-content"><div className="optional-module-title"><h2>{t(item.labelKey)}</h2><span className={`optional-status ${queryError ? 'error' : `status-${status}`}`}>{queryError ? t('optional.unavailable') : t(`optional.status.${status}`)}</span></div><p>{t(item.descriptionKey)}</p><small>{isAvailable && !queryError ? `${counts[key] ?? 0} ${key === 'pos' ? t('optional.registers') : key === 'projects' ? t('optional.projects') : t('optional.assets')}` : queryError ? t('optional.apiFailure') : status === 'setup_required' ? t('optional.setupDetail') : status === 'disabled' ? t('optional.enableToOpen') : t('optional.accessDetail')}</small></div>
+          {isAvailable && !queryError && <Link className="primary optional-open" to={item.path}>{t('optional.open')}</Link>}
         </article>;
       })}
     </div>
@@ -57,7 +58,9 @@ export function OptionalModuleWorkspacePage({ module }: { module: OptionalModule
   const companyRows = companies.data?.data.data ?? [];
   const companyId = searchParams.get('company_id') ?? (companyRows.length === 1 ? companyRows[0].id : '');
   const flags = useQuery({ queryKey: ['modules'], queryFn: getModules });
-  const enabled = flags.data?.data.some((item) => item.module_key === module && item.enabled) === true;
+  const moduleFlag = flags.data?.data.find((item) => item.module_key === module);
+  const status = moduleFlag?.status ?? (moduleFlag?.enabled ? 'unavailable' : 'disabled');
+  const enabled = status === 'available';
   const params = { company_id: companyId || undefined, page: Number(searchParams.get('page') ?? 1), per_page: 25 };
   const records = useQuery({ queryKey: ['optional-workspace', module, params], enabled: enabled, queryFn: async (): Promise<OptionalList<Row>> => {
     if (module === 'pos') return (await getPosRegisters(params)).data;
@@ -78,7 +81,7 @@ export function OptionalModuleWorkspacePage({ module }: { module: OptionalModule
   return <section className="optional-page page-section">
     <header className="optional-header optional-workspace-header"><div><Link className="optional-back" to="/optional-modules"><ArrowLeft size={15} /> {t('optional.back')}</Link><div className="optional-title-line"><span className="optional-title-icon"><Icon size={19} /></span><h1>{title}</h1></div></div><button className="icon-button" type="button" onClick={refresh} disabled={records.isFetching || flags.isFetching} aria-label={t('common.refresh')}><RefreshCw size={16} className={records.isFetching ? 'is-spinning' : ''} /></button></header>
     <nav className="optional-tabs" aria-label={title}><Link className="active" to={item.path}>{t('optional.overview')}</Link><span>{module === 'pos' ? t('optional.registers') : module === 'projects' ? t('optional.tasks') : t('optional.depreciation')}</span><span>{module === 'pos' ? t('optional.salesHistory') : module === 'projects' ? t('optional.reports') : t('optional.reports')}</span></nav>
-    {!enabled && !flags.isLoading && <div className="optional-empty"><CircleAlert size={20} /><strong>{t('optional.disabledTitle')}</strong><span>{t('optional.disabledDetail')}</span></div>}
+    {!enabled && !flags.isLoading && <div className="optional-empty"><CircleAlert size={20} /><strong>{t(status === 'setup_required' ? 'optional.setupTitle' : status === 'unavailable' ? 'optional.unavailableTitle' : 'optional.disabledTitle')}</strong><span>{moduleFlag?.reason ?? t(status === 'setup_required' ? 'optional.setupDetail' : status === 'unavailable' ? 'optional.accessDetail' : 'optional.disabledDetail')}</span></div>}
     {isError && <div className="alert alert-danger optional-alert" role="alert"><CircleAlert size={16} /><span>{t('optional.error')} {errorText(flags.error ?? companies.error ?? records.error)}</span><button className="table-action" type="button" onClick={refresh}>{t('common.retry')}</button></div>}
     {enabled && !isError && <>
       <div className="optional-toolbar"><label><span className="sr-only">{t('app.selectCompany')}</span><select value={companyId} onChange={(event) => setCompany(event.target.value)}><option value="">{t('app.allCompanies')}</option>{companyRows.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label><span className="optional-scope">{companyId ? t('optional.companyScope') : t('optional.authorizedScope')}</span></div>

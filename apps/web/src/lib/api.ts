@@ -404,7 +404,8 @@ export const updateEmployee = (id: string, data: Record<string, unknown>) => api
 export const updateEmployeeStatus = (id: string, status: string) => api<{ data: Employee }>(`/hr/employees/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
 export type PayrollPage = { data: { data: PayrollRun[]; current_page: number; last_page: number; per_page: number; total: number }; summary: { total: number; finalized: number; pending: number } };
 export const getPayrollRuns = (companyId?: string) => api<PayrollPage>(`/hr/payroll-runs${queryString({ company_id: companyId }) ? `?${queryString({ company_id: companyId })}` : ''}`);
-export type ModuleFlag = { id: string; module_key: 'pos' | 'projects' | 'fixed_assets'; enabled: boolean };
+export type ModuleStatus = 'available' | 'disabled' | 'setup_required' | 'unavailable';
+export type ModuleFlag = { id: string | null; module_key: 'pos' | 'projects' | 'fixed_assets'; enabled: boolean; status?: ModuleStatus; reason?: string | null; can_open?: boolean; can_configure?: boolean };
 export const getModules = () => api<{ data: ModuleFlag[] }>('/modules');
 export type OptionalListMeta = { current_page: number; last_page: number; per_page: number; total: number };
 export type OptionalProject = { id: string; company_id: string; code: string; name: string; state: string; budget_amount: string; starts_on?: string | null; ends_on?: string | null; tasks?: Array<{ id: string; title: string; state: string }> };

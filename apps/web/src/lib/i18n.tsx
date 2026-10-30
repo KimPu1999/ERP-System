@@ -7,6 +7,15 @@ const STORAGE_KEY = 'erp_cloud.locale';
 const localeEvent = 'erp-cloud-locale-change';
 
 const optionalEnglish = {
+  'optional.status.available': 'Available',
+  'optional.status.disabled': 'Disabled',
+  'optional.status.setup_required': 'Setup required',
+  'optional.status.unavailable': 'Unavailable',
+  'optional.apiFailure': 'API connection failed. Retry to check again.',
+  'optional.setupTitle': 'Setup required',
+  'optional.setupDetail': 'Required module configuration is incomplete.',
+  'optional.unavailableTitle': 'Module unavailable',
+  'optional.accessDetail': 'This module is not currently available for your access scope.',
   'optional.posTitle': 'Point of Sale',
   'optional.posDescription': 'Registers and cashier operations backed by verified inventory and payment services.',
   'optional.projectsTitle': 'Project Management',
@@ -16,6 +25,15 @@ const optionalEnglish = {
 } as const;
 
 const optionalBurmese = {
+  'optional.status.available': 'အသုံးပြုနိုင်သည်',
+  'optional.status.disabled': 'ပိတ်ထားသည်',
+  'optional.status.setup_required': 'စတင်သတ်မှတ်ရန် လိုအပ်သည်',
+  'optional.status.unavailable': 'မရရှိနိုင်',
+  'optional.apiFailure': 'API ချိတ်ဆက်မှု မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။',
+  'optional.setupTitle': 'စတင်သတ်မှတ်ရန် လိုအပ်သည်',
+  'optional.setupDetail': 'Module အတွက် လိုအပ်သော ဆက်တင် မပြည့်စုံသေးပါ။',
+  'optional.unavailableTitle': 'Module မရရှိနိုင်ပါ',
+  'optional.accessDetail': 'သင့်အသုံးပြုခွင့်အတိုင်းအတာအတွက် ဤ module မရရှိနိုင်သေးပါ။',
   'optional.posTitle': 'အရောင်းကောင်တာ',
   'optional.posDescription': 'Inventory နှင့် ငွေပေးချေမှုဝန်ဆောင်မှုများနှင့် ချိတ်ဆက်ထားသော register နှင့် cashier လုပ်ငန်းများ။',
   'optional.projectsTitle': 'Project စီမံခန့်ခွဲမှု',
