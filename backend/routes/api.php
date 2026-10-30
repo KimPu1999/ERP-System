@@ -277,10 +277,15 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/sales/quotations/{q}/submit', [SalesQuotationController::class, 'submit']);
         Route::post('/sales/quotations/{q}/approve', [SalesQuotationController::class, 'approve']);
         Route::post('/sales/quotations/{q}/reject', [SalesQuotationController::class, 'reject']);
+        Route::post('/sales/quotations/{q}/request-revision', [SalesQuotationController::class, 'requestRevision']);
         Route::post('/sales/quotations/{q}/transition', [SalesQuotationController::class, 'transition']);
         Route::get('/sales/quotations/{q}/pdf', [SalesQuotationController::class, 'pdf']);
+        Route::post('/sales/quotations/{q}/send', [SalesQuotationController::class, 'send']);
+        Route::get('/sales/quotations/{q}/communications', [SalesQuotationController::class, 'communications']);
         Route::post('/sales/quotations/{q}/convert', [SalesQuotationController::class, 'convert']);
         Route::get('/sales/price-lists', [SalesQuotationController::class, 'priceLists']);
+        Route::post('/sales/price-lists', [SalesQuotationController::class, 'createPriceList']);
+        Route::post('/sales/price-lists/{priceList}/items', [SalesQuotationController::class, 'addPriceListItem']);
         Route::get('/sales/orders', [SalesOrderController::class, 'index']);
         Route::post('/sales/orders', [SalesOrderController::class, 'store']);
         Route::post('/sales/orders/{order}/submit', [SalesOrderController::class, 'submit']);

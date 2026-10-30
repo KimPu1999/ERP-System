@@ -1,0 +1,1 @@
+<!doctype html><html><body><p>{{ $messageText }}</p><p>Quotation: <strong>{{ $quotation->number }}</strong></p><p>Total: {{ $quotation->total }}</p><p>Valid until: {{ $quotation->valid_until?->format('Y-m-d') ?? '—' }}</p></body></html>

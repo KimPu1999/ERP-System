@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->foreignUuid('company_id')->nullable()->after('tenant_id')->constrained()->nullOnDelete();
             $table->foreignUuid('branch_id')->nullable()->after('company_id')->constrained()->nullOnDelete();
             $table->foreignUuid('currency_id')->nullable()->after('customer_id')->constrained('accounting_currencies')->nullOnDelete();
+            $table->foreignUuid('customer_contact_id')->nullable()->after('customer_id')->constrained('customer_contacts')->nullOnDelete();
             $table->foreignUuid('assigned_salesperson_id')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
             // The price-list table is created below in this additive migration; keep this reference
             // nullable here and enforce tenant/company ownership in the quotation service.
@@ -64,6 +65,6 @@ return new class extends Migration {
     {
         Schema::dropIfExists('sales_quotation_communications'); Schema::dropIfExists('sales_quotation_responses'); Schema::dropIfExists('sales_quotation_approvals'); Schema::dropIfExists('sales_quotation_versions'); Schema::dropIfExists('sales_price_list_items'); Schema::dropIfExists('sales_price_lists');
         Schema::table('sales_quotation_items', function (Blueprint $table): void { $table->dropColumn(['description','unit','discount_type','discount_amount','tax_code']); });
-        Schema::table('sales_quotations', function (Blueprint $table): void { $table->dropColumn(['company_id','branch_id','currency_id','assigned_salesperson_id','price_list_id','current_version_id','quotation_date','customer_reference','approval_status','response_status','conversion_status','version_number','payment_terms','delivery_terms','terms_and_conditions','customer_notes','internal_notes','additional_charges','accepted_at','converted_order_id']); });
+        Schema::table('sales_quotations', function (Blueprint $table): void { $table->dropColumn(['company_id','branch_id','currency_id','customer_contact_id','assigned_salesperson_id','price_list_id','current_version_id','quotation_date','customer_reference','approval_status','response_status','conversion_status','version_number','payment_terms','delivery_terms','terms_and_conditions','customer_notes','internal_notes','additional_charges','accepted_at','converted_order_id']); });
     }
 };
