@@ -51,10 +51,14 @@ Verification: PHP syntax, route registration, frontend TypeScript, lint and prod
 - Secure expiring customer response links.
 - Binary PDF generation, attachments and configurable approval thresholds.
 
-## Phase 5 — Customer, quotation, and sales-order workspaces
-- Quotation create/detail/transition/convert flows.
-- Sales order create/detail/submit/approve flow with product, unit, tax, discount, and stock-location validation.
-- No cross-tenant or cross-company records in list/detail APIs.
+## Phase 5 — Sales order, availability and reservation workspace (implemented)
+- Company-scoped sales order register, KPI summary, details and print view.
+- Draft order creation/editing with backend totals and customer/product/warehouse reference validation.
+- Row-locked confirmation that reserves eligible inventory without changing physical quantity or creating stock movements.
+- Idempotent reservation source references, availability inspection, hold/cancel actions and reservation release.
+- Status history and tenant/company/branch authorization on order reads and mutations.
+
+Verification: PHP syntax, route registration, frontend TypeScript, ESLint and production build passed. PostgreSQL-backed reservation, concurrency and isolation tests remain blocked until an isolated test database is available.
 
 ## Phase 3 — Fulfillment and invoicing
 

@@ -55,6 +55,8 @@ import { PurchaseReturnsPage } from './pages/PurchaseReturnsPage';
 import { PurchaseReturnDetailsPage } from './pages/PurchaseReturnDetailsPage';
 import { PurchasingSettingsPage } from './pages/PurchasingSettingsPage';
 import { CrmOverviewPage, CustomerDirectoryPage, LeadDirectoryPage, OpportunityDirectoryPage, PipelinePage, ActivitiesPage } from './pages/CrmPhase3Pages';
+import { SalesOrdersPage } from './pages/SalesOrdersPage';
+import { SalesOrderDetailsPage } from './pages/SalesOrderDetailsPage';
 
 const client = new QueryClient();
 
@@ -87,7 +89,7 @@ export default function App() {
       <Route path="/purchasing/returns/:returnId" element={<PurchasingLayout />}><Route index element={<PurchaseReturnDetailsPage />} /></Route>
       <Route path="/purchasing/settings" element={<PurchasingLayout />}><Route index element={<PurchasingSettingsPage />} /></Route>
       <Route path="/purchasing/supplier-credits" element={<PurchasingLayout />}><Route index element={<SupplierCreditsPage />} /></Route>
-      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="quotations/:quotationId" element={<SalesQuotationDetailsPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
+      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="orders" element={<SalesOrdersPage />} /><Route path="orders/:orderId" element={<SalesOrderDetailsPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="quotations/:quotationId" element={<SalesQuotationDetailsPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />
