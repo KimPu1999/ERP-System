@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\{AccountingCurrency, BankAccount, ChartAccount, Company, FiscalPeriod, FiscalYear, JournalEntry};
+use App\Models\{AccountingCurrency, BankAccount, ChartAccount, Company, FiscalPeriod, FiscalYear, JournalEntry, JournalLine};
 use App\Services\{AccountingService, AuthorizationService};
 use App\Support\TenantContext;
+use App\Support\Decimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\DB;
@@ -185,6 +186,83 @@ final class AccountingController
         $period = DB::transaction(function () use ($period, $tenantId, $request): FiscalPeriod { $locked = FiscalPeriod::where('tenant_id', $tenantId)->whereKey($period->id)->lockForUpdate()->firstOrFail(); if ($locked->state !== 'closed') throw ValidationException::withMessages(['state' => ['Only a closed period can be locked.']]); $locked->update(['state' => 'locked', 'closed_by' => $request->user()->id, 'closed_at' => $locked->closed_at ?: now()]); return $locked->fresh('fiscalYear'); }); return response()->json(['data' => $period]);
     }
 
+    public function journals(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); $companyId = $request->string('company_id')->toString() ?: null; $scope = $this->readCompanies($request, $authorization, $tenantId, $companyId);
+        $query = JournalEntry::where('tenant_id', $tenantId)->with(['period', 'lines.account'])->when($scope !== null, fn ($q) => $q->whereIn('company_id', $scope))->when($request->filled('state'), fn ($q) => $q->where('state', $request->string('state')))->when($request->filled('search'), fn ($q) => $q->where(fn ($inner) => $inner->where('number', 'ilike', '%'.$request->string('search').'%')->orWhere('description', 'ilike', '%'.$request->string('search').'%')));
+        return response()->json(['data' => $query->orderByDesc('entry_date')->orderByDesc('created_at')->paginate(min(max($request->integer('per_page', 25), 1), 100))]);
+    }
+
+    public function journal(Request $request, JournalEntry $entry, AuthorizationService $authorization): JsonResponse
+    {
+        $this->authorizeJournal($request, $entry, $authorization, 'accounting.view');
+        return response()->json(['data' => $entry->load(['period.fiscalYear', 'lines.account', 'reversal'])]);
+    }
+
+    public function storeJournalDraft(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); $data = $request->validate(['company_id' => 'required|uuid', 'fiscal_period_id' => 'required|uuid', 'currency_id' => 'required|uuid', 'entry_date' => 'required|date', 'description' => 'nullable|string|max:5000', 'reference' => 'nullable|string|max:200', 'source_type' => 'nullable|string|max:100', 'source_id' => 'nullable|uuid', 'exchange_rate' => 'nullable|regex:/^\\d+(\\.\\d{1,12})?$/', 'idempotency_key' => 'required|string|max:100', 'lines' => 'required|array|min:2', 'lines.*.account_id' => 'required|uuid', 'lines.*.debit' => 'nullable|regex:/^\\d+(\\.\\d{1,6})?$/', 'lines.*.credit' => 'nullable|regex:/^\\d+(\\.\\d{1,6})?$/', 'lines.*.description' => 'nullable|string|max:1000']);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.create', $data['company_id']) || $authorization->allows($request->user(), $tenantId, 'accounting.manage', $data['company_id']), 403);
+        $entry = DB::transaction(function () use ($data, $tenantId, $request): JournalEntry {
+            $period = FiscalPeriod::where('tenant_id', $tenantId)->whereKey($data['fiscal_period_id'])->whereHas('fiscalYear', fn ($q) => $q->where('company_id', $data['company_id']))->firstOrFail();
+            if ($data['entry_date'] < $period->starts_on->toDateString() || $data['entry_date'] > $period->ends_on->toDateString()) throw ValidationException::withMessages(['entry_date' => ['The entry date is outside the selected fiscal period.']]);
+            if (JournalEntry::where('tenant_id', $tenantId)->where('idempotency_key', $data['idempotency_key'])->exists()) throw ValidationException::withMessages(['idempotency_key' => ['This journal request has already been used.']]);
+            $debit = '0'; $credit = '0'; $lines = [];
+            foreach ($data['lines'] as $line) {
+                $d = Decimal::normalize((string) ($line['debit'] ?? '0')); $c = Decimal::normalize((string) ($line['credit'] ?? '0'));
+                if ((Decimal::compare($d, '0') <= 0 && Decimal::compare($c, '0') <= 0) || (Decimal::compare($d, '0') > 0 && Decimal::compare($c, '0') > 0)) throw ValidationException::withMessages(['lines' => ['Each line must contain exactly one positive debit or credit.']]);
+                $account = ChartAccount::where('tenant_id', $tenantId)->whereKey($line['account_id'])->where('is_active', true)->where('posting_allowed', true)->firstOrFail();
+                if ($account->company_id !== null && $account->company_id !== $data['company_id']) throw ValidationException::withMessages(['lines' => ['An account is outside the selected company scope.']]);
+                $debit = Decimal::add($debit, $d); $credit = Decimal::add($credit, $c); $lines[] = [$account, $d, $c, $line['description'] ?? null];
+            }
+            if (count($lines) < 2 || Decimal::compare($debit, $credit) !== 0) throw ValidationException::withMessages(['lines' => ['Journal entries must have at least two lines and equal total debits and credits.']]);
+            $entry = JournalEntry::create(['tenant_id' => $tenantId, 'company_id' => $data['company_id'], 'fiscal_period_id' => $period->id, 'currency_id' => $data['currency_id'], 'created_by' => $request->user()->id, 'number' => 'JE-DRAFT-'.now()->format('Ym').'-'.strtoupper(bin2hex(random_bytes(3))), 'entry_date' => $data['entry_date'], 'state' => 'draft', 'source_type' => $data['source_type'] ?? null, 'source_id' => $data['source_id'] ?? null, 'idempotency_key' => $data['idempotency_key'], 'exchange_rate' => $data['exchange_rate'] ?? '1', 'description' => $data['description'] ?? null, 'reference' => $data['reference'] ?? null]);
+            foreach ($lines as [$account, $d, $c, $description]) JournalLine::create(['tenant_id' => $tenantId, 'journal_entry_id' => $entry->id, 'account_id' => $account->id, 'company_id' => $data['company_id'], 'debit' => $d, 'credit' => $c, 'base_debit' => Decimal::mul($d, (string) ($data['exchange_rate'] ?? '1')), 'base_credit' => Decimal::mul($c, (string) ($data['exchange_rate'] ?? '1')), 'description' => $description]);
+            return $entry;
+        });
+        return response()->json(['data' => $entry->load('lines')], 201);
+    }
+
+    public function submitJournal(Request $request, JournalEntry $entry, AuthorizationService $authorization): JsonResponse
+    {
+        $this->authorizeJournal($request, $entry, $authorization, 'accounting.submit');
+        abort_unless($entry->state === 'draft', 422, 'Only draft journals can be submitted.');
+        $entry->update(['state' => 'submitted', 'submitted_by' => $request->user()->id, 'submitted_at' => now()]);
+        return response()->json(['data' => $entry->fresh('lines')]);
+    }
+
+    public function approveJournal(Request $request, JournalEntry $entry, AuthorizationService $authorization): JsonResponse
+    {
+        $this->authorizeJournal($request, $entry, $authorization, 'accounting.approve');
+        abort_unless($entry->state === 'submitted', 422, 'Only submitted journals can be approved.');
+        abort_unless($entry->created_by !== $request->user()->id, 403, 'The journal creator cannot approve their own entry.');
+        $entry->update(['state' => 'approved', 'approved_by' => $request->user()->id, 'approved_at' => now()]);
+        return response()->json(['data' => $entry->fresh('lines')]);
+    }
+
+    public function rejectJournal(Request $request, JournalEntry $entry, AuthorizationService $authorization): JsonResponse
+    {
+        $this->authorizeJournal($request, $entry, $authorization, 'accounting.approve');
+        abort_unless(in_array($entry->state, ['submitted', 'approved'], true), 422, 'Only pending journals can be rejected.');
+        $data = $request->validate(['reason' => 'required|string|max:2000']);
+        $entry->update(['state' => 'rejected', 'rejected_by' => $request->user()->id, 'rejected_at' => now(), 'rejection_reason' => $data['reason']]);
+        return response()->json(['data' => $entry->fresh('lines')]);
+    }
+
+    public function postJournal(Request $request, JournalEntry $entry, AccountingService $accounting, AuthorizationService $authorization): JsonResponse
+    {
+        $this->authorizeJournal($request, $entry, $authorization, 'accounting.post');
+        return response()->json(['data' => $accounting->postDraft($entry, $request->user()->id)], 201);
+    }
+
+    public function ledger(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $data = $request->validate(['company_id' => 'required|uuid', 'from' => 'required|date', 'to' => 'required|date|after_or_equal:from', 'account_id' => 'nullable|uuid', 'search' => 'nullable|string|max:100']);
+        abort_unless($authorization->allows($request->user(), $this->tenant(), 'accounting.view', $data['company_id']) || $authorization->allows($request->user(), $this->tenant(), 'reports.view', $data['company_id']), 403);
+        $query = JournalLine::with(['account', 'entry'])->where('tenant_id', $this->tenant())->where('company_id', $data['company_id'])->whereHas('entry', fn ($q) => $q->where('state', 'posted')->whereBetween('entry_date', [$data['from'], $data['to']]))->when($request->filled('account_id'), fn ($q) => $q->where('account_id', $data['account_id']))->when($request->filled('search'), fn ($q) => $q->whereHas('entry', fn ($inner) => $inner->where('number', 'ilike', '%'.$data['search'].'%')->orWhere('description', 'ilike', '%'.$data['search'].'%')));
+        return response()->json(['data' => $query->orderBy('created_at')->paginate(min(max($request->integer('per_page', 50), 10), 100))]);
+    }
+
     public function reverse(Request $request, JournalEntry $entry, AccountingService $accounting, AuthorizationService $authorization): JsonResponse
     {
         $tenantId = $this->tenant();
@@ -230,6 +308,13 @@ final class AccountingController
             if ($parent->id === $accountId) throw ValidationException::withMessages(['parent_id' => ['An account cannot be placed below its descendant.']]);
             $parent = $parent->parent_id ? ChartAccount::where('tenant_id', $tenantId)->whereKey($parent->parent_id)->first() : null;
         }
+    }
+
+    private function authorizeJournal(Request $request, JournalEntry $entry, AuthorizationService $authorization, string $permission): void
+    {
+        $tenantId = $this->tenant(); abort_unless($entry->tenant_id === $tenantId, 404);
+        $allowed = $authorization->allows($request->user(), $tenantId, $permission, $entry->company_id) || ($permission === 'accounting.view' && $authorization->allows($request->user(), $tenantId, 'reports.view', $entry->company_id));
+        abort_unless($allowed, 403);
     }
 
     private function tenant(): string

@@ -53,6 +53,7 @@ const optionalEnglish = {
   'accounting.equity': 'Equity',
   'accounting.revenue': 'Revenue',
   'accounting.expense': 'Expenses',
+  'nav.journals': 'Journal entries',
 } as const;
 
 const optionalBurmese = {
@@ -102,6 +103,7 @@ const optionalBurmese = {
   'accounting.equity': 'ပိုင်ရှင်အစုရှယ်ယာတန်ဖိုး',
   'accounting.revenue': 'ဝင်ငွေ',
   'accounting.expense': 'အသုံးစရိတ်များ',
+  'nav.journals': 'စာရင်းသွင်းမှတ်တမ်းများ',
 } as const;
 
 const messages = {

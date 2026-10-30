@@ -457,8 +457,16 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/accounting/periods/{period}/close', [AccountingController::class, 'closePeriod']);
         Route::post('/accounting/periods/{period}/reopen', [AccountingController::class, 'reopenPeriod']);
         Route::post('/accounting/periods/{period}/lock', [AccountingController::class, 'lockPeriod']);
-        Route::post('/accounting/journals', [AccountingController::class, 'post']);
+        Route::post('/accounting/journals', [AccountingController::class, 'storeJournalDraft']);
+        Route::get('/accounting/journals', [AccountingController::class, 'journals']);
+        Route::post('/accounting/journals/drafts', [AccountingController::class, 'storeJournalDraft']);
+        Route::get('/accounting/journals/{entry}', [AccountingController::class, 'journal']);
+        Route::post('/accounting/journals/{entry}/submit', [AccountingController::class, 'submitJournal']);
+        Route::post('/accounting/journals/{entry}/approve', [AccountingController::class, 'approveJournal']);
+        Route::post('/accounting/journals/{entry}/reject', [AccountingController::class, 'rejectJournal']);
+        Route::post('/accounting/journals/{entry}/post', [AccountingController::class, 'postJournal']);
         Route::post('/accounting/journals/{entry}/reverse', [AccountingController::class, 'reverse']);
+        Route::get('/accounting/ledger', [AccountingController::class, 'ledger']);
         Route::get('/accounting/reports/trial-balance', [AccountingController::class, 'trialBalance']);
         Route::get('/accounting/reports/financial', [AccountingController::class, 'financialReport']);
         Route::get('/hr/employees', [HrController::class, 'employees']);
