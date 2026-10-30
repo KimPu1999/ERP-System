@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -75,6 +76,7 @@ final class CompanyController
     {
         $tenantId = app(TenantContext::class)->id();
         abort_unless($tenantId && $authorization->allows($request->user(), $tenantId, 'company.manage'), 403);
+        $this->ensureCurrencyCatalog((string) $tenantId);
         $data = $request->validate($this->createRules($tenantId));
         $subscriptions->limit($tenantId, 'companies', Company::where('tenant_id', $tenantId)->count());
         $company = DB::transaction(function () use ($data, $tenantId, $request): Company {
@@ -242,6 +244,13 @@ final class CompanyController
         $company->update([$column => null]);
         $audit->record($request, "company.{$kind}.deleted", $company->tenant_id, $company);
         return response()->json(['data' => $this->payload($company->fresh())]);
+    }
+
+    private function ensureCurrencyCatalog(string $tenantId): void
+    {
+        foreach ([['MMK', 'Myanmar Kyat'], ['USD', 'United States Dollar'], ['SGD', 'Singapore Dollar'], ['THB', 'Thai Baht'], ['EUR', 'Euro']] as [$code, $name]) {
+            DB::table('accounting_currencies')->insertOrIgnore(['id' => (string) Str::uuid(), 'tenant_id' => $tenantId, 'code' => $code, 'name' => $name, 'decimal_places' => 2, 'is_base' => false, 'created_at' => now(), 'updated_at' => now()]);
+        }
     }
 
     private function assertCompany(Company $company): void

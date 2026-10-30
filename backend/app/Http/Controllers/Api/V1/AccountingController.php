@@ -9,6 +9,7 @@ use App\Support\Decimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class AccountingController
@@ -95,6 +96,9 @@ final class AccountingController
     {
         $tenantId = $this->tenant();
         $this->readCompanies($request, $authorization, $tenantId, null);
+        foreach ([['MMK', 'Myanmar Kyat'], ['USD', 'United States Dollar'], ['SGD', 'Singapore Dollar'], ['THB', 'Thai Baht'], ['EUR', 'Euro']] as [$code, $name]) {
+            DB::table('accounting_currencies')->insertOrIgnore(['id' => (string) Str::uuid(), 'tenant_id' => $tenantId, 'code' => $code, 'name' => $name, 'decimal_places' => 2, 'is_base' => false, 'created_at' => now(), 'updated_at' => now()]);
+        }
         return response()->json(['data' => AccountingCurrency::where('tenant_id', $tenantId)->orderBy('code')->get()]);
     }
 
