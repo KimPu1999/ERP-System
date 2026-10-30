@@ -46614,3 +46614,19 @@ LINE 1: select count(*) as \"aggregate\" from \"supplier_financial_prof...
 #77 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/kimpu/De...')
 #78 {main}
 "} 
+[2026-10-30 11:55:09] local.ERROR: The "--columns" option does not exist. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\RuntimeException(code: 0): The \"--columns\" option does not exist. at /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Input/ArgvInput.php:226)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Input/ArgvInput.php(153): Symfony\\Component\\Console\\Input\\ArgvInput->addLongOption('columns', 'Method,URI,Acti...')
+#1 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Input/ArgvInput.php(88): Symfony\\Component\\Console\\Input\\ArgvInput->parseLongOption('--columns=Metho...')
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Input/ArgvInput.php(77): Symfony\\Component\\Console\\Input\\ArgvInput->parseToken('--columns=Metho...', true)
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Input/Input.php(53): Symfony\\Component\\Console\\Input\\ArgvInput->parse()
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(238): Symfony\\Component\\Console\\Input\\Input->bind(Object(Symfony\\Component\\Console\\Input\\InputDefinition))
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(1154): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(380): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\RouteListCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(219): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(205): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#12 {main}
+"} 
