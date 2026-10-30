@@ -184,7 +184,7 @@ export type RoleAssignment = { id: string; role_id: string; user_id: string; com
 export const getRoleAssignments = (params: { company_id?: string; role_id?: string } = {}) => api<{ data: RoleAssignment[] }>(`/role-assignments${queryString(params) ? `?${queryString(params)}` : ''}`);
 export const createRoleAssignment = (data: { user_id: string; role_id: string; company_id?: string; branch_id?: string; department_id?: string }) => api<{ data: RoleAssignment }>('/role-assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const deleteRoleAssignment = (assignmentId: string) => api<{ status: string }>(`/role-assignments/${assignmentId}`, { method: 'DELETE' });
-export type Product = { id: string; name: string; status: string; description?: string | null; category_id?: string | null; brand_id?: string | null; variants: Array<{ id: string; sku: string; internal_barcode: string; price: string; cost?: string; unit_id?: string }> };
+export type Product = { id: string; name: string; status: string; description?: string | null; category_id?: string | null; brand_id?: string | null; brand?: CatalogReference | null; variants: Array<{ id: string; sku: string; internal_barcode: string; price: string; cost?: string; unit_id?: string }> };
 export type InventoryBalance = {
   id: string;
   variant_id: string;
@@ -205,6 +205,7 @@ export const getProducts = (params: { search?: string; status?: string; page?: n
 export type CatalogReference = { id: string; name: string; slug?: string; code?: string; parent_id?: string | null; decimal_places?: number };
 export type CatalogReferences = { categories: CatalogReference[]; brands: CatalogReference[]; units: CatalogReference[] };
 export const getCatalogReferences = () => api<CatalogReferences>('/catalog/references');
+export const createCatalogReference = (data: { type: 'brand' | 'category' | 'unit'; name: string; code?: string; parent_id?: string | null; decimal_places?: number }) => api<{ data: CatalogReference }>('/catalog/references', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const createProduct = (data: Record<string, unknown>) => api<{ data: Product }>('/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export type ProductCategory = { id: string; name: string; slug: string; parent_id?: string | null; parent?: { id: string; name: string; slug: string } | null; direct_product_count: number; subcategory_count: number; created_at: string; updated_at: string };
 export type ProductCategoryPage = { data: { data: ProductCategory[]; current_page: number; last_page: number; per_page: number; total: number } };

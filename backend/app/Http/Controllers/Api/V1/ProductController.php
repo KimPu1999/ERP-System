@@ -25,7 +25,7 @@ final class ProductController
         $sort = in_array($request->string('sort')->toString(), $allowedSorts, true) ? $request->string('sort')->toString() : 'name';
         $direction = $request->string('direction')->toString() === 'desc' ? 'desc' : 'asc';
         $search = $request->string('search')->toString();
-        $query = Product::query()->where('tenant_id', app(TenantContext::class)->id())->with('variants')
+        $query = Product::query()->where('tenant_id', app(TenantContext::class)->id())->with(['variants', 'brand'])
             ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('name', 'ilike', "%{$search}%")->orWhereHas('variants', fn ($variant) => $variant->where('name', 'ilike', "%{$search}%")->orWhere('sku', 'ilike', "%{$search}%")->orWhere('internal_barcode', 'ilike', "%{$search}%")->orWhere('gs1_identifier', 'ilike', "%{$search}%"))))
             ->when($request->string('status')->isNotEmpty(), fn ($query) => $query->where('status', $request->string('status')))
             ->orderBy($sort, $direction);
@@ -41,7 +41,7 @@ final class ProductController
         if (! empty($data['variant']['gs1_identifier'])) abort_if(ProductVariant::where('tenant_id', $tenantId)->where('gs1_identifier', $data['variant']['gs1_identifier'])->exists(), 422, 'A product barcode with this value already exists in this workspace.');
         $this->assertReferences($tenantId, $data);
         $product = DB::transaction(function () use ($data, $tenantId, $barcodes): Product { $product = Product::create(['tenant_id' => $tenantId, 'name' => $data['name'], 'slug' => $data['slug'] ?? Str::slug($data['name']).'-'.Str::lower(Str::random(6)), 'description' => $data['description'] ?? null, 'category_id' => $data['category_id'] ?? null, 'brand_id' => $data['brand_id'] ?? null, 'status' => $data['status'] ?? 'active']); $variant = $data['variant']; $product->variants()->create(['tenant_id' => $tenantId, 'unit_id' => $variant['unit_id'], 'name' => $variant['name'] ?? null, 'sku' => $variant['sku'], 'internal_barcode' => $barcodes->internal($tenantId), 'gs1_identifier' => $variant['gs1_identifier'] ?? null, 'cost' => $variant['cost'], 'price' => $variant['price'], 'is_active' => true]); return $product->load('variants'); });
-        $audit->record($request, 'product.created', $tenantId, $product); return response()->json(['data' => $product], 201);
+        $audit->record($request, 'product.created', $tenantId, $product); return response()->json(['data' => $product->load('brand')], 201);
     }
 
     public function export(Request $request): Response

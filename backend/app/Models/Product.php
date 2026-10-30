@@ -2,4 +2,4 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-class Product extends Model { use HasUuids; protected $fillable = ['tenant_id', 'category_id', 'brand_id', 'name', 'slug', 'description', 'status']; public function variants() { return $this->hasMany(ProductVariant::class); } }
+class Product extends Model { use HasUuids; protected $fillable = ['tenant_id', 'category_id', 'brand_id', 'name', 'slug', 'description', 'status']; public function variants() { return $this->hasMany(ProductVariant::class); } public function brand() { return $this->belongsTo(Brand::class); } }
