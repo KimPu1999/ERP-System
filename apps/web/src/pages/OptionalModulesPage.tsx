@@ -1,18 +1,1 @@
-import { useQuery } from '@tanstack/react-query';
-import { RefreshCw } from 'lucide-react';
-import { ApiError, getAssets, getModules, getPosRegisters, getProjects } from '../lib/api';
-
-export function OptionalModulesPage() {
-  const modules = useQuery({ queryKey: ['modules'], queryFn: getModules });
-  const pos = useQuery({ queryKey: ['pos-registers'], queryFn: getPosRegisters, enabled: modules.data?.data.some((module) => module.module_key === 'pos' && module.enabled) });
-  const projects = useQuery({ queryKey: ['projects'], queryFn: getProjects, enabled: modules.data?.data.some((module) => module.module_key === 'projects' && module.enabled) });
-  const assets = useQuery({ queryKey: ['fixed-assets'], queryFn: getAssets, enabled: modules.data?.data.some((module) => module.module_key === 'fixed_assets' && module.enabled) });
-  const error = (modules.error ?? pos.error ?? projects.error ?? assets.error) as Error | null;
-  const failedSource = modules.error ? 'module configuration' : pos.error ? 'POS registers' : projects.error ? 'projects' : assets.error ? 'fixed assets' : null;
-  const errorDetails = error instanceof ApiError ? `${error.message} (HTTP ${error.status})` : error?.message;
-  const loading = modules.isLoading || pos.isLoading || projects.isLoading || assets.isLoading;
-  const moduleRows = modules.data?.data ?? [];
-  const refresh = () => { void modules.refetch(); void pos.refetch(); void projects.refetch(); void assets.refetch(); };
-  const enabled = (key: string) => moduleRows.find((module) => module.module_key === key)?.enabled;
-  return <section className="page-section"><div className="page-heading"><div><p className="eyebrow">Optional modules</p><h1>POS, Projects & Fixed Assets</h1></div><button className="icon-button" type="button" aria-label="Refresh optional modules" onClick={refresh}><RefreshCw size={16} /></button></div>{error && <div className="alert alert-danger" role="alert">Unable to load {failedSource ?? 'optional module'} data. {errorDetails}<button className="table-action" type="button" onClick={refresh}>Retry</button></div>}<div className="metric-grid">{moduleRows.map((module) => <div className="metric" key={module.module_key}><span>{module.module_key.replace('_', ' ')}</span><strong>{loading ? '…' : module.enabled ? 'Enabled' : 'Disabled'}</strong><small>{module.enabled ? 'Available to this tenant' : 'Not enabled'}</small></div>)}{loading && moduleRows.length === 0 && <div className="metric"><span>Module status</span><strong>…</strong></div>}</div><div className="panel"><div className="table-card-header"><div><h2>Shared workflow surfaces</h2><p className="muted">Module records connect to the existing inventory, accounting and organization services.</p></div></div>{loading && <div className="empty">Loading module summaries…</div>}{!loading && !error && moduleRows.length === 0 && <div className="empty">No optional module configuration is available.</div>}{!loading && !error && moduleRows.length > 0 && <div className="table-scroll"><table><thead><tr><th>Module</th><th>Status</th><th>Records</th><th>Integration</th></tr></thead><tbody><tr><td>POS</td><td><span className="badge">{enabled('pos') ? 'Enabled' : 'Disabled'}</span></td><td>{enabled('pos') ? `${pos.data?.data.data.length ?? 0} registers` : '—'}</td><td>Inventory movements + accounting event</td></tr><tr><td>Projects</td><td><span className="badge">{enabled('projects') ? 'Enabled' : 'Disabled'}</span></td><td>{enabled('projects') ? `${projects.data?.data.data.length ?? 0} projects` : '—'}</td><td>Employees, customers and budgets</td></tr><tr><td>Fixed assets</td><td><span className="badge">{enabled('fixed_assets') ? 'Enabled' : 'Disabled'}</span></td><td>{enabled('fixed_assets') ? `${assets.data?.data.data.length ?? 0} assets` : '—'}</td><td>Accounting event + depreciation ledger link</td></tr></tbody></table></div>}</div></section>;
-}
+export { OptionalModulesPage } from './OptionalModuleWorkspacePage';
