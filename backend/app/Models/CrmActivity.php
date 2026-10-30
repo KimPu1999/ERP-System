@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class CrmActivity extends Model { use HasUuids; protected $table='crm_activities'; protected $fillable=['tenant_id','company_id','branch_id','customer_id','lead_id','opportunity_id','assigned_user_id','created_by','activity_type','subject','due_at','priority','status','description','outcome','completed_at']; protected function casts():array{return ['due_at'=>'datetime','completed_at'=>'datetime'];} public function customer(){return $this->belongsTo(Customer::class);} public function lead(){return $this->belongsTo(Lead::class);} public function opportunity(){return $this->belongsTo(Opportunity::class);} public function assignee(){return $this->belongsTo(User::class,'assigned_user_id');} }

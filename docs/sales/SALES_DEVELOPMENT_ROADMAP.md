@@ -20,13 +20,21 @@ Verification: `DashboardOverviewTest`, `SalesPhaseTest`, `TenantIsolationTest`, 
 
 Remaining Phase 3 dependencies: customer/quotation/order management UI, delivery/invoice detail workspaces, payment workflow UI, returns/refunds, and dedicated Sales dashboard feature tests with seeded financial fixtures.
 
-## Phase 3 — Customer, quotation, and sales-order workspaces
+## Phase 3 — CRM customer, lead, opportunity and activity workspaces (implemented)
 
 Dependencies: existing customer, quotation, product, inventory, and sales authorization services.
 
 Acceptance criteria:
 
-- Paginated customer directory with authorized company scope.
+- Paginated customer directory, profile, contacts and addresses with authorized company scope.
+- Lead lifecycle and transactional new/existing-customer conversion with retry protection.
+- Opportunity directory and accessible Kanban pipeline with stage history.
+- Follow-up activities with company-scoped completion.
+- CRM dashboard and pipeline aggregates that keep forecast values separate from revenue.
+
+Verification: frontend TypeScript, ESLint and production build passed; database-backed CRM verification is blocked until an isolated PostgreSQL service is available.
+
+## Phase 3B — Customer, quotation, and sales-order workspaces
 - Quotation create/detail/transition/convert flows.
 - Sales order create/detail/submit/approve flow with product, unit, tax, discount, and stock-location validation.
 - No cross-tenant or cross-company records in list/detail APIs.

@@ -8,8 +8,11 @@ type SalesNavItem = { label: string; to?: string; icon: LucideIcon; permission?:
 
 const salesNavItems: SalesNavItem[] = [
   { label: 'Overview', to: '/crm-sales', icon: BarChart3 },
-  { label: 'Customers', icon: Users, unavailable: 'Customer directory UI is planned for Sales Phase 2.' },
-  { label: 'Leads & Opportunities', icon: Target, unavailable: 'Lead and opportunity workflows are not implemented.' },
+  { label: 'Customers', to: '/crm-sales/customers', icon: Users },
+  { label: 'Leads', to: '/crm-sales/leads', icon: Target },
+  { label: 'Opportunities', to: '/crm-sales/opportunities', icon: Target },
+  { label: 'Pipeline', to: '/crm-sales/pipeline', icon: BarChart3 },
+  { label: 'Activities', to: '/crm-sales/activities', icon: ClipboardList },
   { label: 'Quotations', icon: FileText, permission: 'sales.manage', unavailable: 'Quotation management UI is planned for Sales Phase 2.' },
   { label: 'Sales Orders', icon: ShoppingCart, permission: 'sales.manage', unavailable: 'Sales order management UI is planned for Sales Phase 2.' },
   { label: 'Deliveries', icon: Truck, permission: 'sales.manage', unavailable: 'Delivery management UI is planned for Sales Phase 3.' },
