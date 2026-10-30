@@ -500,9 +500,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/projects/{project}/expenses', [ProjectController::class, 'expense']);
         Route::patch('/project-tasks/{task}', [ProjectController::class, 'updateTask']);
         Route::post('/project-timesheets/{timesheet}/transition', [ProjectController::class, 'timesheetTransition']);
+        Route::get('/fixed-assets/summary', [FixedAssetController::class, 'summary']);
         Route::get('/fixed-assets/categories', [FixedAssetController::class, 'categories']);
+        Route::post('/fixed-assets/categories', [FixedAssetController::class, 'storeCategory']);
         Route::get('/fixed-assets', [FixedAssetController::class, 'assets']);
         Route::post('/fixed-assets', [FixedAssetController::class, 'acquire']);
+        Route::get('/fixed-assets/{asset}', [FixedAssetController::class, 'show']);
+        Route::patch('/fixed-assets/{asset}', [FixedAssetController::class, 'update']);
+        Route::post('/fixed-assets/{asset}/capitalize', [FixedAssetController::class, 'capitalize']);
         Route::post('/fixed-assets/{asset}/depreciate', [FixedAssetController::class, 'depreciate']);
         Route::get('/approvals/definitions', [WorkflowController::class, 'definitions']);
         Route::post('/approvals/definitions', [WorkflowController::class, 'storeDefinition']);
