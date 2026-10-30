@@ -2090,3 +2090,172 @@ table { min-width: 0; }
   .purchasing-clear,
   .purchasing-refresh { flex: 1; }
 }
+
+/* Shared Purchasing workspace finish: functional content leads, while the shell carries context. */
+.purchasing-workspace-layout > .purchasing-page > .purchasing-page-header > div > h1,
+.purchasing-workspace-layout > .page-section.purchasing-page > .purchasing-page-header > div > h1,
+.purchasing-workspace-layout > .purchasing-page > .purchasing-page-header > div > .muted,
+.purchasing-workspace-layout > .page-section.purchasing-page > .purchasing-page-header > div > .muted {
+  display: none;
+}
+.purchasing-workspace-layout > .purchasing-page > .purchasing-page-header,
+.purchasing-workspace-layout > .page-section.purchasing-page > .purchasing-page-header {
+  min-height: 0;
+  margin-bottom: 12px;
+}
+.purchasing-workspace-layout .purchasing-page-header > div:first-child,
+.purchasing-workspace-layout .purchasing-detail-header > div:first-child { min-width: 0; }
+.purchasing-workspace-layout .purchasing-page-header .purchasing-page-actions {
+  margin-left: auto;
+}
+.purchasing-workspace-layout .purchasing-kpi-grid,
+.purchasing-workspace-layout .crm-grid,
+.purchasing-workspace-layout .supplier-catalog-kpi-grid {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+.purchasing-workspace-layout .purchasing-kpi-card,
+.purchasing-workspace-layout .crm-card,
+.purchasing-workspace-layout .supplier-catalog-kpi {
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+.purchasing-workspace-layout .purchasing-kpi-card small { display: none; }
+.purchasing-workspace-layout .crm-grid .crm-card {
+  min-height: 92px;
+  padding: 15px;
+}
+.purchasing-workspace-layout .crm-grid .crm-card strong {
+  margin-top: 9px;
+  font-size: 22px;
+  letter-spacing: -.03em;
+}
+.purchasing-workspace-layout .purchasing-table-card,
+.purchasing-workspace-layout .table-card {
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+.purchasing-workspace-layout .purchasing-table-card table,
+.purchasing-workspace-layout .table-card table { width: 100%; }
+.purchasing-workspace-layout .purchasing-table-card tbody tr:hover,
+.purchasing-workspace-layout .table-card tbody tr:hover { background: var(--surface-muted); }
+.purchasing-workspace-layout .purchasing-table-card td,
+.purchasing-workspace-layout .table-card td { vertical-align: middle; }
+.purchasing-workspace-layout .table-card-heading {
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.purchasing-workspace-layout .table-card-heading .eyebrow { display: none; }
+.purchasing-workspace-layout .table-card-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+}
+.purchasing-workspace-layout .purchasing-filter-toolbar > label > span {
+  color: var(--muted);
+}
+.purchasing-workspace-layout .purchasing-filter-toolbar .crm-search {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+.purchasing-workspace-layout .purchasing-filter-toolbar .crm-search input {
+  min-height: 36px;
+  font-size: 12px;
+}
+.purchasing-workspace-layout .supplier-catalog-toolbar {
+  min-height: 58px;
+  margin: 0 0 12px;
+  padding: 9px 11px;
+  border-radius: 12px;
+}
+.purchasing-workspace-layout .supplier-catalog-search {
+  min-height: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+.purchasing-workspace-layout .supplier-catalog-toolbar-meta {
+  gap: 10px;
+}
+.purchasing-workspace-layout .dashboard-two-col {
+  margin: 0 0 14px;
+}
+.purchasing-workspace-layout .dashboard-two-col > .card,
+.purchasing-workspace-layout .dashboard-two-col > .table-card {
+  min-width: 0;
+  margin: 0;
+  border-radius: 12px;
+}
+.purchasing-workspace-layout .metric-row {
+  margin: 10px 0;
+}
+.purchasing-workspace-layout .card > h2:first-child,
+.purchasing-workspace-layout .card > h3:first-child {
+  margin-top: 0;
+}
+.purchasing-workspace-layout .table-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 11px 15px;
+  border-top: 1px solid var(--border);
+}
+.purchasing-workspace-layout .status-badge,
+.purchasing-workspace-layout .purchasing-status { text-transform: capitalize; }
+.purchasing-workspace-layout .table-primary,
+.purchasing-workspace-layout td strong {
+  overflow-wrap: anywhere;
+}
+.purchasing-workspace-layout .purchase-form-card,
+.purchasing-workspace-layout .purchase-form-summary {
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+.purchasing-workspace-layout .purchase-form-card .form-helper:not(.purchase-form-wide),
+.purchasing-workspace-layout .purchase-form-summary .form-helper {
+  color: var(--muted);
+}
+.purchasing-workspace-layout .supplier-catalog-modal {
+  border-radius: 14px;
+}
+
+@media (max-width: 1180px) {
+  .purchasing-workspace-layout .purchasing-kpi-grid,
+  .purchasing-workspace-layout .crm-grid,
+  .purchasing-workspace-layout .supplier-catalog-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .purchasing-workspace-layout .purchasing-page-header,
+  .purchasing-workspace-layout .purchasing-detail-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .purchasing-workspace-layout .purchasing-page-header .purchasing-page-actions {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+  .purchasing-workspace-layout .purchasing-kpi-grid,
+  .purchasing-workspace-layout .crm-grid,
+  .purchasing-workspace-layout .supplier-catalog-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .purchasing-workspace-layout .supplier-catalog-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .purchasing-workspace-layout .supplier-catalog-toolbar-meta { justify-content: space-between; }
+}
+@media (max-width: 480px) {
+  .purchasing-workspace-layout .purchasing-kpi-grid,
+  .purchasing-workspace-layout .crm-grid,
+  .purchasing-workspace-layout .supplier-catalog-kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .purchasing-workspace-layout .purchasing-kpi-card,
+  .purchasing-workspace-layout .crm-grid .crm-card,
+  .purchasing-workspace-layout .supplier-catalog-kpi { padding: 11px; }
+  .purchasing-workspace-layout .crm-grid .crm-card strong,
+  .purchasing-workspace-layout .supplier-catalog-kpi strong { font-size: 18px; }
+}
