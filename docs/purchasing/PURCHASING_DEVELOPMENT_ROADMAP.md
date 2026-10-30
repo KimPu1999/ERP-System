@@ -100,3 +100,22 @@ Acceptance criteria:
 - [ ] Queued scheduled reminders and notification deduplication
 - [ ] Secure report export adapters
 - [ ] Database-backed feature, concurrency and regression tests
+
+## Suppliers Phase 6
+
+- [x] Explicit supplier portal membership and buyer-company scope
+- [x] Hashed one-time portal invitations and access revocation
+- [x] Supplier portal dashboard and released PO visibility
+- [x] PO acknowledgement and discrepancy reporting foundation
+- [x] Delivery commitment proposals
+- [x] ASN submission without inventory posting
+- [x] Supplier invoice intake without AP posting
+- [x] Supplier/company-scoped messaging foundation
+- [x] Corrective-action supplier response foundation
+- [x] Tenant RLS and portal authorization boundary
+- [ ] Dedicated external registration/login/reset UI
+- [ ] Secure document upload/download UI
+- [ ] Buyer-side ASN receiving integration
+- [ ] Portal notifications and queue deduplication
+- [ ] Full supplier team-management UI
+- [ ] Database-backed portal security and concurrency tests
