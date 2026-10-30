@@ -1110,6 +1110,40 @@ tr:last-child td { border-bottom: 0; }
   .organization-summary-list { grid-template-columns: 1fr; }
 }
 
+/* Workspace dashboard desktop width and grid refinement */
+.dashboard-page.foundation-page { width: 100%; max-width: none; margin: 0; padding: 20px clamp(20px, 2.2vw, 32px) 40px; }
+.dashboard-foundation { width: 100%; min-width: 0; gap: 20px; }
+.dashboard-section-block { width: 100%; min-width: 0; }
+.dashboard-welcome { width: 100%; }
+.dashboard-toolbar { width: 100%; min-width: 0; }
+.dashboard-kpi-grid { width: 100%; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.phase3-analytics-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; width: 100%; }
+.phase3-revenue-card { grid-column: span 6; }
+.phase3-growth-card, .phase3-financial-card { grid-column: span 3; }
+.phase3-analytics-card { min-height: 286px; width: 100%; }
+.business-performance-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
+.top-products-split { display: contents; }
+.business-performance-panel { min-height: 250px; width: 100%; }
+.foundation-three-grid { width: 100%; }
+
+@media (max-width: 1279px) {
+  .dashboard-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .phase3-analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phase3-revenue-card { grid-column: span 2; }
+  .phase3-growth-card, .phase3-financial-card { grid-column: span 1; }
+}
+@media (max-width: 980px) {
+  .dashboard-page.foundation-page { padding-right: 22px; padding-left: 22px; }
+  .business-performance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .business-performance-grid > .business-performance-panel:first-child { grid-column: span 2; }
+}
+@media (max-width: 680px) {
+  .dashboard-page.foundation-page { padding-right: 16px; padding-left: 16px; }
+  .dashboard-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phase3-analytics-grid, .business-performance-grid { grid-template-columns: 1fr; }
+  .phase3-revenue-card, .phase3-growth-card, .phase3-financial-card, .business-performance-grid > .business-performance-panel:first-child { grid-column: auto; }
+}
+
 /* Company dashboard refinement */
 .dashboard-page { padding-top: 20px; }
 .dashboard-welcome { align-items: center; margin-bottom: 14px; }
