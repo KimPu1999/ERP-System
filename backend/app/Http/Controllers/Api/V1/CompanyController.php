@@ -45,7 +45,7 @@ final class CompanyController
         $tenantId = (string) $request->header('X-Tenant-Id');
         $ids = [];
         $allCompanies = false;
-        foreach (['reports.view', 'organization.manage', 'company.manage'] as $permission) {
+        foreach (['reports.view', 'organization.manage', 'company.manage', 'procurement.manage'] as $permission) {
             $accessible = $authorization->accessibleCompanyIds($request->user(), $tenantId, $permission);
             if ($accessible === null) {
                 $allCompanies = true;
