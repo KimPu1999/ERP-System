@@ -453,6 +453,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/accounting/reports/financial', [AccountingController::class, 'financialReport']);
         Route::get('/hr/employees', [HrController::class, 'employees']);
         Route::post('/hr/employees', [HrController::class, 'storeEmployee']);
+        Route::patch('/hr/employees/{employee}', [HrController::class, 'updateEmployee']);
+        Route::patch('/hr/employees/{employee}/status', [HrController::class, 'status']);
         Route::get('/hr/job-titles', [HrController::class, 'jobTitles']);
         Route::post('/hr/leave-requests', [HrController::class, 'leave']);
         Route::post('/hr/leave-requests/{leaveRequest}/approve', [HrController::class, 'approveLeave']);

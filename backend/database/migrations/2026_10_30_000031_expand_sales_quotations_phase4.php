@@ -8,38 +8,38 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('sales_quotations', function (Blueprint $table): void {
-            $table->foreignUuid('company_id')->nullable()->after('tenant_id')->constrained()->nullOnDelete();
-            $table->foreignUuid('branch_id')->nullable()->after('company_id')->constrained()->nullOnDelete();
-            $table->foreignUuid('currency_id')->nullable()->after('customer_id')->constrained('accounting_currencies')->nullOnDelete();
-            $table->foreignUuid('customer_contact_id')->nullable()->after('customer_id')->constrained('customer_contacts')->nullOnDelete();
-            $table->foreignUuid('assigned_salesperson_id')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
+            if (! Schema::hasColumn('sales_quotations', 'company_id')) $table->foreignUuid('company_id')->nullable()->after('tenant_id')->constrained()->nullOnDelete();
+            if (! Schema::hasColumn('sales_quotations', 'branch_id')) $table->foreignUuid('branch_id')->nullable()->after('company_id')->constrained()->nullOnDelete();
+            if (! Schema::hasColumn('sales_quotations', 'currency_id')) $table->foreignUuid('currency_id')->nullable()->after('customer_id')->constrained('accounting_currencies')->nullOnDelete();
+            if (! Schema::hasColumn('sales_quotations', 'customer_contact_id')) $table->foreignUuid('customer_contact_id')->nullable()->after('customer_id')->constrained('customer_contacts')->nullOnDelete();
+            if (! Schema::hasColumn('sales_quotations', 'assigned_salesperson_id')) $table->foreignUuid('assigned_salesperson_id')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
             // The price-list table is created below in this additive migration; keep this reference
             // nullable here and enforce tenant/company ownership in the quotation service.
-            $table->uuid('price_list_id')->nullable()->after('currency_id');
-            $table->foreignUuid('current_version_id')->nullable()->after('price_list_id');
-            $table->date('quotation_date')->nullable();
-            $table->string('customer_reference')->nullable();
-            $table->string('approval_status')->default('not_required');
-            $table->string('response_status')->default('pending');
-            $table->string('conversion_status')->default('not_converted');
-            $table->unsignedInteger('version_number')->default(1);
-            $table->text('payment_terms')->nullable();
-            $table->text('delivery_terms')->nullable();
-            $table->text('terms_and_conditions')->nullable();
-            $table->text('customer_notes')->nullable();
-            $table->text('internal_notes')->nullable();
-            $table->decimal('additional_charges', 20, 6)->default(0);
-            $table->date('accepted_at')->nullable();
-            $table->foreignUuid('converted_order_id')->nullable()->constrained('sales_orders')->nullOnDelete();
+            if (! Schema::hasColumn('sales_quotations', 'price_list_id')) $table->uuid('price_list_id')->nullable()->after('currency_id');
+            if (! Schema::hasColumn('sales_quotations', 'current_version_id')) $table->foreignUuid('current_version_id')->nullable()->after('price_list_id');
+            if (! Schema::hasColumn('sales_quotations', 'quotation_date')) $table->date('quotation_date')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'customer_reference')) $table->string('customer_reference')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'approval_status')) $table->string('approval_status')->default('not_required');
+            if (! Schema::hasColumn('sales_quotations', 'response_status')) $table->string('response_status')->default('pending');
+            if (! Schema::hasColumn('sales_quotations', 'conversion_status')) $table->string('conversion_status')->default('not_converted');
+            if (! Schema::hasColumn('sales_quotations', 'version_number')) $table->unsignedInteger('version_number')->default(1);
+            if (! Schema::hasColumn('sales_quotations', 'payment_terms')) $table->text('payment_terms')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'delivery_terms')) $table->text('delivery_terms')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'terms_and_conditions')) $table->text('terms_and_conditions')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'customer_notes')) $table->text('customer_notes')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'internal_notes')) $table->text('internal_notes')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'additional_charges')) $table->decimal('additional_charges', 20, 6)->default(0);
+            if (! Schema::hasColumn('sales_quotations', 'accepted_at')) $table->date('accepted_at')->nullable();
+            if (! Schema::hasColumn('sales_quotations', 'converted_order_id')) $table->foreignUuid('converted_order_id')->nullable()->constrained('sales_orders')->nullOnDelete();
             $table->index(['tenant_id', 'company_id', 'branch_id', 'state']);
             $table->index(['tenant_id', 'approval_status', 'response_status']);
         });
         Schema::table('sales_quotation_items', function (Blueprint $table): void {
-            $table->text('description')->nullable();
-            $table->string('unit')->nullable();
-            $table->string('discount_type')->default('percentage');
-            $table->decimal('discount_amount', 20, 6)->default(0);
-            $table->string('tax_code')->nullable();
+            if (! Schema::hasColumn('sales_quotation_items', 'description')) $table->text('description')->nullable();
+            if (! Schema::hasColumn('sales_quotation_items', 'unit')) $table->string('unit')->nullable();
+            if (! Schema::hasColumn('sales_quotation_items', 'discount_type')) $table->string('discount_type')->default('percentage');
+            if (! Schema::hasColumn('sales_quotation_items', 'discount_amount')) $table->decimal('discount_amount', 20, 6)->default(0);
+            if (! Schema::hasColumn('sales_quotation_items', 'tax_code')) $table->string('tax_code')->nullable();
         });
 
         Schema::create('sales_price_lists', function (Blueprint $table): void {
