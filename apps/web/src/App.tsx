@@ -69,16 +69,18 @@ import { SalesOrderDetailsPage } from './pages/SalesOrderDetailsPage';
 import { SalesFulfillmentPage } from './pages/SalesFulfillmentPage';
 import { SalesFulfillmentDetailsPage } from './pages/SalesFulfillmentDetailsPage';
 import { SupplierIntelligencePage } from './pages/SupplierIntelligencePage';
+import { I18nProvider, useI18n } from './lib/i18n';
 
 const client = new QueryClient();
 
 function HealthPage() {
+  const { t } = useI18n();
   const health = useQuery({ queryKey: ['health'], queryFn: getHealth });
-  return <section className="page-section"><div className="page-heading"><div><p className="eyebrow">Platform monitoring</p><h1>System health</h1><p className="muted">Operational diagnostics for authorized platform administrators.</p></div><span className="date-chip">Live status</span></div><div className="metric-grid"><div className="metric"><span>API service</span><strong className={health.data?.status === 'ok' ? 'text-success' : ''}>{health.data?.status ?? (health.isError ? 'Unavailable' : 'Checking')}</strong></div><div className="metric"><span>Database</span><strong>{health.data ? (health.data.checks.database ? 'Connected' : 'Unavailable') : '—'}</strong></div><div className="metric"><span>Cache</span><strong>{health.data ? (health.data.checks.cache ? 'Connected' : 'Unavailable') : '—'}</strong></div></div>{health.isError && <div className="alert alert-danger">{health.error.message}</div>}</section>;
+  return <section className="page-section"><div className="page-heading"><div><p className="eyebrow">{t('nav.monitoring')}</p><h1>System health</h1></div><span className="date-chip">{t('dashboard.live')}</span></div><div className="metric-grid"><div className="metric"><span>API service</span><strong className={health.data?.status === 'ok' ? 'text-success' : ''}>{health.data?.status ?? (health.isError ? 'Unavailable' : 'Checking')}</strong></div><div className="metric"><span>Database</span><strong>{health.data ? (health.data.checks.database ? 'Connected' : 'Unavailable') : '—'}</strong></div><div className="metric"><span>Cache</span><strong>{health.data ? (health.data.checks.cache ? 'Connected' : 'Unavailable') : '—'}</strong></div></div>{health.isError && <div className="alert alert-danger">{health.error.message}</div>}</section>;
 }
 
 export default function App() {
-  return <QueryClientProvider client={client}><BrowserRouter><AuthProvider><Routes>
+  return <QueryClientProvider client={client}><BrowserRouter><I18nProvider><AuthProvider><Routes>
     <Route element={<AuthLayout />}>
       <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} />
     </Route>
@@ -117,5 +119,5 @@ export default function App() {
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes></AuthProvider></BrowserRouter></QueryClientProvider>;
+  </Routes></AuthProvider></I18nProvider></BrowserRouter></QueryClientProvider>;
 }

@@ -2,29 +2,32 @@ import { NavLink } from 'react-router-dom';
 import { Boxes, Building2, ChevronLeft, ClipboardCheck, FileBarChart2, LayoutDashboard, Package, PanelLeftClose, Settings, ShoppingCart, Users, WalletCards, X } from 'lucide-react';
 import { useState } from 'react';
 import { Brand } from '../components/Brand';
+import { useI18n, type TranslationKey } from '../lib/i18n';
 
-type Item = { label: string; to: string; icon: typeof LayoutDashboard };
-const companyGroups: Array<{ label: string; items: Item[] }> = [
-  { label: 'Workspace', items: [{ label: 'Dashboard', to: '/', icon: LayoutDashboard }, { label: 'Organization', to: '/organization', icon: Building2 }, { label: 'Company & branches', to: '/company', icon: Building2 }] },
-  { label: 'CRM & Sales', items: [{ label: 'Sales workspace', to: '/crm-sales', icon: Users }] },
-  { label: 'Purchasing', items: [{ label: 'Purchase orders', to: '/purchasing', icon: ShoppingCart }, { label: 'Suppliers', to: '/purchasing/suppliers', icon: Users }] },
-  { label: 'Products', items: [{ label: 'Product catalog', to: '/catalog', icon: Package }, { label: 'Product categories', to: '/catalog/categories', icon: Package }] },
-  { label: 'Inventory', items: [{ label: 'Inventory control', to: '/inventory', icon: Boxes }] },
-  { label: 'Accounting', items: [{ label: 'Accounting', to: '/accounting', icon: WalletCards }] },
-  { label: 'HR & Payroll', items: [{ label: 'HR & payroll', to: '/hr', icon: Users }] },
-  { label: 'POS · Projects · Assets', items: [{ label: 'Optional modules', to: '/optional-modules', icon: Building2 }] },
-  { label: 'Approvals & Reports', items: [{ label: 'Approvals', to: '/workflow', icon: ClipboardCheck }, { label: 'Reports', to: '/workflow', icon: FileBarChart2 }] },
-  { label: 'Settings', items: [{ label: 'Access & settings', to: '/organization/roles', icon: Settings }] },
+type Item = { key: TranslationKey; to: string; icon: typeof LayoutDashboard };
+type Group = { key: TranslationKey; items: Item[] };
+const companyGroups: Group[] = [
+  { key: 'nav.workspace', items: [{ key: 'nav.dashboard', to: '/', icon: LayoutDashboard }, { key: 'nav.organization', to: '/organization', icon: Building2 }, { key: 'nav.companyBranches', to: '/company', icon: Building2 }] },
+  { key: 'nav.crmSales', items: [{ key: 'nav.salesWorkspace', to: '/crm-sales', icon: Users }] },
+  { key: 'nav.purchasing', items: [{ key: 'nav.purchaseOrders', to: '/purchasing', icon: ShoppingCart }, { key: 'nav.suppliers', to: '/purchasing/suppliers', icon: Users }] },
+  { key: 'nav.products', items: [{ key: 'nav.productCatalog', to: '/catalog', icon: Package }, { key: 'nav.productCategories', to: '/catalog/categories', icon: Package }] },
+  { key: 'nav.inventory', items: [{ key: 'nav.inventoryControl', to: '/inventory', icon: Boxes }] },
+  { key: 'nav.accounting', items: [{ key: 'nav.accounting', to: '/accounting', icon: WalletCards }] },
+  { key: 'nav.hrPayroll', items: [{ key: 'nav.hr', to: '/hr', icon: Users }] },
+  { key: 'nav.optional', items: [{ key: 'nav.optionalModules', to: '/optional-modules', icon: Building2 }] },
+  { key: 'nav.approvalsReports', items: [{ key: 'nav.approvals', to: '/workflow', icon: ClipboardCheck }, { key: 'nav.reports', to: '/workflow', icon: FileBarChart2 }] },
+  { key: 'nav.settings', items: [{ key: 'nav.accessSettings', to: '/organization/roles', icon: Settings }] },
 ];
-const platformItems: Item[] = [{ label: 'Overview', to: '/platform', icon: LayoutDashboard }, { label: 'Tenant Management', to: '/platform/tenants', icon: Building2 }, { label: 'Monitoring · System Health', to: '/platform/monitoring', icon: ClipboardCheck }, { label: 'Subscriptions & Billing', to: '/platform/control', icon: WalletCards }];
+const platformItems: Item[] = [{ key: 'nav.overview', to: '/platform', icon: LayoutDashboard }, { key: 'nav.tenantManagement', to: '/platform/tenants', icon: Building2 }, { key: 'nav.monitoring', to: '/platform/monitoring', icon: ClipboardCheck }, { key: 'nav.subscriptions', to: '/platform/control', icon: WalletCards }];
 
 export function Sidebar({ platform = false, collapsed, mobileOpen, onCollapse, onClose }: { platform?: boolean; collapsed: boolean; mobileOpen: boolean; onCollapse: () => void; onClose: () => void }) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Workspace: true, 'CRM & Sales': true, Purchasing: true, Products: true, Inventory: true, Accounting: true, 'HR & Payroll': true, 'POS · Projects · Assets': true, 'Approvals & Reports': true, Settings: false });
-  const groups = platform ? [{ label: 'Platform', items: platformItems }] : companyGroups;
+  const { t } = useI18n();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ 'nav.workspace': true, 'nav.crmSales': true, 'nav.purchasing': true, 'nav.products': true, 'nav.inventory': true, 'nav.accounting': true, 'nav.hrPayroll': true, 'nav.optional': true, 'nav.approvalsReports': true, 'nav.settings': false, 'nav.platform': true });
+  const groups = platform ? [{ key: 'nav.platform' as TranslationKey, items: platformItems }] : companyGroups;
   return <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''} ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
-    <div className="sidebar-top"><Brand compact={collapsed} /><button className="icon-button sidebar-close" aria-label="Close navigation" onClick={onClose}><X size={18} /></button><button className="icon-button sidebar-collapse" aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} onClick={onCollapse}>{collapsed ? <ChevronLeft size={18} /> : <PanelLeftClose size={18} />}</button></div>
-    <div className="workspace-badge"><span className="workspace-dot" />{!collapsed && <span>{platform ? 'Platform operations' : 'Acme workspace'}</span>}</div>
-    <nav className="side-nav" aria-label={platform ? 'Platform navigation' : 'Company navigation'}>{groups.map((group) => <div className="nav-group" key={group.label}>{!collapsed && <button className="nav-group-toggle" onClick={() => setOpenGroups((current) => ({ ...current, [group.label]: !current[group.label] }))} aria-expanded={openGroups[group.label]}><span className="nav-group-label">{group.label}</span><span>{openGroups[group.label] ? '−' : '+'}</span></button>}{(collapsed || openGroups[group.label]) && group.items.map(({ label, to, icon: Icon }) => <NavLink end={to === '/'} key={`${group.label}-${to}-${label}`} to={to} onClick={onClose} title={collapsed ? label : undefined} className={({ isActive }) => `side-link ${isActive ? 'active' : ''}`}><Icon size={18} aria-hidden="true" /><span>{!collapsed && label}</span></NavLink>)}</div>)}</nav>
+    <div className="sidebar-top"><Brand compact={collapsed} /><button className="icon-button sidebar-close" aria-label={t('app.closeNavigation')} onClick={onClose}><X size={18} /></button><button className="icon-button sidebar-collapse" aria-label={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')} onClick={onCollapse}>{collapsed ? <ChevronLeft size={18} /> : <PanelLeftClose size={18} />}</button></div>
+    <div className="workspace-badge"><span className="workspace-dot" />{!collapsed && <span>{platform ? t('app.platform') : t('app.workspace')}</span>}</div>
+    <nav className="side-nav" aria-label={platform ? t('app.platform') : t('nav.workspace')}>{groups.map((group) => { const groupLabel = t(group.key); return <div className="nav-group" key={group.key}>{!collapsed && <button className="nav-group-toggle" onClick={() => setOpenGroups((current) => ({ ...current, [group.key]: !current[group.key] }))} aria-expanded={openGroups[group.key]}><span className="nav-group-label">{groupLabel}</span><span>{openGroups[group.key] ? '−' : '+'}</span></button>}{(collapsed || openGroups[group.key]) && group.items.map(({ key, to, icon: Icon }) => { const label = t(key); return <NavLink end={to === '/'} key={`${group.key}-${to}-${key}`} to={to} onClick={onClose} title={collapsed ? label : undefined} className={({ isActive }) => `side-link ${isActive ? 'active' : ''}`}><Icon size={18} aria-hidden="true" /><span>{!collapsed && label}</span></NavLink>; })}</div>; })}</nav>
     <div className="sidebar-bottom"><div className="sidebar-version">{!collapsed && 'ERP Cloud · v1.0'}</div></div>
   </aside>;
 }

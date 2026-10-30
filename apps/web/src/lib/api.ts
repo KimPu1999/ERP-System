@@ -3,6 +3,7 @@ export const API_BASE_URL = API_URL;
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? 'http://localhost:8000';
 const CONFIGURED_TENANT_ID = import.meta.env.VITE_TENANT_ID;
 const TENANT_STORAGE_KEY = 'erp_cloud.tenant_id';
+const LOCALE_STORAGE_KEY = 'erp_cloud.locale';
 const xsrfToken = () => document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=');
 
 export const getActiveTenantId = (): string | undefined => {
@@ -25,7 +26,7 @@ export class ApiError extends Error {
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   const tenantId = getActiveTenantId();
-  try { response = await fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}), ...init?.headers } }); }
+  try { response = await fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}), ...(typeof window !== 'undefined' && window.localStorage.getItem(LOCALE_STORAGE_KEY) ? { 'X-Locale': window.localStorage.getItem(LOCALE_STORAGE_KEY)! } : {}), ...init?.headers } }); }
   catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend and check the API URL.`); }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new ApiError(response.status, body.message ?? `Request failed (${response.status}).`);

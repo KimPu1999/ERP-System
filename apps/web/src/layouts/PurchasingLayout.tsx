@@ -3,36 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { BarChart3, Banknote, Bell, ClipboardCheck, ClipboardList, FileCheck2, FileMinus2, PackageCheck, Receipt, RotateCcw, Settings2, ShieldCheck, ShoppingCart, Truck, Users, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
+import { useI18n, type TranslationKey } from '../lib/i18n';
 
-type PurchasingNavItem = { label: string; to?: string; icon: LucideIcon; unavailable?: string };
+type PurchasingNavItem = { label: TranslationKey; to?: string; icon: LucideIcon; unavailable?: string };
 
 const purchasingNavItems: PurchasingNavItem[] = [
-  { label: 'Overview', to: '/purchasing', icon: BarChart3 },
-  { label: 'Suppliers', to: '/purchasing/suppliers', icon: Users },
-  { label: 'Supplier Onboarding', to: '/purchasing/suppliers/onboarding', icon: FileCheck2 },
-  { label: 'Supplier Financials', to: '/purchasing/suppliers/financial', icon: Banknote },
-  { label: 'Supplier Catalogs', to: '/purchasing/suppliers/catalog', icon: ClipboardList },
-  { label: 'Supplier Performance', to: '/purchasing/suppliers/performance', icon: BarChart3 },
-  { label: 'Supplier Intelligence', to: '/purchasing/suppliers/analytics', icon: BarChart3 },
-  { label: 'Supplier Reports', to: '/purchasing/suppliers/reports', icon: FileCheck2 },
-  { label: 'Supplier Automations', to: '/purchasing/suppliers/automations', icon: Settings2 },
-  { label: 'Supplier Notifications', to: '/purchasing/suppliers/notifications', icon: Bell },
-  { label: 'Portal Activity', to: '/purchasing/suppliers/portal-activity', icon: Users },
-  { label: 'Access Reviews', to: '/purchasing/suppliers/access-reviews', icon: ShieldCheck },
-  { label: 'Purchase Requests', icon: ClipboardList, unavailable: 'Purchase request management UI is planned for the next purchasing phase.' },
-  { label: 'Purchase Orders', to: '/purchasing', icon: ShoppingCart },
-  { label: 'Purchase Approvals', to: '/purchasing/approvals', icon: ClipboardCheck },
-  { label: 'Goods Receipts', to: '/purchasing/goods-receipts', icon: PackageCheck },
-  { label: 'Supplier Bills', to: '/purchasing/supplier-bills', icon: Receipt },
-  { label: 'Accounts Payable', to: '/purchasing/accounts-payable', icon: FileCheck2 },
-  { label: 'Payments', to: '/purchasing/payments', icon: Banknote },
-  { label: 'Supplier Credits', to: '/purchasing/supplier-credits', icon: FileMinus2 },
-  { label: 'Purchase Returns', to: '/purchasing/returns', icon: RotateCcw },
-  { label: 'Reports', icon: FileCheck2, unavailable: 'A dedicated purchasing reports workspace is not implemented.' },
-  { label: 'Settings', to: '/purchasing/settings', icon: Settings2 },
+  { label: 'purchase.overview', to: '/purchasing', icon: BarChart3 }, { label: 'nav.suppliers', to: '/purchasing/suppliers', icon: Users }, { label: 'purchase.onboarding', to: '/purchasing/suppliers/onboarding', icon: FileCheck2 }, { label: 'purchase.financials', to: '/purchasing/suppliers/financial', icon: Banknote }, { label: 'purchase.catalogs', to: '/purchasing/suppliers/catalog', icon: ClipboardList }, { label: 'purchase.performance', to: '/purchasing/suppliers/performance', icon: BarChart3 }, { label: 'purchase.intelligence', to: '/purchasing/suppliers/analytics', icon: BarChart3 }, { label: 'purchase.reports', to: '/purchasing/suppliers/reports', icon: FileCheck2 }, { label: 'purchase.automations', to: '/purchasing/suppliers/automations', icon: Settings2 }, { label: 'purchase.notifications', to: '/purchasing/suppliers/notifications', icon: Bell }, { label: 'purchase.portalActivity', to: '/purchasing/suppliers/portal-activity', icon: Users }, { label: 'purchase.accessReviews', to: '/purchasing/suppliers/access-reviews', icon: ShieldCheck }, { label: 'purchase.requests', icon: ClipboardList, unavailable: 'Purchase request management UI is planned for the next purchasing phase.' }, { label: 'purchase.orders', to: '/purchasing', icon: ShoppingCart }, { label: 'purchase.approvals', to: '/purchasing/approvals', icon: ClipboardCheck }, { label: 'purchase.receipts', to: '/purchasing/goods-receipts', icon: PackageCheck }, { label: 'purchase.bills', to: '/purchasing/supplier-bills', icon: Receipt }, { label: 'purchase.payables', to: '/purchasing/accounts-payable', icon: FileCheck2 }, { label: 'purchase.payments', to: '/purchasing/payments', icon: Banknote }, { label: 'purchase.credits', to: '/purchasing/supplier-credits', icon: FileMinus2 }, { label: 'purchase.returns', to: '/purchasing/returns', icon: RotateCcw }, { label: 'purchase.reports', icon: FileCheck2, unavailable: 'A dedicated purchasing reports workspace is not implemented.' }, { label: 'purchase.settings', to: '/purchasing/settings', icon: Settings2 },
 ];
 
 export function PurchasingLayout() {
+  const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const companies = useQuery({ queryKey: ['dashboard-companies', 'purchasing-workspace'], queryFn: getDashboardCompanies });
   const permissions = useQuery({ queryKey: ['me', 'purchasing-workspace'], queryFn: getMe, retry: false });
@@ -53,11 +33,11 @@ export function PurchasingLayout() {
 
   return <div className="purchasing-workspace-layout">
     <header className="purchasing-layout-heading">
-      <span className="workspace-shell-label">Purchasing</span>
-      {companyId && <span className="purchasing-context-chip"><Truck size={14} />{companyList.find((company) => company.id === companyId)?.name ?? 'Selected company'}</span>}
+      <span className="workspace-shell-label">{t('nav.purchasing')}</span>
+      {companyId && <span className="purchasing-context-chip"><Truck size={14} />{companyList.find((company) => company.id === companyId)?.name ?? t('org.selectedCompany')}</span>}
     </header>
-    <nav className="purchasing-nav" aria-label="Purchasing navigation"><div className="purchasing-nav-inner">
-      {purchasingNavItems.map(({ label, to, icon: Icon, unavailable }) => to && !unavailable ? <NavLink key={label} to={href(to)} end={to === '/purchasing'} className={({ isActive }) => `purchasing-nav-link ${isActive ? 'active' : ''} ${label === 'Purchase Orders' && !canManage ? 'restricted' : ''}`}><Icon size={14} aria-hidden="true" /><span>{label}</span></NavLink> : <span key={label} className="purchasing-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{label}</span><small>Planned</small></span>)}
+    <nav className="purchasing-nav" aria-label={t('nav.purchasing')}><div className="purchasing-nav-inner">
+      {purchasingNavItems.map(({ label, to, icon: Icon, unavailable }) => { const text = t(label); return to && !unavailable ? <NavLink key={`${label}-${to}`} to={href(to)} end={to === '/purchasing'} className={({ isActive }) => `purchasing-nav-link ${isActive ? 'active' : ''} ${label === 'purchase.orders' && !canManage ? 'restricted' : ''}`}><Icon size={14} aria-hidden="true" /><span>{text}</span></NavLink> : <span key={`${label}-${to ?? 'disabled'}`} className="purchasing-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{text}</span><small>Planned</small></span>; })}
     </div></nav>
     <Outlet />
   </div>;

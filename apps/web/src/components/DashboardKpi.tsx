@@ -1,17 +1,18 @@
 import { ArrowDownRight, ArrowUpRight, CircleDollarSign, FileText, Package, ShoppingCart, Truck, Warehouse, type LucideIcon } from 'lucide-react';
 import type { DashboardKpi as DashboardKpiValue, DashboardOverview } from '../lib/api';
 import { formatMoney, formatNumber } from '../lib/dashboardFormatting';
+import { useI18n, type TranslationKey } from '../lib/i18n';
 
 type Currency = DashboardOverview['currency']['code'];
-type KpiDefinition = { key: keyof DashboardOverview['kpis']; label: string; icon: LucideIcon; accent: string; money?: boolean };
+type KpiDefinition = { key: keyof DashboardOverview['kpis']; label: TranslationKey; icon: LucideIcon; accent: string; money?: boolean };
 
 const definitions: KpiDefinition[] = [
-  { key: 'revenue', label: 'Revenue', icon: CircleDollarSign, accent: 'blue', money: true },
-  { key: 'sales_orders', label: 'Orders', icon: ShoppingCart, accent: 'indigo' },
-  { key: 'pending_invoices', label: 'Invoices', icon: FileText, accent: 'purple' },
-  { key: 'pending_deliveries', label: 'Deliveries', icon: Truck, accent: 'emerald' },
-  { key: 'inventory_value', label: 'Inventory value', icon: Warehouse, accent: 'cyan', money: true },
-  { key: 'low_stock_products', label: 'Low stock', icon: Package, accent: 'orange' },
+  { key: 'revenue', label: 'dashboard.revenue', icon: CircleDollarSign, accent: 'blue', money: true },
+  { key: 'sales_orders', label: 'dashboard.orders', icon: ShoppingCart, accent: 'indigo' },
+  { key: 'pending_invoices', label: 'dashboard.invoices', icon: FileText, accent: 'purple' },
+  { key: 'pending_deliveries', label: 'dashboard.deliveries', icon: Truck, accent: 'emerald' },
+  { key: 'inventory_value', label: 'dashboard.inventoryValue', icon: Warehouse, accent: 'cyan', money: true },
+  { key: 'low_stock_products', label: 'dashboard.lowStock', icon: Package, accent: 'orange' },
 ];
 
 export function DashboardKpiGrid({ kpis, currency }: { kpis: DashboardOverview['kpis']; currency: Currency }) {
@@ -19,12 +20,14 @@ export function DashboardKpiGrid({ kpis, currency }: { kpis: DashboardOverview['
 }
 
 export function DashboardKpiCard({ definition, kpi, currency }: { definition: KpiDefinition; kpi: DashboardKpiValue; currency: Currency }) {
+  const { t } = useI18n();
   const Icon = definition.icon;
+  const label = t(definition.label);
   const available = kpi.available !== false;
   const value = available ? (definition.money ? formatMoney(kpi.value, currency) : formatNumber(kpi.value)) : 'Unavailable';
   const change = kpi.change_percent === null ? null : Number(kpi.change_percent);
   const supportingText = available && change !== null ? `${Math.abs(change).toFixed(1)}% vs previous period` : (kpi.reason ?? 'Metric unavailable');
-  return <article className={`dashboard-kpi foundation-kpi kpi-accent-${definition.accent} ${available ? '' : 'is-unavailable'}`} aria-label={`${definition.label}: ${value}`}><div className="kpi-top"><span className="kpi-icon"><Icon size={16} aria-hidden="true" /></span><span className="kpi-label">{definition.label}</span></div><strong>{value}</strong>{available && change !== null ? <span className={`kpi-change ${change >= 0 ? 'positive' : 'negative'}`}>{change >= 0 ? <ArrowUpRight size={13} aria-hidden="true" /> : <ArrowDownRight size={13} aria-hidden="true" />}{supportingText}</span> : !available ? <span className="kpi-note">{supportingText}</span> : null}</article>;
+  return <article className={`dashboard-kpi foundation-kpi kpi-accent-${definition.accent} ${available ? '' : 'is-unavailable'}`} aria-label={`${label}: ${value}`}><div className="kpi-top"><span className="kpi-icon"><Icon size={16} aria-hidden="true" /></span><span className="kpi-label">{label}</span></div><strong>{value}</strong>{available && change !== null ? <span className={`kpi-change ${change >= 0 ? 'positive' : 'negative'}`}>{change >= 0 ? <ArrowUpRight size={13} aria-hidden="true" /> : <ArrowDownRight size={13} aria-hidden="true" />}{supportingText}</span> : !available ? <span className="kpi-note">{supportingText}</span> : null}</article>;
 }
 
 export function DashboardKpiSkeleton() { return <div className="dashboard-panel foundation-skeleton-card" aria-hidden="true" />; }

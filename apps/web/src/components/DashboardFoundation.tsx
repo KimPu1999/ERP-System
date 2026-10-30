@@ -5,15 +5,17 @@ import { DashboardKpiGrid, DashboardKpiSkeleton } from './DashboardKpi';
 import { DashboardAnalytics, type DashboardAnalyticsProps } from './DashboardAnalytics';
 import { formatNumber as number } from '../lib/dashboardFormatting';
 import type { DashboardOverview } from '../lib/api';
+import { useI18n } from '../lib/i18n';
 
 export function DashboardFoundation({ data, onNavigate, analytics, business }: { data: DashboardOverview; onNavigate: (path: string) => void; analytics: DashboardAnalyticsProps; business: Omit<BusinessPerformanceProps, 'onNavigate'> }) {
+  const { t } = useI18n();
   const currency = data.currency.code;
   const companyProfilePath = data.filters.company_id ? `/organization/profile?company_id=${encodeURIComponent(data.filters.company_id)}&tab=localization` : '/organization/profile?tab=localization';
   return <div className="dashboard-foundation">
-    <section className="dashboard-section-block" aria-labelledby="dashboard-kpis-title"><SectionHeading id="dashboard-kpis-title" title="Business snapshot" /><DashboardKpiGrid kpis={data.kpis} currency={currency} />{!data.currency.configured && <div className="dashboard-currency-notice" role="status"><span>Base accounting currency is required for financial totals.</span><Link to={companyProfilePath}>Configure currency</Link></div>}</section>
-    <section className="dashboard-section-block" aria-labelledby="dashboard-analytics-title"><SectionHeading id="dashboard-analytics-title" title="Analytics Overview" /><DashboardAnalytics {...analytics} /></section>
-    <section className="dashboard-section-block" aria-labelledby="dashboard-business-title"><SectionHeading id="dashboard-business-title" title="Business performance" /><BusinessPerformanceSection {...business} onNavigate={onNavigate} /></section>
-    <section className="dashboard-section-block" aria-labelledby="dashboard-operations-title"><SectionHeading id="dashboard-operations-title" title="Operations monitoring" /><div className="foundation-three-grid"><ApprovalsTable rows={data.pending_approvals} /><InventoryTable rows={data.inventory_alerts} /><QuickActions onNavigate={onNavigate} /></div></section>
+    <section className="dashboard-section-block" aria-labelledby="dashboard-kpis-title"><SectionHeading id="dashboard-kpis-title" title={t('dashboard.businessSnapshot')} /><DashboardKpiGrid kpis={data.kpis} currency={currency} />{!data.currency.configured && <div className="dashboard-currency-notice" role="status"><span>{t('dashboard.currencyRequired')}</span><Link to={companyProfilePath}>{t('accounting.configureCurrency')}</Link></div>}</section>
+    <section className="dashboard-section-block" aria-labelledby="dashboard-analytics-title"><SectionHeading id="dashboard-analytics-title" title={t('dashboard.analyticsOverview')} /><DashboardAnalytics {...analytics} /></section>
+    <section className="dashboard-section-block" aria-labelledby="dashboard-business-title"><SectionHeading id="dashboard-business-title" title={t('dashboard.businessPerformance')} /><BusinessPerformanceSection {...business} onNavigate={onNavigate} /></section>
+    <section className="dashboard-section-block" aria-labelledby="dashboard-operations-title"><SectionHeading id="dashboard-operations-title" title={t('dashboard.operationsMonitoring')} /><div className="foundation-three-grid"><ApprovalsTable rows={data.pending_approvals} /><InventoryTable rows={data.inventory_alerts} /><QuickActions onNavigate={onNavigate} /></div></section>
   </div>;
 }
 
