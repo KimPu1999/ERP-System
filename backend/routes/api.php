@@ -173,8 +173,18 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/inventory/reorder-rules', [ReorderRuleController::class, 'index']);
         Route::post('/inventory/reorder-rules', [ReorderRuleController::class, 'store']);
         Route::get('/suppliers', [SupplierController::class, 'index']);
+        Route::get('/suppliers/summary', [SupplierController::class, 'summary']);
         Route::post('/suppliers', [SupplierController::class, 'store']);
+        Route::get('/suppliers/{supplier}', [SupplierController::class, 'show']);
         Route::patch('/suppliers/{supplier}', [SupplierController::class, 'update']);
+        Route::post('/suppliers/{supplier}/activate', [SupplierController::class, 'activate']);
+        Route::post('/suppliers/{supplier}/deactivate', [SupplierController::class, 'deactivate']);
+        Route::get('/suppliers/{supplier}/contacts', [SupplierController::class, 'contacts']);
+        Route::post('/suppliers/{supplier}/contacts', [SupplierController::class, 'storeContact']);
+        Route::patch('/supplier-contacts/{contact}', [SupplierController::class, 'updateContact']);
+        Route::get('/suppliers/{supplier}/addresses', [SupplierController::class, 'addresses']);
+        Route::post('/suppliers/{supplier}/addresses', [SupplierController::class, 'storeAddress']);
+        Route::patch('/supplier-addresses/{address}', [SupplierController::class, 'updateAddress']);
         Route::get('/purchase-requests', [PurchaseRequestController::class, 'index']);
         Route::post('/purchase-requests', [PurchaseRequestController::class, 'store']);
         Route::post('/purchase-requests/{purchaseRequest}/submit', [PurchaseRequestController::class, 'submit']);

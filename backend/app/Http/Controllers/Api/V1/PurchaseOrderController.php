@@ -128,7 +128,7 @@ final class PurchaseOrderController
         if (! empty($data['branch_id'])) abort_unless(Branch::where('tenant_id', $tenantId)->whereKey($data['branch_id'])->where('company_id', $data['company_id'])->where('status', 'active')->exists(), 404);
         if (! empty($data['warehouse_id'])) abort_unless(Warehouse::where('tenant_id', $tenantId)->whereKey($data['warehouse_id'])->where('company_id', $data['company_id'])->when($data['branch_id'] ?? null, fn ($q, $branchId) => $q->where('branch_id', $branchId))->where('is_active', true)->exists(), 404);
         if (! empty($data['currency_id'])) abort_unless(AccountingCurrency::where('tenant_id', $tenantId)->whereKey($data['currency_id'])->exists(), 404);
-        abort_unless(Supplier::whereKey($data['supplier_id'])->where('tenant_id', $tenantId)->where('status', 'active')->exists(), 404);
+        abort_unless(Supplier::whereKey($data['supplier_id'])->where('tenant_id', $tenantId)->where('status', 'active')->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $data['company_id']))->exists(), 404);
         $variantIds = collect($data['items'])->pluck('variant_id');
         if ($variantIds->duplicates()->isNotEmpty()) throw ValidationException::withMessages(['items' => ['The same product variant cannot be added twice. Use a separate variant or consolidate the quantity.']]);
         foreach ($data['items'] as $item) abort_unless(ProductVariant::whereKey($item['variant_id'])->where('tenant_id', $tenantId)->where('is_active', true)->exists(), 404);
