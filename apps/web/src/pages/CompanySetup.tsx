@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Building2, Check, CircleHelp, Globe2, ImagePlus, MapPin, Save, ShieldCheck, Upload, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ApiError, createCompany, getActiveTenantId, getCompanies, uploadCompanyAsset } from '../lib/api';
+import { ApiError, createCompany, getAccountingCurrencies, getActiveTenantId, getCompanies, uploadCompanyAsset } from '../lib/api';
 
 type Form = {
   legal_name: string;
@@ -61,6 +61,7 @@ export function CompanySetup() {
   const client = useQueryClient();
   const navigate = useNavigate();
   const companies = useQuery({ queryKey: ['companies', 'setup'], queryFn: getCompanies });
+  const currencies = useQuery({ queryKey: ['accounting-currencies'], queryFn: getAccountingCurrencies });
   const [notice, setNotice] = useState('');
   const [createdCompanyId, setCreatedCompanyId] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -219,7 +220,7 @@ export function CompanySetup() {
         <fieldset className="card setup-card">
           <div className="setup-card-heading"><div className="setup-card-icon"><Globe2 size={18} /></div><div><p className="panel-eyebrow">Step 3</p><legend>Localization & branding</legend><small>Set the defaults used for documents, dates and financial reporting.</small></div></div>
           <div className="form-grid setup-form-grid">
-            <label className="required-field">Base currency *<select {...register('base_currency', { required: 'Base currency is required' })} aria-invalid={Boolean(errors.base_currency)}><option value="">Select currency</option><option value="MMK">MMK — Myanmar Kyat</option><option value="USD">USD — US Dollar</option><option value="SGD">SGD — Singapore Dollar</option><option value="THB">THB — Thai Baht</option><option value="EUR">EUR — Euro</option></select>{errorMessage('base_currency') && <small className="error-text">{errorMessage('base_currency')}</small>}</label>
+            <label className="required-field">Base accounting currency *<select {...register('base_currency', { required: 'Base accounting currency is required' })} aria-invalid={Boolean(errors.base_currency)}><option value="">Select currency</option>{(currencies.data?.data ?? []).map((currency) => <option value={currency.code} key={currency.id}>{currency.code} — {currency.name}</option>)}</select><small className="field-hint">Used to display company-level financial totals. Historical documents retain their recorded currency.</small>{errorMessage('base_currency') && <small className="error-text">{errorMessage('base_currency')}</small>}</label>
             <label className="required-field">Timezone *<select {...register('timezone', { required: 'Timezone is required' })} aria-invalid={Boolean(errors.timezone)}><option value="Asia/Yangon">Asia/Yangon (UTC+06:30)</option><option value="UTC">UTC</option><option value="Asia/Singapore">Asia/Singapore (UTC+08:00)</option><option value="Asia/Bangkok">Asia/Bangkok (UTC+07:00)</option></select>{errorMessage('timezone') && <small className="error-text">{errorMessage('timezone')}</small>}<small className="field-hint">Used for business date boundaries.</small></label>
             <label className="required-field">Default language *<select {...register('default_locale', { required: 'Default language is required' })} aria-invalid={Boolean(errors.default_locale)}><option value="en">English</option><option value="my">မြန်မာ</option></select>{errorMessage('default_locale') && <small className="error-text">{errorMessage('default_locale')}</small>}</label>
             <label className="required-field">Date format *<select {...register('date_format', { required: 'Date format is required' })} aria-invalid={Boolean(errors.date_format)}><option value="YYYY-MM-DD">YYYY-MM-DD</option><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option></select>{errorMessage('date_format') && <small className="error-text">{errorMessage('date_format')}</small>}</label>

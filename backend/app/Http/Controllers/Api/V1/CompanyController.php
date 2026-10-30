@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\AccountingCurrency;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\CompanyDocument;
@@ -105,6 +106,7 @@ final class CompanyController
         if (array_key_exists('legal_name', $payload) && filled($payload['legal_name'])) $payload['name'] = $payload['legal_name'];
         if (array_key_exists('base_currency', $payload) && filled($payload['base_currency'])) {
             $payload['base_currency'] = strtoupper($payload['base_currency']);
+            abort_unless(AccountingCurrency::where('tenant_id', $company->tenant_id)->where('code', $payload['base_currency'])->exists(), 422, 'The selected base currency is not available for this tenant.');
             if ($payload['base_currency'] !== strtoupper((string) $company->base_currency) && JournalEntry::where('tenant_id', $company->tenant_id)->where('company_id', $company->id)->where('state', 'posted')->exists()) {
                 throw ValidationException::withMessages(['base_currency' => ['The base currency cannot be changed after posted financial transactions exist. Use an approved financial conversion procedure.']]);
             }
@@ -174,7 +176,7 @@ final class CompanyController
     {
         return [
             'name' => ['sometimes', 'string', 'max:200'], 'code' => ['sometimes', 'alpha_dash', 'max:40', Rule::unique('companies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))->ignore($company->id)],
-            'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'industry' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'alternative_phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'township' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3'], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'fiscal_year_start' => ['nullable', 'date'], 'document_number_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'number_format' => ['nullable', Rule::in(['1,234.56', '1.234,56', '1 234,56'])], 'invoice_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'purchase_order_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'brand_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
+            'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'industry' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'alternative_phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'township' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3', Rule::exists('accounting_currencies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'fiscal_year_start' => ['nullable', 'date'], 'document_number_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'number_format' => ['nullable', Rule::in(['1,234.56', '1.234,56', '1 234,56'])], 'invoice_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'purchase_order_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'brand_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
         ];
     }
 
@@ -198,7 +200,7 @@ final class CompanyController
             'township' => ['nullable', 'string', 'max:120'],
             'postal_code' => ['nullable', 'string', 'max:30'],
             'street_address' => ['required', 'string', 'max:255'],
-            'base_currency' => ['required', 'alpha', 'size:3'],
+            'base_currency' => ['required', 'alpha', 'size:3', Rule::exists('accounting_currencies', 'code')->where(fn ($query) => $query->where('tenant_id', $tenantId))],
             'timezone' => ['required', 'timezone'],
             'default_locale' => ['required', 'string', 'max:10'],
             'date_format' => ['required', 'string', 'max:30'],

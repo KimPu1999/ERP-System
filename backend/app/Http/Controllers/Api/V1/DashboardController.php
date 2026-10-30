@@ -44,7 +44,12 @@ final class DashboardController
 
         $previousTo = $from->subDay()->endOfDay();
         $previousFrom = $previousTo->subDays($from->diffInDays($to))->startOfDay();
-        $currency = AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places']);
+        $currency = $companyId
+            ? AccountingCurrency::query()
+                ->where('tenant_id', $tenantId)
+                ->where('code', Company::where('tenant_id', $tenantId)->whereKey($companyId)->value('base_currency'))
+                ->first(['code', 'decimal_places'])
+            : AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places']);
         $financialAvailable = $currency !== null;
 
         $revenue = $this->invoiceTotal($tenantId, $companyId, $branchId, $from, $to);
@@ -414,7 +419,13 @@ final class DashboardController
             $previousTo = $from->subDay()->endOfDay();
             $previousFrom = $previousTo->subDays($from->diffInDays($to))->startOfDay();
         }
-        return ['tenant_id' => $tenantId, 'company_id' => $companyId, 'branch_id' => $branchId, 'timezone' => $timezone, 'period' => $period, 'year' => $year, 'comparison_period' => $comparison, 'from' => $from, 'to' => $to, 'previous_from' => $previousFrom, 'previous_to' => $previousTo, 'currency' => AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places'])];
+        $currency = $companyId
+            ? AccountingCurrency::query()
+                ->where('tenant_id', $tenantId)
+                ->where('code', Company::where('tenant_id', $tenantId)->whereKey($companyId)->value('base_currency'))
+                ->first(['code', 'decimal_places'])
+            : AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places']);
+        return ['tenant_id' => $tenantId, 'company_id' => $companyId, 'branch_id' => $branchId, 'timezone' => $timezone, 'period' => $period, 'year' => $year, 'comparison_period' => $comparison, 'from' => $from, 'to' => $to, 'previous_from' => $previousFrom, 'previous_to' => $previousTo, 'currency' => $currency];
     }
 
     private function analyticsFilters(array $context): array

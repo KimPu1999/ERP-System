@@ -32,6 +32,7 @@ import {
   getCompanyActivity,
   getCompanyDocuments,
   getDashboardCompanies,
+  getAccountingCurrencies,
   updateCompany,
   uploadCompanyAsset,
   uploadCompanyDocument,
@@ -116,6 +117,7 @@ function DetailList({ items }: { items: Array<[string, unknown]> }) {
 }
 
 function CompanyProfileEditForm({ company, onSaved, onCancel }: { company: Company; onSaved: (data: FormValues) => void; onCancel: () => void }) {
+  const currencies = useQuery({ queryKey: ['accounting-currencies'], queryFn: getAccountingCurrencies });
   const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<FormValues>({ defaultValues: formValues(company) });
   const update = useMutation({ mutationFn: (data: FormValues) => updateCompany(company.id, data), onSuccess: (result) => { reset(formValues(result.data)); onSaved(formValues(result.data)); } });
   useEffect(() => { reset(formValues(company)); }, [company, reset]);
@@ -153,7 +155,7 @@ function CompanyProfileEditForm({ company, onSaved, onCancel }: { company: Compa
       <ProfileField label="Street address" required error={errors.street_address?.message} wide><input {...register('street_address', { required: 'Street address is required' })} /></ProfileField>
     </div></fieldset>
     <fieldset className="card profile-edit-card"><div className="profile-section-heading"><div><p className="eyebrow">Localization & financial preferences</p><h2>Make dates and documents behave correctly</h2></div><Globe2 size={18} className="muted" /></div><div className="profile-form-grid">
-      <ProfileField label="Base currency" required hint="Changing this after posted journals requires an approved conversion." error={errors.base_currency?.message}><input maxLength={3} {...register('base_currency', { required: 'Base currency is required', pattern: { value: /^[A-Za-z]{3}$/, message: 'Use a three-letter ISO currency code.' } })} placeholder="MMK" /></ProfileField>
+      <ProfileField label="Base accounting currency" required hint="Used for company-level financial totals. Changing it after posted journals requires an approved conversion." error={errors.base_currency?.message}><select {...register('base_currency', { required: 'Base accounting currency is required' })}><option value="">Select currency</option>{(currencies.data?.data ?? []).map((currency) => <option value={currency.code} key={currency.id}>{currency.code} — {currency.name}</option>)}</select></ProfileField>
       <ProfileField label="Timezone" required error={errors.timezone?.message}><input {...register('timezone', { required: 'Timezone is required' })} placeholder="Asia/Yangon" /></ProfileField>
       <ProfileField label="Default language" required><select {...register('default_locale', { required: true })}><option value="en">English</option><option value="my">မြန်မာ</option></select></ProfileField>
       <ProfileField label="Date format" required><select {...register('date_format', { required: true })}><option value="YYYY-MM-DD">YYYY-MM-DD</option><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option></select></ProfileField>
