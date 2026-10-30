@@ -9,7 +9,7 @@ export function ProductCategoriesPage() {
   const page = categories.data?.data;
 
   return <section className="page-section">
-    <div className="page-heading"><div><p className="eyebrow">Products / Categories</p><h1>Product Categories</h1><p className="muted">Organize and manage product classifications.</p></div><button className="icon-button" type="button" aria-label="Refresh categories" onClick={() => void categories.refetch()}><RefreshCw size={16} /></button></div>
+    <div className="page-heading"><div><p className="eyebrow">Products / Categories</p><h1>Product Categories</h1></div><button className="icon-button" type="button" aria-label="Refresh categories" onClick={() => void categories.refetch()}><RefreshCw size={16} /></button></div>
     <div className="toolbar"><input aria-label="Search categories" placeholder="Search category name or slug" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
     <div className="table-card">
       {categories.isLoading && <p className="muted">Loading categories…</p>}

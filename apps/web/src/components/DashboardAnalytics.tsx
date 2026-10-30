@@ -22,17 +22,17 @@ export type DashboardAnalyticsProps = {
 
 export function DashboardAnalytics({ revenue, growth, financial, revenueError, growthError, financialError, isLoading, year, onYearChange, onRetry }: DashboardAnalyticsProps) {
   return <div className="dashboard-analytics-phase3">
-    <div className="analytics-period-row"><span className="analytics-period-note">Real-time authorized aggregates</span><AnalyticsPeriodSelector value={year} onChange={onYearChange} /></div>
+    <div className="analytics-period-row"><AnalyticsPeriodSelector value={year} onChange={onYearChange} /></div>
     <div className="phase3-analytics-grid">
-      <AnalyticsCard title="Revenue Overview" eyebrow="Current vs comparison period" className="phase3-revenue-card"><RevenueOverviewChart data={revenue} error={revenueError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
-      <AnalyticsCard title="Company Growth" eyebrow="Recognized revenue change" className="phase3-growth-card"><CompanyGrowthWidget data={growth} error={growthError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
-      <AnalyticsCard title="Financial Performance" eyebrow="Posted general ledger" className="phase3-financial-card"><FinancialPerformanceChart data={financial} error={financialError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
+      <AnalyticsCard title="Revenue Overview" className="phase3-revenue-card"><RevenueOverviewChart data={revenue} error={revenueError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
+      <AnalyticsCard title="Company Growth" className="phase3-growth-card"><CompanyGrowthWidget data={growth} error={growthError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
+      <AnalyticsCard title="Financial Performance" className="phase3-financial-card"><FinancialPerformanceChart data={financial} error={financialError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
     </div>
   </div>;
 }
 
-function AnalyticsCard({ title, eyebrow, className = '', children }: { title: string; eyebrow: string; className?: string; children: React.ReactNode }) {
-  return <article className={`dashboard-panel foundation-panel phase3-analytics-card ${className}`}><div className="panel-heading"><div><p className="panel-eyebrow">{eyebrow}</p><h3>{title}</h3></div></div>{children}</article>;
+function AnalyticsCard({ title, className = '', children }: { title: string; className?: string; children: React.ReactNode }) {
+  return <article className={`dashboard-panel foundation-panel phase3-analytics-card ${className}`}><div className="panel-heading"><h3>{title}</h3></div>{children}</article>;
 }
 
 function AnalyticsPeriodSelector({ value, onChange }: { value: string; onChange: (year: string) => void }) {

@@ -827,6 +827,15 @@ tr:last-child td { border-bottom: 0; }
 .organization-layout-heading { min-width: 0; }
 @media (max-width: 680px) { .organization-layout-heading { align-items: stretch; flex-direction: column; gap: 10px; padding: 20px 18px 0; } .organization-layout-heading h1 { font-size: 24px; } .organization-context-chip { align-self: flex-start; } .organization-nav { top: 64px; margin-right: 0; padding: 7px 18px 9px; } .organization-nav-inner { margin: 0; } }
 
+/* Keep shared workspace shells compact; child routes provide the page heading. */
+.workspace-shell-label { color: var(--text); font-size: 24px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+.purchasing-layout-heading, .sales-layout-heading { align-items: center; min-height: 48px; padding-top: 18px; }
+.organization-layout-heading .workspace-shell-label { display: inline-block; }
+@media (max-width: 680px) {
+  .workspace-shell-label { font-size: 22px; }
+  .purchasing-layout-heading, .sales-layout-heading { padding-top: 16px; }
+}
+
 /* CRM & Sales workspace */
 .sales-workspace-layout { max-width: 1440px; margin: 0 auto; }
 .sales-layout-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 26px 36px 0; }

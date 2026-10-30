@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, Building2, ChevronRight, ClipboardList, CreditCard, FileText, HandCoins, Receipt, RotateCcw, ShoppingCart, Target, Truck, Users, type LucideIcon } from 'lucide-react';
+import { BarChart3, Building2, ClipboardList, CreditCard, FileText, HandCoins, Receipt, RotateCcw, ShoppingCart, Target, Truck, Users, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 
@@ -45,7 +45,7 @@ export function SalesWorkspaceLayout() {
 
   return <div className="sales-workspace-layout">
     <header className="sales-layout-heading">
-      <div><div className="breadcrumb-line"><span>Workspace</span><ChevronRight size={13} /><span>CRM & Sales</span></div><h1>Sales workspace</h1><p className="muted">A focused operating view for the verified order-to-cash data already available in this workspace.</p></div>
+      <span className="workspace-shell-label">Sales</span>
       {companyId && <span className="sales-context-chip"><Building2 size={14} />{companyList.find((company) => company.id === companyId)?.name ?? 'Selected company'}</span>}
     </header>
     <nav className="sales-nav" aria-label="Sales navigation"><div className="sales-nav-inner">

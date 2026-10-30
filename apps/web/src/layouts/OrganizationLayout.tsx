@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, Landmark, Network, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
-import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 
 type OrganizationNavItem = { label: string; to: string; permission: string; icon: LucideIcon };
@@ -18,6 +18,7 @@ const navItems: OrganizationNavItem[] = [
 
 export function OrganizationLayout() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const companies = useQuery({ queryKey: ['dashboard-companies', 'organization'], queryFn: getDashboardCompanies });
   const permissions = useQuery({ queryKey: ['me', 'organization'], queryFn: getMe, retry: false });
   const companyList = companies.data?.data.data ?? [];
@@ -51,8 +52,7 @@ export function OrganizationLayout() {
   return <div className="organization-layout">
     <header className="organization-layout-heading">
       <div>
-        <h1>Organization</h1>
-        <p className="muted">Manage your company structure and access.</p>
+        {location.pathname === '/organization' ? <h1>Organization</h1> : <span className="workspace-shell-label">Organization</span>}
       </div>
       {companyId && <div className="organization-layout-context"><label className="organization-context-selector"><Building2 size={14} /><span className="sr-only">Select company</span><select aria-label="Select organization company" value={companyId} onChange={(event) => selectCompany(event.target.value)}>{companyList.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label>{selectedCompany && <span className="organization-status-pill"><i />{selectedCompany.is_active ? 'Active' : 'Inactive'}</span>}</div>}
     </header>

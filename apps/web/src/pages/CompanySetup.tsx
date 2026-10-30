@@ -170,7 +170,6 @@ export function CompanySetup() {
         <Link className="back-link" to="/"><ArrowLeft size={15} /> Back to dashboard</Link>
         <p className="eyebrow">Workspace onboarding</p>
         <h1>Set up your company</h1>
-        <p className="muted">Create the company profile that powers your authorized ERP workspace.</p>
       </div>
       <div className="setup-security-note"><ShieldCheck size={16} /><span>Tenant-scoped and secure</span></div>
     </div>

@@ -53,7 +53,7 @@ export function PurchasingLayout() {
 
   return <div className="purchasing-workspace-layout">
     <header className="purchasing-layout-heading">
-      <div><div className="breadcrumb-line"><span>Workspace</span><span>/</span><span>Purchasing</span></div><h1>Purchasing workspace</h1><p className="muted">Manage purchase orders with authorized company and branch context.</p></div>
+      <span className="workspace-shell-label">Purchasing</span>
       {companyId && <span className="purchasing-context-chip"><Truck size={14} />{companyList.find((company) => company.id === companyId)?.name ?? 'Selected company'}</span>}
     </header>
     <nav className="purchasing-nav" aria-label="Purchasing navigation"><div className="purchasing-nav-inner">
