@@ -20,7 +20,10 @@ import { RoleManagementPage } from './pages/RoleManagementPage';
 import { OrganizationPage } from './pages/OrganizationPage';
 import { ProductCatalogPage } from './pages/ProductCatalogPage';
 import { ProductCategoriesPage } from './pages/ProductCategoriesPage';
+import { CatalogReferencesPage } from './pages/CatalogReferencesPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { WarehouseManagementPage } from './pages/WarehouseManagementPage';
+import { InventoryOperationsPage } from './pages/InventoryOperationsPage';
 import { SuppliersPage } from './pages/SuppliersPage';
 import { SupplierOnboardingPage } from './pages/SupplierOnboardingPage';
 import { SupplierFinancialPage } from './pages/SupplierFinancialPage';
@@ -93,6 +96,9 @@ export default function App() {
     <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
     <Route element={<AuthenticatedRoute />}><Route element={<CompanyLayout />}>
       <Route path="/" element={<CompanyDashboard />} />
+      <Route path="/catalog/references" element={<CatalogReferencesPage />} />
+      <Route path="/inventory/warehouses" element={<WarehouseManagementPage />} />
+      <Route path="/inventory/operations" element={<InventoryOperationsPage />} />
       <Route path="/organization" element={<OrganizationLayout />}>
         <Route index element={<OrganizationPage />} />
         <Route path="profile" element={<CompanyProfilePage />} />

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Boxes, Building2, ChevronLeft, ClipboardCheck, FileBarChart2, LayoutDashboard, Link2, Package, PanelLeftClose, Settings, ShoppingCart, Users, WalletCards, X } from 'lucide-react';
+import { Boxes, Building2, ChevronLeft, ClipboardCheck, FileBarChart2, LayoutDashboard, Link2, Package, PanelLeftClose, Settings, ShoppingCart, Users, WalletCards, Warehouse, X } from 'lucide-react';
 import { useState } from 'react';
 import { Brand } from '../components/Brand';
 import { useI18n, type TranslationKey } from '../lib/i18n';
@@ -10,8 +10,8 @@ const companyGroups: Group[] = [
   { key: 'nav.workspace', items: [{ key: 'nav.dashboard', to: '/', icon: LayoutDashboard }, { key: 'nav.organization', to: '/organization', icon: Building2 }, { key: 'nav.companyBranches', to: '/company', icon: Building2 }] },
   { key: 'nav.crmSales', items: [{ key: 'nav.salesWorkspace', to: '/crm-sales', icon: Users }] },
   { key: 'nav.purchasing', items: [{ key: 'nav.purchaseOrders', to: '/purchasing', icon: ShoppingCart }, { key: 'nav.suppliers', to: '/purchasing/suppliers', icon: Users }] },
-  { key: 'nav.products', items: [{ key: 'nav.productCatalog', to: '/catalog', icon: Package }, { key: 'nav.productCategories', to: '/catalog/categories', icon: Package }] },
-  { key: 'nav.inventory', items: [{ key: 'nav.inventoryControl', to: '/inventory', icon: Boxes }] },
+  { key: 'nav.products', items: [{ key: 'nav.productCatalog', to: '/catalog', icon: Package }, { key: 'nav.productCategories', to: '/catalog/categories', icon: Package }, { key: 'nav.catalogReferences', to: '/catalog/references', icon: Link2 }] },
+  { key: 'nav.inventory', items: [{ key: 'nav.inventoryControl', to: '/inventory', icon: Boxes }, { key: 'nav.inventoryControl', to: '/inventory/warehouses', icon: Warehouse }, { key: 'nav.inventoryControl', to: '/inventory/operations', icon: ClipboardCheck }] },
   { key: 'nav.accounting', items: [{ key: 'nav.accounting', to: '/accounting', icon: WalletCards }, { key: 'nav.journals', to: '/accounting/journals', icon: FileBarChart2 }, { key: 'nav.financialReports', to: '/accounting/reports', icon: FileBarChart2 }, { key: 'nav.accountingIntegration', to: '/accounting/integration', icon: Link2 }] },
   { key: 'nav.hrPayroll', items: [{ key: 'nav.hr', to: '/hr', icon: Users }] },
   { key: 'nav.optional', items: [{ key: 'nav.optionalModules', to: '/optional-modules', icon: Building2 }] },
