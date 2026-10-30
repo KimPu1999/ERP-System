@@ -1436,6 +1436,20 @@ table { min-width: 0; }
 .supplier-catalog-modal > footer .primary, .supplier-catalog-modal > footer .secondary { min-height: 36px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .spin { animation: supplier-catalog-spin .8s linear infinite; }
+.product-create-form { margin-bottom: 16px; padding: 18px; }
+.product-create-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.product-create-heading h2 { margin: 0; font-size: 17px; }
+.product-create-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.product-create-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.product-create-section h3 { margin: 0 0 12px; color: var(--text); font-size: 13px; }
+.product-create-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.product-create-grid label { display: grid; align-content: start; gap: 6px; min-width: 0; color: var(--text); font-size: 12px; font-weight: 700; }
+.product-create-grid input, .product-create-grid select, .product-create-grid textarea { width: 100%; min-height: 40px; box-sizing: border-box; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; }
+.product-create-grid textarea { min-height: 72px; padding-top: 9px; resize: vertical; }
+.product-create-grid input:focus, .product-create-grid select:focus, .product-create-grid textarea:focus { border-color: var(--blue); outline: 0; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.product-create-wide { grid-column: 1 / -1; }
+.product-create-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+@media (max-width: 720px) { .product-create-grid { grid-template-columns: 1fr; } .product-create-wide { grid-column: auto; } .product-create-actions { justify-content: stretch; } .product-create-actions button { flex: 1; } }
 .supplier-context-card { display: flex; align-items: end; gap: 12px; margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 .supplier-context-card label { display: grid; gap: 6px; min-width: min(360px, 100%); color: var(--text); font-size: 12px; font-weight: 700; }
 .supplier-context-card select, .supplier-filter-toolbar select { min-height: 38px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 12px; }

@@ -184,7 +184,7 @@ export type RoleAssignment = { id: string; role_id: string; user_id: string; com
 export const getRoleAssignments = (params: { company_id?: string; role_id?: string } = {}) => api<{ data: RoleAssignment[] }>(`/role-assignments${queryString(params) ? `?${queryString(params)}` : ''}`);
 export const createRoleAssignment = (data: { user_id: string; role_id: string; company_id?: string; branch_id?: string; department_id?: string }) => api<{ data: RoleAssignment }>('/role-assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const deleteRoleAssignment = (assignmentId: string) => api<{ status: string }>(`/role-assignments/${assignmentId}`, { method: 'DELETE' });
-export type Product = { id: string; name: string; status: string; variants: Array<{ id: string; sku: string; internal_barcode: string; price: string }> };
+export type Product = { id: string; name: string; status: string; description?: string | null; category_id?: string | null; brand_id?: string | null; variants: Array<{ id: string; sku: string; internal_barcode: string; price: string; cost?: string; unit_id?: string }> };
 export type InventoryBalance = {
   id: string;
   variant_id: string;
@@ -202,6 +202,10 @@ export type InventoryBalancePage = { data: { data: InventoryBalance[]; current_p
 export type InventoryReport = { total_skus: number; balance_count: number; on_hand_quantity: string; reserved_quantity: string; available_quantity: string; low_stock_alerts: Array<{ id: string; variant_id: string; location_id: string; variant?: { sku: string; product?: { name: string } }; location?: { name: string } }>; out_of_stock_count: number };
 export type ProductPage = { data: { data: Product[]; current_page: number; last_page: number; per_page: number; total: number } };
 export const getProducts = (params: { search?: string; status?: string; page?: number; per_page?: number; sort?: string; direction?: 'asc' | 'desc' } = {}) => { const query = queryString(params); return api<ProductPage>(`/products${query ? `?${query}` : ''}`); };
+export type CatalogReference = { id: string; name: string; slug?: string; code?: string; parent_id?: string | null; decimal_places?: number };
+export type CatalogReferences = { categories: CatalogReference[]; brands: CatalogReference[]; units: CatalogReference[] };
+export const getCatalogReferences = () => api<CatalogReferences>('/catalog/references');
+export const createProduct = (data: Record<string, unknown>) => api<{ data: Product }>('/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export type ProductCategory = { id: string; name: string; slug: string; parent_id?: string | null; parent?: { id: string; name: string; slug: string } | null; direct_product_count: number; subcategory_count: number; created_at: string; updated_at: string };
 export type ProductCategoryPage = { data: { data: ProductCategory[]; current_page: number; last_page: number; per_page: number; total: number } };
 export const getProductCategories = (params: { search?: string; parent_id?: string; page?: number; per_page?: number; sort?: string; direction?: 'asc' | 'desc' } = {}) => { const query = queryString(params); return api<ProductCategoryPage>(`/product-categories${query ? `?${query}` : ''}`); };
