@@ -862,6 +862,12 @@ tr:last-child td { border-bottom: 0; }
 .sales-chart-legend strong { color: var(--text); font-size: 12px; }
 .sales-legend-current { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
 .sales-empty-inline { display: grid; min-height: 105px; place-items: center; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
+.sales-status-list, .sales-summary-list { display: grid; gap: 9px; margin-top: 14px; }
+.sales-status-row { display: grid; grid-template-columns: 100px 1fr 34px; align-items: center; gap: 8px; color: var(--text); font-size: 11px; }
+.sales-status-track { display: block; height: 7px; overflow: hidden; border-radius: 999px; background: var(--surface-muted); }
+.sales-status-track i { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+.sales-summary-list > div { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+.sales-summary-list strong { color: var(--text); }
 .sales-unavailable-panel { min-height: 190px; }
 .sales-table-panel { overflow: hidden; }
 .sales-table-scroll { overflow-x: auto; margin-top: 10px; }

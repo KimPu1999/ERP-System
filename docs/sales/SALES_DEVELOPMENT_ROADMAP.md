@@ -8,7 +8,19 @@
 - Explicit unavailable states for unsupported workflows and metrics.
 - Frontend checks and existing sales calculation tests.
 
-## Phase 2 — Customer, quotation, and sales-order workspaces
+## Phase 2 — Sales overview dashboard (implemented)
+
+- Consolidated company/branch/date-scoped `/api/v1/sales/dashboard` endpoint.
+- Server-defined KPI methodology for eligible invoiced revenue, eligible orders, verified applied payments, outstanding A/R, customers and pending deliveries.
+- Revenue trend, order status, top product/customer, branch performance, receivables and recent-order panels.
+- URL-preserved filters with company timezone and explicit unavailable CRM pipeline state.
+- No new sales, invoice, payment, inventory or accounting records are created by dashboard reads.
+
+Verification: `DashboardOverviewTest`, `SalesPhaseTest`, `TenantIsolationTest`, and `AuthenticationAccessTest` passed; frontend TypeScript, ESLint, Vitest and production build passed.
+
+Remaining Phase 3 dependencies: customer/quotation/order management UI, delivery/invoice detail workspaces, payment workflow UI, returns/refunds, and dedicated Sales dashboard feature tests with seeded financial fixtures.
+
+## Phase 3 — Customer, quotation, and sales-order workspaces
 
 Dependencies: existing customer, quotation, product, inventory, and sales authorization services.
 

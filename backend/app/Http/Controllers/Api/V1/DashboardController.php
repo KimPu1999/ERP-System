@@ -19,7 +19,7 @@ final class DashboardController
         // Read the request value here as the stable request-scoped identifier.
         $tenantId = (string) $request->header('X-Tenant-Id');
         $filters = $request->validate([
-            'period' => ['nullable', 'in:today,last_7_days,last_30_days,this_month,this_year,custom'],
+            'period' => ['nullable', 'in:today,yesterday,last_7_days,last_30_days,this_month,last_month,this_quarter,this_year,custom'],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
             'date_from' => ['nullable', 'date'],
@@ -80,6 +80,28 @@ final class DashboardController
             'inventory_alerts' => $this->inventoryAlerts($tenantId, $companyId, $branchId),
             'pending_approvals' => $this->pendingApprovals($tenantId, $companyId),
         ]]);
+    }
+
+    public function salesDashboard(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $context = $this->analyticsContext($request, $authorization);
+        $tenantId = $context['tenant_id']; $companyId = $context['company_id']; $branchId = $context['branch_id']; $from = $context['from']; $to = $context['to']; $currency = $context['currency'];
+        $eligibleInvoiceStates = ['issued', 'partially_paid', 'paid'];
+        $eligibleOrderStates = ['pending_approval', 'approved', 'processing', 'partially_fulfilled', 'fulfilled', 'delivered'];
+        $orderQuery = $this->scope(SalesOrder::where('tenant_id', $tenantId)->whereIn('state', $eligibleOrderStates)->whereBetween('created_at', [$from, $to]), $companyId, $branchId);
+        $invoiceQuery = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereIn('state', $eligibleInvoiceStates)->whereBetween('created_at', [$from, $to]), $companyId, $branchId);
+        $revenue = $currency ? $this->invoiceTotal($tenantId, $companyId, $branchId, $from, $to) : '0';
+        $previousRevenue = $currency ? $this->invoiceTotal($tenantId, $companyId, $branchId, $context['previous_from'], $context['previous_to']) : '0';
+        $paymentQuery = DB::table('payment_allocations as pa')->join('payments_received as pr', 'pr.id', '=', 'pa.payment_id')->join('sales_invoices as si', 'si.id', '=', 'pa.invoice_id')->where('pa.tenant_id', $tenantId)->where('pr.tenant_id', $tenantId)->where('si.tenant_id', $tenantId)->where('pr.state', 'verified')->whereBetween(DB::raw('COALESCE(pr.verified_at, pr.created_at)'), [$from, $to])->when($companyId, fn ($q) => $q->where('si.company_id', $companyId))->when($branchId, fn ($q) => $q->where('si.branch_id', $branchId));
+        $payments = (string) ($paymentQuery->sum('pa.amount') ?: '0');
+        $ar = $this->receivablesSummary($tenantId, $companyId, $branchId, $to);
+        $statusRows = (clone $orderQuery)->select('state')->selectRaw('COUNT(*) as count')->groupBy('state')->pluck('count', 'state');
+        $customers = (clone $invoiceQuery)->whereNotNull('customer_id')->distinct()->count('customer_id');
+        $topCustomers = $this->salesTopCustomers($tenantId, $companyId, $branchId, $from, $to, $eligibleInvoiceStates);
+        $branches = $this->salesBranchPerformance($tenantId, $companyId, $branchId, $from, $to, $eligibleInvoiceStates);
+        $recent = $this->scope(SalesOrder::where('tenant_id', $tenantId)->whereIn('state', $eligibleOrderStates)->whereBetween('created_at', [$from, $to])->with(['customer', 'items']), $companyId, $branchId)->latest()->limit(10)->get()->map(fn (SalesOrder $order) => ['id' => $order->id, 'number' => $order->number, 'customer' => $order->customer?->name ?? '—', 'date' => $order->created_at?->setTimezone($context['timezone'])->toDateString(), 'branch_id' => $order->branch_id, 'amount' => (string) ($order->base_total ?? $order->total), 'currency_code' => $currency?->code, 'status' => $order->state, 'payment_status' => null])->values()->all();
+        $counts = collect(['draft', 'pending_approval', 'approved', 'processing', 'partially_fulfilled', 'fulfilled', 'delivered', 'cancelled'])->mapWithKeys(fn ($state) => [$state => (int) ($statusRows[$state] ?? 0)])->all();
+        return response()->json(['data' => ['filters' => $this->analyticsFilters($context), 'metric_definitions' => ['revenue' => 'Eligible issued, partially paid and paid sales invoices less issued/applied customer credit notes, converted to the tenant base currency.', 'payments_received' => 'Verified customer payment allocations applied to scoped invoices during the selected period; unapplied verified receipts are excluded.', 'outstanding_ar' => 'As-of-date eligible invoice totals less recorded paid totals and eligible customer credit notes.', 'orders' => 'Sales orders in supported non-draft, non-cancelled workflow states.'], 'currency' => ['code' => $currency?->code, 'decimal_places' => $currency?->decimal_places, 'configured' => $currency !== null], 'kpis' => ['invoiced_revenue' => $this->kpi($revenue, $previousRevenue, $currency !== null, $currency ? null : 'Base accounting currency is not configured.'), 'sales_orders' => $this->kpi((string) $orderQuery->count(), (string) $this->scope(SalesOrder::where('tenant_id', $tenantId)->whereIn('state', $eligibleOrderStates)->whereBetween('created_at', [$context['previous_from'], $context['previous_to']]), $companyId, $branchId)->count()), 'customers' => $this->metric((string) $customers), 'payments_received' => $this->metric($payments, $currency !== null, $currency ? null : 'Base accounting currency is not configured.'), 'outstanding_ar' => $this->metric($ar['outstanding'], $currency !== null, $currency ? null : 'Base accounting currency is not configured.'), 'pending_deliveries' => $this->metric((string) $this->pendingDeliveries($tenantId, $companyId, $branchId))], 'revenue_trend' => $this->salesRevenueTrend($tenantId, $companyId, $branchId, $from, $to, $context['timezone'], $currency), 'order_summary' => ['eligible_total' => array_sum($counts) - $counts['draft'] - $counts['cancelled'], 'statuses' => $counts, 'distribution' => collect($counts)->map(fn ($count, $state) => ['state' => $state, 'count' => $count])->values()->all()], 'top_products' => $this->topProducts($tenantId, $companyId, $branchId, $from, $to), 'top_customers' => $topCustomers, 'branch_performance' => $branches, 'receivables' => $ar, 'recent_orders' => $recent, 'pipeline' => ['available' => false, 'reason' => 'Opportunities are tenant-scoped in the current CRM schema and cannot be safely attributed to a company or branch.'], 'unavailable_sections' => $currency ? [] : ['revenue', 'payments_received', 'outstanding_ar']]]);
     }
 
     public function revenueTrend(Request $request, AuthorizationService $authorization): JsonResponse
@@ -311,6 +333,38 @@ final class DashboardController
         return response()->json(['data' => ['available' => true, 'reason' => null, 'ranking' => $ranking, 'filters' => $this->analyticsFilters($context), 'methodology' => $ranking === 'sales' ? 'Posted sales invoice line revenue in base currency, less valid credit notes allocated proportionally to invoice lines and received sales returns.' : 'Posted sales invoice quantities, less received sales-return quantities; each SKU and unit of measure is ranked separately.', 'items' => $items, 'pagination' => ['limit' => $limit, 'has_more' => count($items) === $limit]]]);
     }
 
+    private function salesRevenueTrend(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to, string $timezone, ?AccountingCurrency $currency): array
+    {
+        if (! $currency) return ['available' => false, 'reason' => 'Base accounting currency is not configured.', 'granularity' => null, 'points' => []];
+        $granularity = $from->diffInDays($to) > 62 ? 'month' : 'day'; $series = $this->revenueBuckets($tenantId, $companyId, $branchId, $from, $to, $timezone, $granularity);
+        return ['available' => true, 'reason' => null, 'granularity' => $granularity, 'points' => collect($series['buckets'])->map(fn ($bucket) => ['key' => $bucket['key'], 'label' => $bucket['label'], 'value' => (string) ($series['values'][$bucket['key']] ?? '0')])->all()];
+    }
+
+    private function receivablesSummary(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $asOf): array
+    {
+        $invoices = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereIn('state', ['issued', 'partially_paid', 'paid'])->where('created_at', '<=', $asOf), $companyId, $branchId)->get(['id', 'customer_id', 'total', 'paid_total', 'state', 'created_at']);
+        $creditNotes = DB::table('credit_notes')->where('tenant_id', $tenantId)->whereIn('state', ['issued', 'applied'])->where('created_at', '<=', $asOf)->select('invoice_id')->selectRaw('SUM(total) as total')->groupBy('invoice_id')->pluck('total', 'invoice_id');
+        $outstanding = '0'; $unpaid = 0; $partial = 0; $overdue = 0; $dueSoon = 0; $today = $asOf->toDateString(); $soon = $asOf->addDays(7)->toDateString();
+        foreach ($invoices as $invoice) {
+            $balance = Decimal::sub(Decimal::sub((string) $invoice->total, (string) ($invoice->paid_total ?? '0')), (string) ($creditNotes[$invoice->id] ?? '0')); if (Decimal::compare($balance, '0') <= 0) continue; $outstanding = Decimal::add($outstanding, $balance); $invoice->state === 'issued' ? $unpaid++ : $partial++;
+            if ($invoice->due_date ?? null) { if ($invoice->due_date < $today) $overdue++; elseif ($invoice->due_date <= $soon) $dueSoon++; }
+        }
+        return ['posted_invoice_count' => $invoices->count(), 'unpaid_invoices' => $unpaid, 'partially_paid_invoices' => $partial, 'overdue_invoices' => $overdue, 'due_soon' => $dueSoon, 'outstanding' => $outstanding, 'as_of' => $asOf->toDateString()];
+    }
+
+    private function salesTopCustomers(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to, array $states): array
+    {
+        return $this->scope(SalesInvoice::where('sales_invoices.tenant_id', $tenantId)->whereIn('sales_invoices.state', $states)->whereBetween('sales_invoices.created_at', [$from, $to])->join('customers', 'customers.id', '=', 'sales_invoices.customer_id'), $companyId, $branchId, 'sales_invoices')->select('customers.id', 'customers.name')->selectRaw('COUNT(DISTINCT sales_invoices.id) as order_count')->selectRaw('SUM(COALESCE(sales_invoices.base_total, sales_invoices.total)) as sales_amount')->selectRaw('MAX(sales_invoices.created_at) as last_purchase_at')->groupBy('customers.id', 'customers.name')->orderByDesc('sales_amount')->limit(10)->get()->map(fn ($row) => ['customer_id' => $row->id, 'customer' => $row->name, 'order_count' => (int) $row->order_count, 'sales_amount' => (string) $row->sales_amount, 'last_purchase_at' => CarbonImmutable::parse($row->last_purchase_at)->toDateString()])->values()->all();
+    }
+
+    private function salesBranchPerformance(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to, array $states): array
+    {
+        if (! $companyId) return ['available' => false, 'reason' => 'Select a company to view branch performance.', 'items' => []];
+        $branches = Branch::where('tenant_id', $tenantId)->where('company_id', $companyId)->when($branchId, fn ($q) => $q->whereKey($branchId))->get(['id', 'name']);
+        $rows = $this->scope(SalesInvoice::where('sales_invoices.tenant_id', $tenantId)->whereIn('sales_invoices.state', $states)->whereBetween('sales_invoices.created_at', [$from, $to])->join('branches', 'branches.id', '=', 'sales_invoices.branch_id'), $companyId, $branchId, 'sales_invoices')->select('branches.id', 'branches.name')->selectRaw('COUNT(DISTINCT sales_invoices.id) as order_count')->selectRaw('SUM(COALESCE(sales_invoices.base_total, sales_invoices.total)) as sales_amount')->groupBy('branches.id', 'branches.name')->get()->keyBy('id');
+        return ['available' => true, 'reason' => null, 'items' => $branches->map(function ($branch) use ($rows): array { $row = $rows->get($branch->id); $amount = (string) ($row->sales_amount ?? '0'); $count = (int) ($row->order_count ?? 0); return ['branch_id' => $branch->id, 'branch' => $branch->name, 'sales_amount' => $amount, 'order_count' => $count, 'average_order_value' => $count ? Decimal::div($amount, (string) $count) : '0']; })->values()->all()];
+    }
+
     private function transactionRow(object $row, string $type, string $typeLabel, string $direction, ?string $currency, ?string $viewAllPath): array
     {
         return ['id' => (string) $row->id, 'type' => $type, 'type_label' => $typeLabel, 'reference' => (string) $row->reference, 'party_name' => $row->party_name ?: '—', 'occurred_at' => CarbonImmutable::parse((string) $row->occurred_at)->toIso8601String(), 'amount' => (string) $row->amount, 'currency_code' => $currency, 'direction' => $direction, 'status' => (string) $row->status, 'detail_path' => null, 'view_all_path' => $viewAllPath];
@@ -417,7 +471,10 @@ final class DashboardController
         $today = CarbonImmutable::now($timezone)->startOfDay();
         return match ($period) {
             'today' => [$today->startOfDay(), $today->endOfDay()],
+            'yesterday' => [$today->subDay()->startOfDay(), $today->subDay()->endOfDay()],
             'last_7_days' => [$today->subDays(6)->startOfDay(), $today->endOfDay()],
+            'last_month' => [$today->subMonth()->startOfMonth(), $today->subMonth()->endOfMonth()],
+            'this_quarter' => [$today->startOfQuarter(), $today->endOfDay()],
             'this_month' => [$today->startOfMonth(), $today->endOfDay()],
             'this_year' => [$today->startOfYear(), $today->endOfDay()],
             'custom' => [CarbonImmutable::parse($filters['from'], $timezone)->startOfDay(), CarbonImmutable::parse($filters['to'], $timezone)->endOfDay()],

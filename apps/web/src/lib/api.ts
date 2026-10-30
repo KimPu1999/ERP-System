@@ -47,6 +47,22 @@ export type DashboardOverview = {
   pending_approvals: Array<{ id: string; document_type: string; reference: string; requested_by: string; date: string; amount: string; status: string }>;
 };
 export const getDashboardOverview = (params: Record<string, string | undefined>) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: DashboardOverview }>(`/dashboard/overview?${query.toString()}`); };
+export type SalesDashboard = {
+  filters: { period: string; from: string; to: string; company_id: string | null; branch_id: string | null; timezone: string };
+  currency: { code: string | null; decimal_places: number | null; configured: boolean };
+  metric_definitions: Record<string, string>;
+  kpis: { invoiced_revenue: DashboardKpi; sales_orders: DashboardKpi; customers: DashboardKpi; payments_received: DashboardKpi; outstanding_ar: DashboardKpi; pending_deliveries: DashboardKpi };
+  revenue_trend: { available: boolean; reason: string | null; granularity: string | null; points: Array<{ key: string; label: string; value: string }> };
+  order_summary: { eligible_total: number; statuses: Record<string, number>; distribution: Array<{ state: string; count: number }> };
+  top_products: Array<{ product: string; sku: string; units_sold: string; revenue: string }>;
+  top_customers: Array<{ customer_id: string; customer: string; order_count: number; sales_amount: string; last_purchase_at: string }>;
+  branch_performance: { available: boolean; reason: string | null; items: Array<{ branch_id: string; branch: string; sales_amount: string; order_count: number; average_order_value: string }> };
+  receivables: { posted_invoice_count: number; unpaid_invoices: number; partially_paid_invoices: number; overdue_invoices: number; due_soon: number; outstanding: string; as_of: string };
+  recent_orders: Array<{ id: string; number: string; customer: string; date: string; branch_id: string | null; amount: string; currency_code: string | null; status: string; payment_status: string | null }>;
+  pipeline: { available: boolean; reason: string | null };
+  unavailable_sections: string[];
+};
+export const getSalesDashboard = (params: Record<string, string | undefined>) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: SalesDashboard }>(`/sales/dashboard?${query.toString()}`); };
 export type DashboardAnalyticsParams = { period?: string; company_id?: string; branch_id?: string; date_from?: string; date_to?: string; year?: string; comparison_period?: 'previous_period' | 'previous_year' };
 export type DashboardAnalyticsPoint = { key: string; label: string; current: string; previous: string };
 export type DashboardAnalyticsBase = { available: boolean; reason: string | null; currency: { code: string | null; decimal_places: number | null }; accounting_basis: string | null; filters: { period: string; year: number | null; comparison_period: string; from: string; to: string; company_id: string | null; branch_id: string | null; timezone: string }; points: DashboardAnalyticsPoint[] };

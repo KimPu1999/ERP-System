@@ -337,6 +337,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/dashboard/revenue-trend', [DashboardController::class, 'revenueTrend']);
         Route::get('/dashboard/growth', [DashboardController::class, 'growth']);
         Route::get('/dashboard/financial-performance', [DashboardController::class, 'financialPerformance']);
+        Route::get('/sales/dashboard', [DashboardController::class, 'salesDashboard']);
         Route::get('/dashboards/summary', [DashboardController::class, 'show']);
     });
 });
