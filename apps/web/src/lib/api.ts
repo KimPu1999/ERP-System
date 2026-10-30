@@ -185,7 +185,8 @@ export const createRoleAssignment = (data: { user_id: string; role_id: string; c
 export const deleteRoleAssignment = (assignmentId: string) => api<{ status: string }>(`/role-assignments/${assignmentId}`, { method: 'DELETE' });
 export type Product = { id: string; name: string; status: string; variants: Array<{ id: string; sku: string; internal_barcode: string; price: string }> };
 export type InventoryBalance = { id: string; variant_id: string; location_id: string; quantity: string; reserved_quantity: string; variant?: { sku: string }; location?: { name: string } };
-export const getProducts = (search = '') => api<{ data: { data: Product[] } }>(`/products${search ? `?search=${encodeURIComponent(search)}` : ''}`);
+export type ProductPage = { data: { data: Product[]; current_page: number; last_page: number; per_page: number; total: number } };
+export const getProducts = (params: { search?: string; status?: string; page?: number; per_page?: number; sort?: string; direction?: 'asc' | 'desc' } = {}) => { const query = queryString(params); return api<ProductPage>(`/products${query ? `?${query}` : ''}`); };
 export type ProductCategory = { id: string; name: string; slug: string; parent_id?: string | null; parent?: { id: string; name: string; slug: string } | null; direct_product_count: number; subcategory_count: number; created_at: string; updated_at: string };
 export type ProductCategoryPage = { data: { data: ProductCategory[]; current_page: number; last_page: number; per_page: number; total: number } };
 export const getProductCategories = (params: { search?: string; parent_id?: string; page?: number; per_page?: number; sort?: string; direction?: 'asc' | 'desc' } = {}) => { const query = queryString(params); return api<ProductCategoryPage>(`/product-categories${query ? `?${query}` : ''}`); };

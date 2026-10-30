@@ -19,7 +19,19 @@ use Illuminate\Support\Str;
 
 final class ProductController
 {
-    public function index(Request $request): JsonResponse { $query = Product::query()->where('tenant_id', app(TenantContext::class)->id())->with('variants')->when($request->string('search')->isNotEmpty(), fn ($query) => $query->where('name', 'ilike', '%'.$request->string('search').'%'))->when($request->string('status')->isNotEmpty(), fn ($query) => $query->where('status', $request->string('status')))->orderBy($request->string('sort', 'name'), $request->string('direction', 'asc') === 'desc' ? 'desc' : 'asc'); return response()->json(['data' => $query->paginate(min($request->integer('per_page', 25), 100))]); }
+    public function index(Request $request): JsonResponse
+    {
+        $allowedSorts = ['name', 'status', 'created_at', 'updated_at'];
+        $sort = in_array($request->string('sort')->toString(), $allowedSorts, true) ? $request->string('sort')->toString() : 'name';
+        $direction = $request->string('direction')->toString() === 'desc' ? 'desc' : 'asc';
+        $search = $request->string('search')->toString();
+        $query = Product::query()->where('tenant_id', app(TenantContext::class)->id())->with('variants')
+            ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('name', 'ilike', "%{$search}%")->orWhereHas('variants', fn ($variant) => $variant->where('name', 'ilike', "%{$search}%")->orWhere('sku', 'ilike', "%{$search}%")->orWhere('internal_barcode', 'ilike', "%{$search}%")->orWhere('gs1_identifier', 'ilike', "%{$search}%"))))
+            ->when($request->string('status')->isNotEmpty(), fn ($query) => $query->where('status', $request->string('status')))
+            ->orderBy($sort, $direction);
+
+        return response()->json(['data' => $query->paginate(min(max($request->integer('per_page', 25), 1), 100))]);
+    }
 
     public function store(Request $request, AuthorizationService $authorization, BarcodeService $barcodes, AuditLogger $audit): JsonResponse
     {
