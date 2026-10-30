@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\{AccountingCurrency, BankAccount, ChartAccount, Company, FiscalPeriod, FiscalYear, JournalEntry};
 use App\Services\{AccountingService, AuthorizationService};
 use App\Support\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -73,6 +74,28 @@ final class AccountingController
         return response()->json(['data' => $period->load('fiscalYear')], 201);
     }
 
+    public function fiscalYears(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); $companyId = $request->string('company_id')->toString() ?: null; $scope = $this->readCompanies($request, $authorization, $tenantId, $companyId);
+        $query = FiscalYear::where('tenant_id', $tenantId)->withCount('periods')->when($scope !== null, fn ($q) => $q->whereIn('company_id', $scope));
+        return response()->json(['data' => $query->orderByDesc('starts_on')->paginate(min(max($request->integer('per_page', 25), 1), 100))]);
+    }
+
+    public function storeFiscalYear(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); $data = $request->validate(['company_id' => 'required|uuid', 'name' => 'required|string|max:100', 'starts_on' => 'required|date', 'ends_on' => 'required|date|after:starts_on']);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.manage', $data['company_id']), 403); abort_unless(Company::where('tenant_id', $tenantId)->whereKey($data['company_id'])->where('is_active', true)->exists(), 404);
+        $year = DB::transaction(function () use ($data, $tenantId): FiscalYear { if (FiscalYear::where('tenant_id', $tenantId)->where('company_id', $data['company_id'])->whereDate('starts_on', '<=', $data['ends_on'])->whereDate('ends_on', '>=', $data['starts_on'])->exists()) throw ValidationException::withMessages(['starts_on' => ['The fiscal year overlaps an existing fiscal year.']]); return FiscalYear::create([...$data, 'tenant_id' => $tenantId, 'state' => 'open']); });
+        return response()->json(['data' => $year->load('periods')], 201);
+    }
+
+    public function generatePeriods(Request $request, FiscalYear $fiscalYear, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); abort_unless($fiscalYear->tenant_id === $tenantId, 404); abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.manage', $fiscalYear->company_id), 403);
+        $periods = DB::transaction(function () use ($fiscalYear, $tenantId): array { $year = FiscalYear::where('tenant_id', $tenantId)->whereKey($fiscalYear->id)->lockForUpdate()->firstOrFail(); if ($year->state !== 'open') throw ValidationException::withMessages(['state' => ['Periods cannot be generated for a closed fiscal year.']]); if ($year->periods()->exists()) throw ValidationException::withMessages(['periods' => ['Periods already exist for this fiscal year.']]); $cursor = CarbonImmutable::parse($year->starts_on->toDateString()); $end = CarbonImmutable::parse($year->ends_on->toDateString()); $created = []; while ($cursor->lte($end)) { $periodEnd = $cursor->endOfMonth()->min($end); $created[] = FiscalPeriod::create(['tenant_id' => $tenantId, 'fiscal_year_id' => $year->id, 'name' => $cursor->format('F Y'), 'starts_on' => $cursor->toDateString(), 'ends_on' => $periodEnd->toDateString(), 'state' => 'open']); $cursor = $periodEnd->addDay(); } return $created; });
+        return response()->json(['data' => $periods], 201);
+    }
+
     public function closePeriod(Request $request, FiscalPeriod $period, AuthorizationService $authorization): JsonResponse
     {
         $tenantId = $this->tenant();
@@ -95,6 +118,18 @@ final class AccountingController
         abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.post', $data['company_id']), 403);
         $entry = $accounting->post([...$data, 'tenant_id' => $tenantId, 'created_by' => $request->user()->id]);
         return response()->json(['data' => $entry], 201);
+    }
+
+    public function reopenPeriod(Request $request, FiscalPeriod $period, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); abort_unless($period->tenant_id === $tenantId, 404); $period->load('fiscalYear'); abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.close', $period->fiscalYear->company_id), 403);
+        $period = DB::transaction(function () use ($period, $tenantId): FiscalPeriod { $locked = FiscalPeriod::where('tenant_id', $tenantId)->whereKey($period->id)->lockForUpdate()->firstOrFail(); if ($locked->state === 'open') throw ValidationException::withMessages(['state' => ['The period is already open.']]); $locked->update(['state' => 'open', 'closed_at' => null, 'closed_by' => null]); return $locked->fresh('fiscalYear'); }); return response()->json(['data' => $period]);
+    }
+
+    public function lockPeriod(Request $request, FiscalPeriod $period, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); abort_unless($period->tenant_id === $tenantId, 404); $period->load('fiscalYear'); abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.close', $period->fiscalYear->company_id), 403);
+        $period = DB::transaction(function () use ($period, $tenantId, $request): FiscalPeriod { $locked = FiscalPeriod::where('tenant_id', $tenantId)->whereKey($period->id)->lockForUpdate()->firstOrFail(); if ($locked->state !== 'closed') throw ValidationException::withMessages(['state' => ['Only a closed period can be locked.']]); $locked->update(['state' => 'locked', 'closed_by' => $request->user()->id, 'closed_at' => $locked->closed_at ?: now()]); return $locked->fresh('fiscalYear'); }); return response()->json(['data' => $period]);
     }
 
     public function reverse(Request $request, JournalEntry $entry, AccountingService $accounting, AuthorizationService $authorization): JsonResponse

@@ -446,7 +446,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/accounting/accounts', [AccountingController::class, 'storeAccount']);
         Route::get('/accounting/periods', [AccountingController::class, 'periods']);
         Route::post('/accounting/periods', [AccountingController::class, 'storePeriod']);
+        Route::get('/accounting/fiscal-years', [AccountingController::class, 'fiscalYears']);
+        Route::post('/accounting/fiscal-years', [AccountingController::class, 'storeFiscalYear']);
+        Route::post('/accounting/fiscal-years/{fiscalYear}/generate-periods', [AccountingController::class, 'generatePeriods']);
         Route::post('/accounting/periods/{period}/close', [AccountingController::class, 'closePeriod']);
+        Route::post('/accounting/periods/{period}/reopen', [AccountingController::class, 'reopenPeriod']);
+        Route::post('/accounting/periods/{period}/lock', [AccountingController::class, 'lockPeriod']);
         Route::post('/accounting/journals', [AccountingController::class, 'post']);
         Route::post('/accounting/journals/{entry}/reverse', [AccountingController::class, 'reverse']);
         Route::get('/accounting/reports/trial-balance', [AccountingController::class, 'trialBalance']);
