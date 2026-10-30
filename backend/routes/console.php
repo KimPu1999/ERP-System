@@ -1,6 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\RunAutomationRule;
+use App\Models\AutomationRule;
+use Illuminate\Support\Facades\{Artisan, Schedule};
 
 Artisan::command('erp:status', function (): void {
     $this->info('Enterprise ERP Cloud API foundation is configured.');
@@ -25,3 +27,14 @@ Artisan::command('erp:release-check', function (): int {
     }
     return in_array(false, $checks, true) ? 1 : 0;
 });
+
+Artisan::command('erp:purchasing-automation', function (): int {
+    $now = now()->utc()->format('Y-m-d-H');
+    AutomationRule::where('is_active', true)->orderBy('id')->chunkById(100, function ($rules) use ($now): void {
+        foreach ($rules as $rule) RunAutomationRule::dispatch($rule->tenant_id, $rule->id, 'purchasing:'.$rule->id.':'.$now);
+    });
+    $this->info('Dispatched bounded tenant-scoped Purchasing automation batches.');
+    return 0;
+})->purpose('Dispatch safe non-financial Purchasing automation rules');
+
+Schedule::command('erp:purchasing-automation')->hourly()->withoutOverlapping(30);

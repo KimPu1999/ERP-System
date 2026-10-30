@@ -70,6 +70,17 @@
 - [ ] Supplier payment verification/authorization queue and provider integrations.
 - [ ] Full supplier credit allocation/reversal history and credit-note line-item workflow.
 
+## Phase 7 — Purchasing Settings, Automation & Production Security
+
+- [x] Audited and reused existing approval, notification, automation, queue, audit, role, and tenant-context services.
+- [x] Added company-scoped Purchasing Settings for general defaults, receiving controls, and invoice-matching tolerances.
+- [x] Added atomic company numbering policies with database row locking, uniqueness, previews, and legacy fallback for unscoped documents.
+- [x] Added Purchasing Settings UI with General, Numbering, Receiving & Matching, Automation, Notifications, and Security & Audit tabs.
+- [x] Added tenant RLS policies for new settings, numbering, and notification-preference tables.
+- [x] Added bounded hourly automation dispatch, idempotent execution records, retries, backoff, failure redaction, and dry-run API.
+- [x] Added company-scoped automation metadata, notification preferences, audit-log filtering, and server-side authorization checks.
+- [ ] Phase 7-specific feature tests, email provider delivery confirmation, browser responsive/dark-mode verification, and isolated restore testing remain open.
+
 ## Explicitly deferred to Phase 4
 
 - [ ] Provider-backed email notifications and delivery observability.

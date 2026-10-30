@@ -8,6 +8,7 @@
 - Phase 4: Goods Receipt drafts, partial/full receiving, warehouse/location validation, accepted/rejected/damaged quantities, immutable stock posting, movement history, and GRN print output.
 - Phase 5: Supplier Bill drafts, 2-way/3-way matching, approval/posting gates, explicit AP journal mapping, supplier payments, AP allocations, aging register, and supplier credit-note posting.
 - Phase 6: Receipt-anchored Purchase Returns, approval-gated Return to Supplier dispatch, inventory-safe idempotent movements, debit/refund records, supplier performance read models, procurement analytics, and Purchase Returns UI.
+- Phase 7: Company-scoped Purchasing Settings, atomic document numbering, receiving/matching policies, safe automation dispatch, notification preferences, audit views, RLS, and production-readiness verification.
 
 ## Phase 6 — Inventory receiving controls and documents
 
@@ -41,3 +42,8 @@ Acceptance criteria:
 - Rejected/damaged and pending quantities are shown per receipt line; mixed-unit summary totals are intentionally unavailable.
 - Receipt document attachments and posted-receipt reversal are deferred until the required secure storage and ledger-correction workflows are designed.
 - Browser-level visual and accessibility verification was not run in this environment.
+
+## Phase 7 readiness
+
+- Status: CONDITIONALLY READY for controlled staging validation; not approved for production deployment.
+- Blocking follow-up: add dedicated Phase 7 feature/concurrency tests, configure real scheduler/queue workers and email provider observability, run browser responsive/dark-mode checks, and perform an isolated backup restore test.

@@ -51,6 +51,7 @@ import { SupplierPaymentsPage } from './pages/SupplierPaymentsPage';
 import { SupplierCreditsPage } from './pages/SupplierCreditsPage';
 import { PurchaseReturnsPage } from './pages/PurchaseReturnsPage';
 import { PurchaseReturnDetailsPage } from './pages/PurchaseReturnDetailsPage';
+import { PurchasingSettingsPage } from './pages/PurchasingSettingsPage';
 
 const client = new QueryClient();
 
@@ -81,6 +82,7 @@ export default function App() {
       <Route path="/company" element={<CompanySetup />} /><Route path="/branches" element={<BranchManagement />} /><Route path="/catalog" element={<ProductCatalogPage />} /><Route path="/inventory" element={<InventoryPage />} /><Route path="/suppliers" element={<SuppliersPage />} /><Route path="/purchasing" element={<PurchasingLayout />}><Route index element={<PurchaseOrdersPage />} /><Route path="suppliers" element={<SuppliersPage />} /><Route path="approvals" element={<PurchaseApprovalsPage />} /><Route path="goods-receipts" element={<GoodsReceiptsPage />} /><Route path="goods-receipts/new" element={<GoodsReceiptFormPage />} /><Route path="goods-receipts/:goodsReceiptId/edit" element={<GoodsReceiptFormPage edit />} /><Route path="goods-receipts/:goodsReceiptId" element={<GoodsReceiptDetailsPage />} /><Route path="supplier-bills" element={<SupplierBillsPage />} /><Route path="supplier-bills/new" element={<SupplierBillFormPage />} /><Route path="supplier-bills/:supplierBillId/edit" element={<SupplierBillFormPage edit />} /><Route path="supplier-bills/:supplierBillId" element={<SupplierBillDetailsPage />} /><Route path="accounts-payable" element={<AccountsPayablePage />} /><Route path="payments" element={<SupplierPaymentsPage />} /><Route path="new" element={<PurchaseOrderFormPage />} /><Route path=":purchaseOrderId/edit" element={<PurchaseOrderFormPage edit />} /><Route path=":purchaseOrderId" element={<PurchaseOrderDetailsPage />} /></Route>
       <Route path="/purchasing/returns" element={<PurchasingLayout />}><Route index element={<PurchaseReturnsPage />} /></Route>
       <Route path="/purchasing/returns/:returnId" element={<PurchasingLayout />}><Route index element={<PurchaseReturnDetailsPage />} /></Route>
+      <Route path="/purchasing/settings" element={<PurchasingLayout />}><Route index element={<PurchasingSettingsPage />} /></Route>
       <Route path="/purchasing/supplier-credits" element={<PurchasingLayout />}><Route index element={<SupplierCreditsPage />} /></Route>
       <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /></Route>
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />

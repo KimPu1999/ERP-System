@@ -16,7 +16,7 @@ final class SupplierBillService
             $this->assertDuplicateFree($tenantId, $data['company_id'], $data['supplier_id'], $data['supplier_reference'] ?? null);
             $bill = SupplierBill::create([
                 ...$this->header($data), 'tenant_id' => $tenantId, 'created_by' => $actorId,
-                'number' => $data['number'] ?? app(ProcurementNumberService::class)->make('BILL'),
+                'number' => $data['number'] ?? app(ProcurementNumberService::class)->makeFor('BILL', $tenantId, $data['company_id'], $data['branch_id'] ?? null),
                 'state' => 'draft', 'approval_status' => 'draft',
             ]);
             $this->replaceLines($bill, $data['lines'] ?? []);

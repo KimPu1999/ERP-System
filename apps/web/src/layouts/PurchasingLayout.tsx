@@ -19,7 +19,7 @@ const purchasingNavItems: PurchasingNavItem[] = [
   { label: 'Supplier Credits', to: '/purchasing/supplier-credits', icon: FileMinus2 },
   { label: 'Purchase Returns', to: '/purchasing/returns', icon: RotateCcw },
   { label: 'Reports', icon: FileCheck2, unavailable: 'A dedicated purchasing reports workspace is not implemented.' },
-  { label: 'Settings', icon: Settings2, unavailable: 'Purchasing settings UI is not implemented.' },
+  { label: 'Settings', to: '/purchasing/settings', icon: Settings2 },
 ];
 
 export function PurchasingLayout() {
