@@ -468,6 +468,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/accounting/journals/{entry}/reverse', [AccountingController::class, 'reverse']);
         Route::get('/accounting/ledger', [AccountingController::class, 'ledger']);
         Route::get('/accounting/reports/trial-balance', [AccountingController::class, 'trialBalance']);
+        Route::get('/accounting/reports/statements', [AccountingController::class, 'financialStatements']);
         Route::get('/accounting/reports/financial', [AccountingController::class, 'financialReport']);
         Route::get('/hr/employees', [HrController::class, 'employees']);
         Route::post('/hr/employees', [HrController::class, 'storeEmployee']);

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\{AccountingCurrency, BankAccount, ChartAccount, Company, FiscalPeriod, FiscalYear, JournalEntry, JournalLine};
-use App\Services\{AccountingService, AuthorizationService};
+use App\Services\{AccountingService, AuthorizationService, FinancialReportingService};
 use App\Support\TenantContext;
 use App\Support\Decimal;
 use Carbon\CarbonImmutable;
@@ -263,6 +263,15 @@ final class AccountingController
         return response()->json(['data' => $query->orderBy('created_at')->paginate(min(max($request->integer('per_page', 50), 10), 100))]);
     }
 
+    public function financialStatements(Request $request, FinancialReportingService $reporting, AuthorizationService $authorization): JsonResponse
+    {
+        $data = $request->validate(['company_id' => 'required|uuid', 'report' => 'required|in:trial_balance,profit_loss,balance_sheet', 'from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from', 'as_of' => 'nullable|date']);
+        abort_unless($authorization->allows($request->user(), $this->tenant(), 'reports.view', $data['company_id']) || $authorization->allows($request->user(), $this->tenant(), 'accounting.view', $data['company_id']), 403);
+        $from = $data['from'] ?? now()->startOfYear()->toDateString(); $to = $data['to'] ?? now()->toDateString();
+        $result = match ($data['report']) { 'trial_balance' => $reporting->trialBalance($this->tenant(), $data['company_id'], $from, $to), 'profit_loss' => $reporting->profitAndLoss($this->tenant(), $data['company_id'], $from, $to), 'balance_sheet' => $reporting->balanceSheet($this->tenant(), $data['company_id'], $data['as_of'] ?? $to) };
+        return response()->json(['data' => $result, 'report' => $data['report'], 'currency_policy' => 'base_currency_posted_ledger']);
+    }
+
     public function reverse(Request $request, JournalEntry $entry, AccountingService $accounting, AuthorizationService $authorization): JsonResponse
     {
         $tenantId = $this->tenant();
@@ -279,14 +288,13 @@ final class AccountingController
         return response()->json(['data' => $accounting->trialBalance($this->tenant(), $data['company_id'], $data['from'], $data['to'])]);
     }
 
-    public function financialReport(Request $request, AccountingService $accounting, AuthorizationService $authorization): JsonResponse
+    public function financialReport(Request $request, FinancialReportingService $reporting, AuthorizationService $authorization): JsonResponse
     {
         $data = $request->validate(['company_id' => 'required|uuid', 'from' => 'required|date', 'to' => 'required|date|after_or_equal:from', 'type' => 'required|in:profit_loss,balance_sheet,cash_flow']);
         abort_unless($authorization->allows($request->user(), $this->tenant(), 'reports.view', $data['company_id']) || $authorization->allows($request->user(), $this->tenant(), 'accounting.manage', $data['company_id']), 403);
         if ($data['type'] === 'cash_flow') return response()->json(['data' => [], 'available' => false, 'reason' => 'Cash-flow classification is not configured for this tenant.']);
-        $rows = $accounting->trialBalance($this->tenant(), $data['company_id'], $data['from'], $data['to']);
-        $types = $data['type'] === 'profit_loss' ? ['revenue', 'expense'] : ['asset', 'liability', 'equity'];
-        return response()->json(['data' => array_values(array_filter($rows, fn ($row) => in_array($row['account_type'] ?? null, $types, true))), 'available' => true, 'report_type' => $data['type']]);
+        $result = $data['type'] === 'profit_loss' ? $reporting->profitAndLoss($this->tenant(), $data['company_id'], $data['from'], $data['to']) : $reporting->balanceSheet($this->tenant(), $data['company_id'], $data['to']);
+        return response()->json(['data' => $result, 'available' => true, 'report_type' => $data['type']]);
     }
 
     private function authorizeAccount(Request $request, ChartAccount $account, AuthorizationService $authorization, string $permission): void
