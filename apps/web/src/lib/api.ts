@@ -20,7 +20,7 @@ export const clearActiveTenantId = (): void => {
 };
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, message: string) { super(message); }
+  constructor(public readonly status: number, message: string, public readonly errors: Record<string, string[]> = {}) { super(message); }
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -29,7 +29,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   try { response = await fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}), ...(typeof window !== 'undefined' && window.localStorage.getItem(LOCALE_STORAGE_KEY) ? { 'X-Locale': window.localStorage.getItem(LOCALE_STORAGE_KEY)! } : {}), ...init?.headers } }); }
   catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend and check the API URL.`); }
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(response.status, body.message ?? `Request failed (${response.status}).`);
+  if (!response.ok) throw new ApiError(response.status, body.message ?? `Request failed (${response.status}).`, body.errors ?? {});
   return body as T;
 }
 
