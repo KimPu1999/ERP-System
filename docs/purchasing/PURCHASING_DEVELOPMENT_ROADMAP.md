@@ -48,3 +48,12 @@ Acceptance criteria:
 
 - Status: CONDITIONALLY READY for controlled staging validation; not approved for production deployment.
 - Blocking follow-up: add dedicated Phase 7 feature/concurrency tests, configure real scheduler/queue workers and email provider observability, run browser responsive/dark-mode checks, and perform an isolated backup restore test.
+
+## Suppliers Phase 2
+
+- [x] Supplier onboarding application schema and dashboard
+- [x] Company-scoped document requirements and private document metadata
+- [x] Document review history and eligibility checks
+- [x] Existing approval engine integration
+- [ ] Scheduler-backed supplier expiry reminders
+- [ ] Full onboarding form and document-review UI

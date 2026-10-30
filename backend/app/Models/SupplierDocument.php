@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class SupplierDocument extends Model { use HasUuids; protected $fillable=['tenant_id','company_id','supplier_id','application_id','requirement_id','uploaded_by','verified_by','document_type','original_filename','storage_path','mime_type','file_size','version','status','issue_date','expiry_date','verified_at','review_notes']; protected function casts():array{return ['issue_date'=>'date','expiry_date'=>'date','verified_at'=>'datetime'];} public function supplier(){return $this->belongsTo(Supplier::class);} public function application(){return $this->belongsTo(SupplierOnboardingApplication::class,'application_id');} public function requirement(){return $this->belongsTo(SupplierDocumentRequirement::class,'requirement_id');} public function reviews(){return $this->hasMany(SupplierDocumentReview::class);} }
