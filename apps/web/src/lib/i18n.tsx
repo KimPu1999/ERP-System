@@ -55,6 +55,7 @@ const optionalEnglish = {
   'accounting.expense': 'Expenses',
   'nav.journals': 'Journal entries',
   'nav.financialReports': 'Financial reports',
+  'nav.accountingIntegration': 'Accounting integration',
 } as const;
 
 const optionalBurmese = {
@@ -106,6 +107,7 @@ const optionalBurmese = {
   'accounting.expense': 'အသုံးစရိတ်များ',
   'nav.journals': 'စာရင်းသွင်းမှတ်တမ်းများ',
   'nav.financialReports': 'ဘဏ္ဍာရေးအစီရင်ခံစာများ',
+  'nav.accountingIntegration': 'Accounting ချိတ်ဆက်မှု',
 } as const;
 
 const messages = {

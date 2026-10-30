@@ -467,6 +467,9 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/accounting/journals/{entry}/post', [AccountingController::class, 'postJournal']);
         Route::post('/accounting/journals/{entry}/reverse', [AccountingController::class, 'reverse']);
         Route::get('/accounting/ledger', [AccountingController::class, 'ledger']);
+        Route::get('/accounting/integration', [AccountingController::class, 'integration']);
+        Route::put('/accounting/integration/mappings', [AccountingController::class, 'updateIntegrationMappings']);
+        Route::patch('/accounting/integration/settings', [AccountingController::class, 'updateIntegrationSettings']);
         Route::get('/accounting/reports/trial-balance', [AccountingController::class, 'trialBalance']);
         Route::get('/accounting/reports/statements', [AccountingController::class, 'financialStatements']);
         Route::get('/accounting/reports/financial', [AccountingController::class, 'financialReport']);

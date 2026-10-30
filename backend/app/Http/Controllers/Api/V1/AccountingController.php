@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\{AccountingCurrency, BankAccount, ChartAccount, Company, FiscalPeriod, FiscalYear, JournalEntry, JournalLine};
+use App\Models\{AccountingCurrency, AccountingIntegrationSetting, AccountMapping, BankAccount, ChartAccount, Company, FiscalPeriod, FiscalYear, JournalEntry, JournalLine};
 use App\Services\{AccountingService, AuthorizationService, FinancialReportingService};
 use App\Support\TenantContext;
 use App\Support\Decimal;
@@ -13,6 +13,69 @@ use Illuminate\Validation\ValidationException;
 
 final class AccountingController
 {
+    private const INTEGRATION_MAPPINGS = [
+        'sales_revenue', 'accounts_receivable', 'cash', 'bank_clearing', 'sales_tax_payable', 'sales_discounts', 'sales_returns',
+        'accounts_payable', 'inventory_asset', 'purchase_expense', 'input_tax', 'supplier_payment_clearing',
+        'cogs', 'inventory_adjustment_expense', 'inventory_gain_loss', 'inventory_clearing',
+        'salary_expense', 'salary_payable', 'payroll_tax_withholding', 'payroll_deductions', 'payroll_bank',
+    ];
+
+    public function integration(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant();
+        $data = $request->validate(['company_id' => 'required|uuid']);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.view', $data['company_id']) || $authorization->allows($request->user(), $tenantId, 'reports.view', $data['company_id']), 403);
+        $company = Company::where('tenant_id', $tenantId)->whereKey($data['company_id'])->where('is_active', true)->firstOrFail();
+        $mappings = AccountMapping::where('tenant_id', $tenantId)->where('company_id', $company->id)->with('account')->get()->keyBy('mapping_key');
+        $mappingRows = collect(self::INTEGRATION_MAPPINGS)->map(fn (string $key): array => ['key' => $key, 'account' => $mappings->get($key)?->account, 'configured' => $mappings->has($key)])->values();
+        $required = ['sales_revenue', 'accounts_receivable', 'accounts_payable', 'purchase_expense', 'inventory_asset', 'cogs', 'salary_expense', 'salary_payable'];
+        $missing = collect($required)->reject(fn (string $key): bool => $mappings->has($key))->values()->all();
+        $settings = AccountingIntegrationSetting::firstOrCreate(['tenant_id' => $tenantId, 'company_id' => $company->id]);
+        $lastPosted = JournalEntry::where('tenant_id', $tenantId)->where('company_id', $company->id)->where('state', 'posted')->max('posted_at');
+        $openPeriod = FiscalPeriod::where('tenant_id', $tenantId)->whereHas('fiscalYear', fn ($query) => $query->where('company_id', $company->id))->where('state', 'open')->exists();
+        return response()->json(['data' => ['company' => $company, 'automatic_posting_enabled' => $settings->automatic_posting_enabled, 'mappings' => $mappingRows, 'missing_required_mappings' => $missing, 'readiness' => ['base_currency' => (bool) $company->base_currency, 'account_mappings' => $missing === [], 'open_period' => $openPeriod, 'ready' => (bool) $company->base_currency && $missing === [] && $openPeriod && $settings->automatic_posting_enabled], 'modules' => $this->integrationModules($tenantId, $company->id, $lastPosted)]]);
+    }
+
+    public function updateIntegrationMappings(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant();
+        $data = $request->validate(['company_id' => 'required|uuid', 'mappings' => 'required|array', 'mappings.*' => 'nullable|uuid']);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.manage', $data['company_id']), 403);
+        $company = Company::where('tenant_id', $tenantId)->whereKey($data['company_id'])->where('is_active', true)->firstOrFail();
+        DB::transaction(function () use ($data, $tenantId, $company): void {
+            foreach ($data['mappings'] as $key => $accountId) {
+                abort_unless(in_array($key, self::INTEGRATION_MAPPINGS, true), 422, 'Unsupported accounting mapping.');
+                if ($accountId === null || $accountId === '') { AccountMapping::where('tenant_id', $tenantId)->where('company_id', $company->id)->where('mapping_key', $key)->delete(); continue; }
+                $account = ChartAccount::where('tenant_id', $tenantId)->whereKey($accountId)->where('is_active', true)->firstOrFail();
+                abort_unless($account->company_id === null || $account->company_id === $company->id, 422, 'Mapped account is outside the selected company.');
+                abort_unless($account->posting_allowed !== false, 422, 'Mapped account must allow posting.');
+                AccountMapping::updateOrCreate(['tenant_id' => $tenantId, 'company_id' => $company->id, 'mapping_key' => $key], ['account_id' => $account->id]);
+            }
+        });
+        return $this->integration($request->merge(['company_id' => $company->id]), $authorization);
+    }
+
+    public function updateIntegrationSettings(Request $request, AuthorizationService $authorization): JsonResponse
+    {
+        $tenantId = $this->tenant(); $data = $request->validate(['company_id' => 'required|uuid', 'automatic_posting_enabled' => 'required|boolean']);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.manage', $data['company_id']), 403);
+        $company = Company::where('tenant_id', $tenantId)->whereKey($data['company_id'])->where('is_active', true)->firstOrFail();
+        $mappingKeys = AccountMapping::where('tenant_id', $tenantId)->where('company_id', $company->id)->whereIn('mapping_key', ['sales_revenue', 'accounts_receivable', 'accounts_payable', 'purchase_expense', 'inventory_asset', 'cogs', 'salary_expense', 'salary_payable'])->pluck('mapping_key');
+        $currencyReady = (bool) $company->base_currency; $periodReady = FiscalPeriod::where('tenant_id', $tenantId)->whereHas('fiscalYear', fn ($query) => $query->where('company_id', $company->id))->where('state', 'open')->exists();
+        abort_unless(! $data['automatic_posting_enabled'] || ($currencyReady && $periodReady && $mappingKeys->count() === 8), 422, 'Complete base currency, open period and required account mappings before enabling automatic posting.');
+        $setting = AccountingIntegrationSetting::updateOrCreate(['tenant_id' => $tenantId, 'company_id' => $company->id], ['automatic_posting_enabled' => $data['automatic_posting_enabled'], 'enabled_at' => $data['automatic_posting_enabled'] ? now() : null, 'enabled_by' => $data['automatic_posting_enabled'] ? $request->user()->id : null]);
+        return response()->json(['data' => $setting]);
+    }
+
+    private function integrationModules(string $tenantId, string $companyId, mixed $lastPosted): array
+    {
+        $sourceTypes = JournalEntry::where('tenant_id', $tenantId)->where('company_id', $companyId)->where('state', 'posted')->pluck('source_type')->filter()->values();
+        $matches = ['sales' => ['Sales', 'Pos'], 'purchasing' => ['Supplier', 'Purchase'], 'inventory' => ['Inventory', 'Stock', 'GoodsReceipt'], 'payroll' => ['Payroll']];
+        return collect(['sales' => 'Sales', 'purchasing' => 'Purchasing', 'inventory' => 'Inventory', 'payroll' => 'Payroll'])->map(function (string $name, string $key) use ($sourceTypes, $matches, $lastPosted): array {
+            $detected = $sourceTypes->contains(fn ($source) => collect($matches[$key])->contains(fn (string $needle) => str_contains((string) $source, $needle)));
+            return ['key' => $key, 'name' => $name, 'configuration_status' => 'Review required', 'posting_eligibility' => $detected ? 'Posted events detected' : 'No posted events detected', 'last_successful_posting' => $detected ? $lastPosted : null, 'failed_posting_count' => null, 'reconciliation_status' => 'Not verified'];
+        })->values()->all();
+    }
     public function accounts(Request $request, AuthorizationService $authorization): JsonResponse
     {
         $tenantId = $this->tenant();
