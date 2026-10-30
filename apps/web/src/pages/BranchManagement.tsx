@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, ChevronRight, CircleAlert, Plus, RefreshCw } from 'lucide-react';
+import { Building2, CircleAlert, Plus, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BranchFilters } from '../components/BranchFilters';
@@ -35,7 +35,7 @@ export function BranchManagement() {
   if (companies.isError) return <section className="page-section organization-page branch-management-page"><div className="organization-state-card card"><CircleAlert size={24} /><h2>Branch management unavailable</h2><p className="muted">{companies.error instanceof ApiError && companies.error.status === 403 ? 'Your account does not have access to an active company.' : companies.error.message}</p><button className="secondary" type="button" onClick={() => companies.refetch()}><RefreshCw size={14} />Retry</button></div></section>;
   if (!companyId) return <section className="page-section organization-page branch-management-page"><div className="organization-state-card card"><Building2 size={24} /><h2>{(companies.data?.meta?.inactive_count ?? 0) > 0 ? 'Your company is inactive' : 'Set up your company'}</h2><p className="muted">{(companies.data?.meta?.inactive_count ?? 0) > 0 ? 'An inactive company cannot manage branches. Ask an authorized administrator to review its status.' : 'Create an active company before adding branches.'}</p>{(companies.data?.meta?.inactive_count ?? 0) === 0 && <Link className="primary" to="/company">Open company setup</Link>}</div></section>;
   return <section className="page-section organization-page branch-management-page">
-    <div className="page-heading"><div><div className="breadcrumb-line"><Link to={`/organization?company_id=${companyId}`}>Organization</Link><ChevronRight size={13} /><span>Branches</span></div><h1>Branch management</h1><p className="muted">Localization & financial preferences</p></div><div className="branch-heading-actions">{company && <label className="context-select">Company<select aria-label="Select branch company" value={companyId} onChange={(event) => setParams({ company_id: event.target.value, page: '1' }, { replace: true })}>{companies.data?.data.data.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>}{canManage && <button className="primary" type="button" onClick={() => setFormMode('new')} disabled={!company}><Plus size={15} /> Add branch</button>}</div></div>
+    <div className="organization-tab-toolbar"><div />{canManage && <button className="primary" type="button" onClick={() => setFormMode('new')} disabled={!company}><Plus size={15} /> Add branch</button>}</div>
     {!canManage && <div className="alert alert-warning" role="status">You have read-only access to this branch directory. Create and status actions are hidden.</div>}
     {company && <>
       <BranchSummaryCards summary={branches.data?.summary} isLoading={branches.isLoading} />

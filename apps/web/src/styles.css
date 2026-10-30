@@ -1254,6 +1254,26 @@ table { min-width: 0; }
   .dashboard-currency-notice { align-items: flex-start; flex-direction: column; gap: 5px; }
 }
 
+/* Organization tabs share one compact shell header. Child pages keep only the
+   controls and data that belong to the selected tab. */
+.organization-title-row { display: flex; align-items: center; gap: 10px; }
+.organization-back-button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); font-size: 11px; font-weight: 650; }
+.organization-back-button:hover { color: var(--blue); border-color: #bfdbfe; background: var(--blue-soft); }
+.organization-tab-toolbar { display: flex; align-items: center; justify-content: flex-end; min-height: 38px; margin: 0 0 16px; }
+.organization-tab-toolbar .primary { min-height: 36px; }
+.organization-structure-route { margin-top: 2px; }
+.organization-structure-route .organization-structure-panel { margin-top: 0; min-height: 360px; }
+.organization-structure-route .organization-structure-panel .panel-heading { margin-bottom: 14px; }
+.company-profile-tab-toolbar { margin-bottom: 12px; }
+.branch-details-page .organization-tab-toolbar { margin-bottom: 12px; }
+
+@media (max-width: 680px) {
+  .organization-title-row { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .organization-back-button { align-self: flex-start; }
+  .organization-tab-toolbar { align-items: stretch; margin-bottom: 12px; }
+  .organization-tab-toolbar .primary { width: 100%; justify-content: center; }
+}
+
 /* Supplier catalog page: the page uses the shared ERP primitives, with a small
    scoped layer for its KPI, table and dialog states. */
 .supplier-catalog-page { min-width: 0; }

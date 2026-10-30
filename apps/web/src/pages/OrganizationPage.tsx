@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, CheckCircle2, ChevronRight, CircleAlert, ClipboardList, FileText, MapPin, Network, Pencil, RefreshCw, ShieldCheck, UserPlus, Users, Warehouse, type LucideIcon } from 'lucide-react';
-import { NavLink, useSearchParams } from 'react-router-dom';
+import { NavLink, useLocation, useSearchParams } from 'react-router-dom';
 import { ApiError, getDashboardCompanies, getMe, getOrganizationOverview, type OrganizationMetric, type OrganizationOverview } from '../lib/api';
 
 function MetricCard({ label, metric, icon: Icon, accent, unavailableLabel }: { label: string; metric?: OrganizationMetric; icon: LucideIcon; accent: string; unavailableLabel?: string }) {
@@ -42,7 +42,7 @@ function DepartmentPanel({ data }: { data: OrganizationOverview }) {
 }
 
 function StructurePanel({ data }: { data: OrganizationOverview }) {
-  return <article className="card organization-panel organization-structure-panel"><div className="panel-heading"><div><p className="eyebrow">Organization structure</p><h2>{data.hierarchy.company.name}</h2></div><NavLink className="text-link" to={`/organization/structure?company_id=${data.company.id}`}>Open structure</NavLink></div><div className="structure-preview-root"><Building2 size={15} /><strong>{data.hierarchy.company.name}</strong></div><div className="structure-preview-children">{data.hierarchy.branches.map((branch) => <details key={branch.id} open><summary><Warehouse size={14} /> <strong>{branch.name}</strong><span>{branch.departments.length} departments</span></summary><div className="structure-department-list">{branch.departments.map((department) => <span key={department.id}><Network size={12} />{department.name}</span>)}{branch.departments.length === 0 && <small>No departments configured</small>}</div></details>)}{data.hierarchy.branches.length === 0 && <p className="muted">Add branches to build the organization structure.</p>}</div>{data.hierarchy.teams.length === 0 ? <small className="structure-unavailable">Teams are not assigned to the structure preview yet.</small> : <small className="structure-team-count">{data.hierarchy.teams.length} active teams available</small>}</article>;
+  return <article className="card organization-panel organization-structure-panel"><div className="panel-heading"><h2>Organization structure</h2><NavLink className="text-link" to={`/organization/branches?company_id=${data.company.id}`}>Manage branches</NavLink></div><div className="structure-preview-root"><Building2 size={15} /><strong>{data.hierarchy.company.name}</strong></div><div className="structure-preview-children">{data.hierarchy.branches.map((branch) => <details key={branch.id} open><summary><Warehouse size={14} /> <strong>{branch.name}</strong><span>{branch.departments.length} departments</span></summary><div className="structure-department-list">{branch.departments.map((department) => <span key={department.id}><Network size={12} />{department.name}</span>)}{branch.departments.length === 0 && <small>No departments configured</small>}</div></details>)}{data.hierarchy.branches.length === 0 && <p className="muted">Add branches to build the organization structure.</p>}</div>{data.hierarchy.teams.length === 0 ? <small className="structure-unavailable">Teams are not assigned to the structure preview yet.</small> : <small className="structure-team-count">{data.hierarchy.teams.length} active teams available</small>}</article>;
 }
 
 function AccessPanel({ data }: { data: OrganizationOverview }) {
@@ -55,6 +55,7 @@ function ActivityPanel({ data }: { data: OrganizationOverview }) {
 
 export function OrganizationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const companies = useQuery({ queryKey: ['dashboard-companies', 'organization'], queryFn: getDashboardCompanies });
   const permissions = useQuery({ queryKey: ['me', 'organization'], queryFn: getMe, retry: false });
   const companyList = companies.data?.data.data ?? [];
@@ -77,6 +78,7 @@ export function OrganizationPage() {
   }, [companyId, searchParams, selectedCompanyId, setSearchParams]);
 
   const data = overview.data?.data;
+  const structureOnly = location.pathname === '/organization/structure';
   const noActiveCompany = !companies.isLoading && !companies.isError && companyList.length === 0;
   const inactiveCompany = noActiveCompany && (companies.data?.meta?.inactive_count ?? 0) > 0;
   const metricCards: Array<[string, OrganizationMetric | undefined, LucideIcon, string, string?]> = data ? [
@@ -95,9 +97,11 @@ export function OrganizationPage() {
     {overview.isLoading && companyId && <div className="dashboard-loading" role="status">Loading company overview…</div>}
     {overview.isError && companyId && <div className="alert alert-danger" role="alert">{overview.error instanceof ApiError && overview.error.status === 403 ? 'This company is inactive or you no longer have access to it.' : `Unable to load organization overview. ${overview.error.message}`}<button className="table-action" type="button" onClick={() => void overview.refetch()}>Retry</button></div>}
     {data && <>
+      {structureOnly ? <div className="organization-structure-route"><StructurePanel data={data} /></div> : <>
       <div className="organization-kpi-grid organization-overview-kpi-grid">{metricCards.map(([label, metric, Icon, accent, unavailableLabel]) => <MetricCard key={label} label={label} metric={metric} icon={Icon} accent={accent} unavailableLabel={unavailableLabel} />)}</div>
       <div className="organization-overview-grid"><CompanySummary data={data} canEdit={allowed('profile')} /><AccessPanel data={data} /><BranchPanel data={data} /><DepartmentPanel data={data} /><StructurePanel data={data} /><ActivityPanel data={data} /></div>
       <article className="card organization-quick-actions"><div className="panel-heading"><h2>Quick actions</h2></div><div className="quick-action-grid organization-quick-action-grid">{allowed('profile') && <NavLink to={`/organization/profile?company_id=${data.company.id}`} className="quick-action"><Pencil size={14} /> Edit company profile <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/branches?company_id=${data.company.id}`} className="quick-action"><PlusIcon /> Add branch <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/departments?company_id=${data.company.id}`} className="quick-action"><Network size={14} /> Add department <ChevronRight size={14} /></NavLink>}{allowed('members.invite') && <NavLink to={`/organization/members?company_id=${data.company.id}&invite=1`} className="quick-action"><UserPlus size={14} /> Invite member <ChevronRight size={14} /></NavLink>}{allowed('roles.manage') && <NavLink to={`/organization/roles?company_id=${data.company.id}`} className="quick-action"><ShieldCheck size={14} /> Manage permissions <ChevronRight size={14} /></NavLink>}</div></article>
+      </>}
     </>}
   </section>;
 }
