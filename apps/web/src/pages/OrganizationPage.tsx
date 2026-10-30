@@ -4,11 +4,12 @@ import { Building2, CheckCircle2, ChevronRight, CircleAlert, ClipboardList, File
 import { NavLink, useSearchParams } from 'react-router-dom';
 import { ApiError, getDashboardCompanies, getMe, getOrganizationOverview, type OrganizationMetric, type OrganizationOverview } from '../lib/api';
 
-function MetricCard({ label, metric, icon: Icon, description }: { label: string; metric?: OrganizationMetric; icon: LucideIcon; description: string }) {
+function MetricCard({ label, metric, icon: Icon, accent, unavailableLabel }: { label: string; metric?: OrganizationMetric; icon: LucideIcon; accent: string; unavailableLabel?: string }) {
+  const available = metric?.available === true;
   return <article className="metric organization-overview-metric">
-    <div className="organization-metric-top"><span className="organization-metric-icon"><Icon size={16} aria-hidden="true" /></span><span>{label}</span></div>
-    <strong>{metric?.available ? metric.value : '—'}</strong>
-    <small>{metric?.available ? description : metric?.reason ?? 'This metric is not available yet.'}</small>
+    <div className={`organization-metric-top org-accent-${accent}`}><span className="organization-metric-icon"><Icon size={16} aria-hidden="true" /></span><span>{label}</span></div>
+    <strong>{available ? metric?.value : unavailableLabel ?? '—'}</strong>
+    {!available && <small className="organization-metric-status">{unavailableLabel ? 'Not configured' : metric?.reason ?? 'Unavailable'}</small>}
   </article>;
 }
 
@@ -25,11 +26,10 @@ function SetupState({ inactive, onRetry }: { inactive: boolean; onRetry?: () => 
 
 function CompanySummary({ data, canEdit }: { data: OrganizationOverview; canEdit: boolean }) {
   const company = data.company;
-  const location = [company.city, company.region, company.country_code].filter(Boolean).join(', ');
   return <article className="card organization-summary organization-summary-card">
-    <div className="panel-heading"><div><p className="eyebrow">Company summary</p><h2>{company.trading_name || company.name}</h2><p className="muted">{company.legal_name || company.name}</p></div>{canEdit && <NavLink className="secondary compact-action" to={`/organization/profile?company_id=${company.id}`}><Pencil size={13} /> Edit profile</NavLink>}</div>
-    <div className="organization-company-identity"><div className="organization-company-logo">{company.logo_url ? <img src={company.logo_url} alt={`${company.name} logo`} /> : <Building2 size={24} />}</div><div><strong>{company.name}</strong><span>{company.code} · <span className="status-pill success">Active</span></span></div></div>
-    <dl className="summary-list organization-summary-list"><div><dt>Business type</dt><dd>{company.business_type || 'Not configured'}</dd></div><div><dt>Registration number</dt><dd>{company.registration_number || 'Not configured'}</dd></div><div><dt>Email</dt><dd>{company.email || 'Not configured'}</dd></div><div><dt>Phone</dt><dd>{company.phone || 'Not configured'}</dd></div><div><dt>Location</dt><dd>{location || 'Not configured'}</dd></div><div><dt>Currency / timezone</dt><dd>{[company.base_currency, company.timezone].filter(Boolean).join(' · ') || 'Not configured'}</dd></div></dl>
+    <div className="panel-heading"><div><h2>Company summary</h2></div>{canEdit && <NavLink className="secondary compact-action" to={`/organization/profile?company_id=${company.id}`}><Pencil size={13} /> Edit profile</NavLink>}</div>
+    <div className="organization-company-identity"><div className="organization-company-logo">{company.logo_url ? <img src={company.logo_url} alt={`${company.name} logo`} /> : <Building2 size={24} />}</div><div><strong>{company.trading_name || company.name}</strong><span>{company.code} <span className="status-pill success">Active</span></span></div></div>
+    <dl className="summary-list organization-summary-list"><div><dt>Business type</dt><dd>{company.business_type || 'Not configured'}</dd></div><div><dt>Registration number</dt><dd>{company.registration_number || 'Not configured'}</dd></div><div><dt>Email</dt><dd>{company.email || 'Not configured'}</dd></div><div><dt>Short name / code</dt><dd>{company.code || 'Not configured'}</dd></div></dl>
   </article>;
 }
 
@@ -76,30 +76,28 @@ export function OrganizationPage() {
     }
   }, [companyId, searchParams, selectedCompanyId, setSearchParams]);
 
-  const selectCompany = (value: string) => { const next = new URLSearchParams(searchParams); if (value) next.set('company_id', value); else next.delete('company_id'); setSearchParams(next, { replace: true }); };
   const data = overview.data?.data;
   const noActiveCompany = !companies.isLoading && !companies.isError && companyList.length === 0;
   const inactiveCompany = noActiveCompany && (companies.data?.meta?.inactive_count ?? 0) > 0;
-  const metricCards: Array<[string, OrganizationMetric | undefined, LucideIcon, string]> = data ? [
-    ['Total branches', data.kpis.total_branches, Warehouse, 'Authorized operating locations'],
-    ['Active departments', data.kpis.active_departments, Network, 'Configured departments'],
-    ['Business units', data.kpis.business_units, Building2, 'Company operating units'],
-    ['Active members', data.kpis.active_members, Users, 'Company memberships'],
-    ['Teams', data.kpis.teams, Users, 'Active company teams'],
-    ['Pending invitations', data.kpis.pending_invitations, UserPlus, 'Awaiting acceptance'],
+  const metricCards: Array<[string, OrganizationMetric | undefined, LucideIcon, string, string?]> = data ? [
+    ['Total branches', data.kpis.total_branches, Warehouse, 'blue'],
+    ['Active departments', data.kpis.active_departments, Network, 'indigo'],
+    ['Business units', data.kpis.business_units, Building2, 'violet', 'Coming soon'],
+    ['Active members', data.kpis.active_members, Users, 'green'],
+    ['Teams', data.kpis.teams, Users, 'cyan'],
+    ['Pending invitations', data.kpis.pending_invitations, UserPlus, 'amber'],
   ] : [];
 
   return <section className="page-section organization-page organization-overview-page">
-    <div className="organization-overview-header"><div><div className="breadcrumb-line"><span>Organization</span><ChevronRight size={13} /><span>Overview</span></div><h1>Company overview</h1><p className="muted">A clear operating view of your company identity, structure and authorized access.</p></div>{companyList.length > 0 && <div className="organization-header-context"><label className="context-select">Company<select aria-label="Select company" value={companyId} onChange={(event) => selectCompany(event.target.value)}>{companyList.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label>{data && <span className="status-pill success">Active</span>}</div>}</div>
     {companies.isLoading && <div className="dashboard-loading" role="status">Loading authorized companies…</div>}
     {companies.isError && <div className="alert alert-danger" role="alert">{companies.error instanceof ApiError && companies.error.status === 403 ? 'You do not have access to an active company in this workspace. Ask an authorized administrator to grant company access.' : `Unable to load company access. ${companies.error.message}`}<button className="table-action" type="button" onClick={() => void companies.refetch()}>Retry</button></div>}
     {noActiveCompany && !companies.isError && <SetupState inactive={inactiveCompany} onRetry={() => void companies.refetch()} />}
     {overview.isLoading && companyId && <div className="dashboard-loading" role="status">Loading company overview…</div>}
     {overview.isError && companyId && <div className="alert alert-danger" role="alert">{overview.error instanceof ApiError && overview.error.status === 403 ? 'This company is inactive or you no longer have access to it.' : `Unable to load organization overview. ${overview.error.message}`}<button className="table-action" type="button" onClick={() => void overview.refetch()}>Retry</button></div>}
     {data && <>
-      <div className="organization-kpi-grid organization-overview-kpi-grid">{metricCards.map(([label, metric, Icon, description]) => <MetricCard key={label} label={label} metric={metric} icon={Icon} description={description} />)}</div>
+      <div className="organization-kpi-grid organization-overview-kpi-grid">{metricCards.map(([label, metric, Icon, accent, unavailableLabel]) => <MetricCard key={label} label={label} metric={metric} icon={Icon} accent={accent} unavailableLabel={unavailableLabel} />)}</div>
       <div className="organization-overview-grid"><CompanySummary data={data} canEdit={allowed('profile')} /><AccessPanel data={data} /><BranchPanel data={data} /><DepartmentPanel data={data} /><StructurePanel data={data} /><ActivityPanel data={data} /></div>
-      <article className="card organization-quick-actions"><div className="panel-heading"><div><p className="eyebrow">Quick actions</p><h2>Organization tasks</h2></div><span className="muted">Only authorized destinations are shown</span></div><div className="quick-action-grid organization-quick-action-grid">{allowed('profile') && <NavLink to={`/organization/profile?company_id=${data.company.id}`} className="quick-action"><Pencil size={14} /> Edit company profile <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/branches?company_id=${data.company.id}`} className="quick-action"><PlusIcon /> Add branch <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/departments?company_id=${data.company.id}`} className="quick-action"><Network size={14} /> Add department <ChevronRight size={14} /></NavLink>}{allowed('members.invite') && <NavLink to={`/organization/members?company_id=${data.company.id}&invite=1`} className="quick-action"><UserPlus size={14} /> Invite member <ChevronRight size={14} /></NavLink>}{allowed('roles.manage') && <NavLink to={`/organization/roles?company_id=${data.company.id}`} className="quick-action"><ShieldCheck size={14} /> Manage permissions <ChevronRight size={14} /></NavLink>}</div></article>
+      <article className="card organization-quick-actions"><div className="panel-heading"><div><p className="eyebrow">Quick actions</p><h2>Organization tasks</h2></div></div><div className="quick-action-grid organization-quick-action-grid">{allowed('profile') && <NavLink to={`/organization/profile?company_id=${data.company.id}`} className="quick-action"><Pencil size={14} /> Edit company profile <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/branches?company_id=${data.company.id}`} className="quick-action"><PlusIcon /> Add branch <ChevronRight size={14} /></NavLink>}{allowed('organization.manage') && <NavLink to={`/organization/departments?company_id=${data.company.id}`} className="quick-action"><Network size={14} /> Add department <ChevronRight size={14} /></NavLink>}{allowed('members.invite') && <NavLink to={`/organization/members?company_id=${data.company.id}&invite=1`} className="quick-action"><UserPlus size={14} /> Invite member <ChevronRight size={14} /></NavLink>}{allowed('roles.manage') && <NavLink to={`/organization/roles?company_id=${data.company.id}`} className="quick-action"><ShieldCheck size={14} /> Manage permissions <ChevronRight size={14} /></NavLink>}</div></article>
     </>}
   </section>;
 }

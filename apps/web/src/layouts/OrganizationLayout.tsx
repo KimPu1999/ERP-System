@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, ChevronRight, Landmark, Network, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { Building2, Landmark, Network, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 
@@ -41,15 +41,20 @@ export function OrganizationLayout() {
   };
 
   const withCompanyContext = (to: string) => `${to}${companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''}`;
+  const selectedCompany = companyList.find((company) => company.id === companyId);
+  const selectCompany = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set('company_id', value); else next.delete('company_id');
+    setSearchParams(next, { replace: true });
+  };
 
   return <div className="organization-layout">
     <header className="organization-layout-heading">
       <div>
-        <div className="breadcrumb-line"><span>Workspace</span><ChevronRight size={13} /><span>Organization</span></div>
         <h1>Organization</h1>
-        <p className="muted">Manage your company identity, structure, people, and access in one workspace.</p>
+        <p className="muted">Manage your company structure and access.</p>
       </div>
-      {companyId && <span className="organization-context-chip"><Building2 size={14} />{companyList.find((company) => company.id === companyId)?.name ?? 'Selected company'}</span>}
+      {companyId && <div className="organization-layout-context"><label className="organization-context-selector"><Building2 size={14} /><span className="sr-only">Select company</span><select aria-label="Select organization company" value={companyId} onChange={(event) => selectCompany(event.target.value)}>{companyList.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label>{selectedCompany && <span className="organization-status-pill"><i />{selectedCompany.is_active ? 'Active' : 'Inactive'}</span>}</div>}
     </header>
     <nav className="organization-nav" aria-label="Organization navigation">
       <div className="organization-nav-inner">
