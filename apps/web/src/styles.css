@@ -1783,3 +1783,236 @@ table { min-width: 0; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Shared Sales workspace polish for list, detail, CRM, quotation and fulfillment pages */
+.sales-workspace-layout > .page-section {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 24px clamp(20px, 2.2vw, 32px) 40px;
+}
+.sales-workspace-layout > .page-section .page-heading {
+  align-items: center;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+.sales-workspace-layout > .page-section .page-heading h1 {
+  margin: 0;
+  font-size: 25px;
+}
+.sales-workspace-layout > .page-section .sales-tab-heading h1 {
+  margin: 0;
+}
+.sales-workspace-layout > .page-section .page-heading > div,
+.sales-workspace-layout > .page-section .sales-page-actions {
+  min-width: 0;
+}
+.sales-workspace-layout > .page-section .page-heading > div > .eyebrow {
+  display: none;
+}
+.sales-workspace-layout > .page-section .page-heading > div > h1 {
+  margin-top: 0;
+}
+.sales-workspace-layout > .page-section .crm-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.sales-workspace-layout > .page-section .crm-grid > .crm-card {
+  min-width: 0;
+  padding: 15px;
+  border-radius: 11px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .035);
+}
+.sales-workspace-layout > .page-section .crm-grid > .crm-card strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 21px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sales-workspace-layout > .page-section .crm-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .035);
+}
+.sales-workspace-layout > .page-section .crm-search {
+  width: min(100%, 420px);
+  min-width: 260px;
+  min-height: 40px;
+  padding: 0 11px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+.sales-workspace-layout > .page-section .crm-search input {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+.sales-workspace-layout > .page-section .crm-card {
+  min-width: 0;
+  border-color: var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .035);
+}
+.sales-workspace-layout > .page-section .quotation-form {
+  margin-bottom: 12px;
+}
+.sales-workspace-layout > .page-section .quotation-form .crm-inline-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  margin: 14px 0;
+}
+.sales-workspace-layout > .page-section .quotation-form .crm-inline-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+.sales-workspace-layout > .page-section .quotation-form input,
+.sales-workspace-layout > .page-section .quotation-form select {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: 0;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 12px;
+}
+.sales-workspace-layout > .page-section .quotation-form input:focus,
+.sales-workspace-layout > .page-section .quotation-form select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(191, 219, 254, .55);
+}
+.sales-workspace-layout > .page-section .quotation-detail-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sales-workspace-layout > .page-section .quotation-detail-actions button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+}
+.sales-workspace-layout > .page-section .quotation-detail-actions button:hover:not(:disabled) { border-color: #bfdbfe; color: var(--blue); background: var(--blue-soft); }
+.sales-workspace-layout > .page-section .quotation-detail-actions button:disabled { cursor: not-allowed; opacity: .5; }
+.sales-workspace-layout > .page-section .status-badge:not(.active) { color: var(--muted); background: var(--surface-muted); }
+.sales-workspace-layout > .page-section .data-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.sales-workspace-layout > .page-section .data-table th {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.sales-workspace-layout > .page-section .data-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+.sales-workspace-layout > .page-section .data-table tbody tr:last-child td { border-bottom: 0; }
+.sales-workspace-layout > .page-section .data-table tbody tr:hover { background: var(--blue-soft); }
+.sales-workspace-layout > .page-section .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, color .15s ease;
+}
+.sales-workspace-layout > .page-section .button-primary {
+  color: #fff;
+  background: #2563eb;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, .16);
+}
+.sales-workspace-layout > .page-section .button-primary:hover { background: #1d4ed8; box-shadow: 0 6px 14px rgba(37, 99, 235, .22); }
+.sales-workspace-layout > .page-section .button-secondary {
+  border-color: var(--border);
+  color: var(--text);
+  background: var(--surface);
+}
+.sales-workspace-layout > .page-section .button-secondary:hover { border-color: #bfdbfe; color: var(--blue); background: var(--blue-soft); }
+.sales-workspace-layout > .page-section .button:focus-visible,
+.sales-workspace-layout > .page-section .table-action:focus-visible,
+.sales-workspace-layout > .page-section .icon-button:focus-visible {
+  outline: 3px solid rgba(191, 219, 254, .7);
+  outline-offset: 2px;
+}
+.sales-workspace-layout > .page-section .button:disabled { cursor: not-allowed; opacity: .55; }
+:root.dark .sales-workspace-layout > .page-section .crm-card,
+:root.dark .sales-workspace-layout > .page-section .crm-toolbar { box-shadow: 0 4px 16px rgba(0, 0, 0, .16); }
+@media (max-width: 1279px) {
+  .sales-workspace-layout > .page-section .crm-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .sales-workspace-layout > .page-section { padding: 20px 16px 32px; }
+  .sales-workspace-layout > .page-section .page-heading { align-items: stretch; flex-direction: column; gap: 10px; }
+  .sales-workspace-layout > .page-section .sales-page-actions { justify-content: flex-start; }
+  .sales-workspace-layout > .page-section .crm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sales-workspace-layout > .page-section .crm-toolbar { align-items: stretch; flex-direction: column; }
+  .sales-workspace-layout > .page-section .crm-search { width: 100%; min-width: 0; }
+  .sales-workspace-layout > .page-section .quotation-form .crm-inline-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .sales-workspace-layout > .page-section .crm-grid { grid-template-columns: 1fr 1fr; }
+  .sales-workspace-layout > .page-section .crm-grid > .crm-card { padding: 12px; }
+  .sales-workspace-layout > .page-section .crm-grid > .crm-card strong { font-size: 18px; }
+  .sales-workspace-layout > .page-section .sales-page-actions { align-items: stretch; flex-wrap: wrap; }
+  .sales-workspace-layout > .page-section .quotation-form .crm-inline-form { grid-template-columns: 1fr; }
+}
+
+/* Keep Sales pages focused on business content; global Sales shell owns the context. */
+.sales-workspace-layout > .page-section > .page-heading > div > .eyebrow {
+  display: none;
+}
+.sales-workspace-layout > .page-section > .page-heading > div > h1 + .muted {
+  display: none;
+}
+.sales-workspace-layout > .page-section .sales-tab-heading {
+  justify-content: flex-end;
+  min-height: 0;
+  margin-bottom: 12px;
+}
+.sales-workspace-layout > .page-section .sales-tab-heading h1 {
+  display: none;
+}
+.sales-workspace-layout > .page-section .sales-page-heading h1 {
+  display: none;
+}

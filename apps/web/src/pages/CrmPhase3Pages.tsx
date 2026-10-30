@@ -5,8 +5,8 @@ import { useSearchParams } from 'react-router-dom';
 import { createCrmCustomer, createCrmLead, getCrmActivities, getCrmCustomers, getCrmDashboard, getCrmLeads, getCrmOpportunities, getCrmPipeline, moveCrmOpportunity, completeCrmActivity } from '../lib/api';
 
 const card = 'crm-card';
-function Header({ title, onRefresh }: { title: string; description?: string; onRefresh?: () => void }) { return <div className="page-heading"><div><p className="eyebrow">Sales / CRM</p><h1>{title}</h1></div>{onRefresh && <button className="button button-secondary" onClick={onRefresh}><RefreshCw size={15} /> Refresh</button>}</div>; }
-function Filters({ search, setSearch }: { search: string; setSearch: (value: string) => void }) { return <div className="crm-toolbar"><div className="crm-search"><Search size={15} /><input aria-label="Search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search records" /></div><span className="muted">Company and branch scope are enforced by the API.</span></div>; }
+function Header({ title, onRefresh }: { title: string; description?: string; onRefresh?: () => void }) { return <div className="page-heading sales-tab-heading"><h1>{title}</h1>{onRefresh && <button className="button button-secondary" onClick={onRefresh}><RefreshCw size={15} /> Refresh</button>}</div>; }
+function Filters({ search, setSearch }: { search: string; setSearch: (value: string) => void }) { return <div className="crm-toolbar sales-tab-toolbar"><div className="crm-search"><Search size={15} /><input aria-label="Search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search records" /></div></div>; }
 function ErrorState({ error }: { error: Error }) { return <div className="alert alert-danger">Unable to load CRM data: {error.message}</div>; }
 function Empty({ label }: { label: string }) { return <div className="crm-empty">{label}</div>; }
 
