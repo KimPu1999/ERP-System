@@ -7,7 +7,7 @@ type Item = { label: string; to: string; icon: typeof LayoutDashboard };
 const companyGroups: Array<{ label: string; items: Item[] }> = [
   { label: 'Workspace', items: [{ label: 'Dashboard', to: '/', icon: LayoutDashboard }, { label: 'Organization', to: '/organization', icon: Building2 }, { label: 'Company & branches', to: '/company', icon: Building2 }] },
   { label: 'CRM & Sales', items: [{ label: 'Sales workspace', to: '/crm-sales', icon: Users }] },
-  { label: 'Purchasing', items: [{ label: 'Purchase orders', to: '/purchasing', icon: ShoppingCart }, { label: 'Suppliers', to: '/suppliers', icon: Users }] },
+  { label: 'Purchasing', items: [{ label: 'Purchase orders', to: '/purchasing', icon: ShoppingCart }, { label: 'Suppliers', to: '/purchasing/suppliers', icon: Users }] },
   { label: 'Products', items: [{ label: 'Product catalog', to: '/catalog', icon: Package }] },
   { label: 'Inventory', items: [{ label: 'Inventory control', to: '/inventory', icon: Boxes }] },
   { label: 'Accounting', items: [{ label: 'Accounting', to: '/accounting', icon: WalletCards }] },
