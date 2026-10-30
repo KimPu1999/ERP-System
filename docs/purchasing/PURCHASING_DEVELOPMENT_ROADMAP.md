@@ -7,6 +7,7 @@
 - Phase 3: Multi-level Purchase Order approval, authorization, audit history, and notifications.
 - Phase 4: Goods Receipt drafts, partial/full receiving, warehouse/location validation, accepted/rejected/damaged quantities, immutable stock posting, movement history, and GRN print output.
 - Phase 5: Supplier Bill drafts, 2-way/3-way matching, approval/posting gates, explicit AP journal mapping, supplier payments, AP allocations, aging register, and supplier credit-note posting.
+- Phase 6: Receipt-anchored Purchase Returns, approval-gated Return to Supplier dispatch, inventory-safe idempotent movements, debit/refund records, supplier performance read models, procurement analytics, and Purchase Returns UI.
 
 ## Phase 6 — Inventory receiving controls and documents
 
@@ -32,6 +33,9 @@ Acceptance criteria:
 - Supplier credit notes currently support a safe draft/post accounting adjustment but not line-level credit allocation or reversal UI.
 
 ## Current known limitations
+
+- Phase 6 return cases require a posted Goods Receipt and approved dispatch; supplier credit allocation, refund accounting verification, configurable performance weights, and queued export formats are not yet complete.
+- Performance delivery scores remain explicitly unavailable until expected/actual delivery data and a configured minimum sample policy exist; analytics keeps currency groups separate.
 
 - Phase 4 captures optional batch/serial and inspection metadata, but the existing schema does not yet provide lot/serial master or quarantine tables.
 - Rejected/damaged and pending quantities are shown per receipt line; mixed-unit summary totals are intentionally unavailable.

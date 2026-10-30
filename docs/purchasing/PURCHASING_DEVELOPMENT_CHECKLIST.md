@@ -47,6 +47,17 @@
 
 ## Explicitly deferred to later phases
 
+## Phase 6 — Purchase Returns, RTS & Procurement Analytics
+
+- [x] Added receipt-anchored purchase return cases with company/branch scope, decimal quantity validation, partial-return protection, and source batch/serial preservation.
+- [x] Separated draft, approval, and return shipment states; draft/approval never deduct inventory.
+- [x] Added idempotent authorized dispatch through the existing immutable inventory ledger with row locking and negative-stock protection.
+- [x] Added return list/detail APIs, approval actions, shipment records, supplier debit-note drafts, and manually verified supplier refund records.
+- [x] Added supplier credit-note linkage field without treating buyer debit notes or unverified credits as settlement.
+- [x] Added supplier performance and procurement analytics APIs with explicit unavailable-metric and multi-currency policies.
+- [x] Added Purchase Returns management and detail UI with KPI cards, filters, create draft, approval, and dispatch controls.
+- [ ] Full quality/quarantine release workflow, credit allocation/reversal UI, supplier refund accounting posting, configurable scorecard administration, report export UI, and browser-level accessibility verification remain open.
+
 - [ ] Full batch/lot and serial master tracking, expiry enforcement, and global serial ledger.
 - [ ] Configurable quality/quarantine release workflow and inspection policy administration.
 - [ ] Receipt attachment upload/download management.

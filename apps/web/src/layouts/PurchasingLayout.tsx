@@ -17,7 +17,7 @@ const purchasingNavItems: PurchasingNavItem[] = [
   { label: 'Accounts Payable', to: '/purchasing/accounts-payable', icon: FileCheck2 },
   { label: 'Payments', to: '/purchasing/payments', icon: Banknote },
   { label: 'Supplier Credits', to: '/purchasing/supplier-credits', icon: FileMinus2 },
-  { label: 'Purchase Returns', icon: RotateCcw, unavailable: 'Purchase return UI is planned for the next purchasing phase.' },
+  { label: 'Purchase Returns', to: '/purchasing/returns', icon: RotateCcw },
   { label: 'Reports', icon: FileCheck2, unavailable: 'A dedicated purchasing reports workspace is not implemented.' },
   { label: 'Settings', icon: Settings2, unavailable: 'Purchasing settings UI is not implemented.' },
 ];

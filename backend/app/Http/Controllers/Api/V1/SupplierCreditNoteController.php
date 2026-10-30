@@ -22,9 +22,10 @@ final class SupplierCreditNoteController
     public function store(Request $request, AuthorizationService $auth, ProcurementNumberService $numbers, AuditLogger $audit): JsonResponse
     {
         $tenant = $this->tenant();
-        $data = $request->validate(['company_id'=>'required|uuid','branch_id'=>'nullable|uuid','supplier_id'=>'required|uuid','supplier_bill_id'=>'nullable|uuid','currency_id'=>'required|uuid','credit_date'=>'required|date','reason'=>'required|string|max:2000','total'=>['required','regex:/^\d+(\.\d{1,6})?$/']]);
+        $data = $request->validate(['company_id'=>'required|uuid','branch_id'=>'nullable|uuid','supplier_id'=>'required|uuid','supplier_bill_id'=>'nullable|uuid','purchase_return_id'=>'nullable|uuid','currency_id'=>'required|uuid','credit_date'=>'required|date','reason'=>'required|string|max:2000','total'=>['required','regex:/^\d+(\.\d{1,6})?$/']]);
         $this->scope($request, $auth, $tenant, $data['company_id']);
         abort_unless(Supplier::where('tenant_id', $tenant)->whereKey($data['supplier_id'])->exists(), 404);
+        if (! empty($data['purchase_return_id'])) abort_unless(\App\Models\PurchaseReturn::where('tenant_id',$tenant)->where('company_id',$data['company_id'])->whereKey($data['purchase_return_id'])->exists(),422);
         if (! empty($data['supplier_bill_id'])) abort_unless(SupplierBill::where('tenant_id', $tenant)->where('company_id', $data['company_id'])->where('supplier_id', $data['supplier_id'])->where('state', 'posted')->whereKey($data['supplier_bill_id'])->exists(), 422);
         $note = SupplierCreditNote::create([...$data, 'tenant_id'=>$tenant, 'number'=>$numbers->make('SCN'), 'state'=>'draft', 'created_by'=>$request->user()->id]);
         $audit->record($request, 'supplier_credit.created', $tenant, $note);
