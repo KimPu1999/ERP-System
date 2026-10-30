@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, Warehouse};
+use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct, Warehouse};
 use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService, PurchaseOrderApprovalService};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
@@ -57,7 +57,7 @@ final class PurchaseOrderController
         $baseTotal = Decimal::mul($totals['grand_total'], $rate);
         $order = DB::transaction(function () use ($data, $tenantId, $request, $numbers, $rate, $baseTotal, $totals): PurchaseOrder {
             $model = PurchaseOrder::create(['tenant_id' => $tenantId, 'company_id' => $data['company_id'], 'branch_id' => $data['branch_id'] ?? null, 'warehouse_id' => $data['warehouse_id'] ?? null, 'currency_id' => $data['currency_id'] ?? null, 'exchange_rate' => $rate, 'base_total' => $baseTotal, 'subtotal' => $totals['subtotal'], 'discount_total' => $totals['discount_total'], 'tax_total' => $totals['tax_total'], 'shipping_total' => $totals['shipping_total'], 'grand_total' => $totals['grand_total'], 'supplier_id' => $data['supplier_id'], 'created_by' => $request->user()->id, 'number' => $numbers->makeFor('PO', $tenantId, $data['company_id'], $data['branch_id'] ?? null), 'state' => 'draft', 'order_date' => $data['order_date'] ?? now()->toDateString(), 'expected_at' => $data['expected_at'] ?? null, 'supplier_reference' => $data['supplier_reference'] ?? null, 'payment_terms' => $data['payment_terms'] ?? null, 'delivery_address' => $data['delivery_address'] ?? null, 'notes' => $data['notes'] ?? null]);
-            foreach ($totals['items'] as $item) PurchaseOrderItem::create(['tenant_id' => $tenantId, 'purchase_order_id' => $model->id, 'variant_id' => $item['variant_id'], 'description' => $item['description'] ?? null, 'ordered_quantity' => $item['ordered_quantity'], 'received_quantity' => '0', 'unit_price' => $item['unit_price'], 'discount_type' => $item['discount_type'], 'discount_amount' => $item['discount_amount'], 'tax_rate' => $item['tax_rate'], 'tax_amount' => $item['tax_amount'], 'line_subtotal' => $item['line_subtotal'], 'line_total' => $item['line_total']]);
+            foreach ($totals['items'] as $item) PurchaseOrderItem::create($this->itemPayload($tenantId, $model->id, $item));
             return $model;
         });
         $audit->record($request, 'purchase_order.created', $tenantId, $order);
@@ -77,7 +77,7 @@ final class PurchaseOrderController
             if (! empty($data['updated_at']) && $locked->updated_at?->toISOString() !== $data['updated_at']) abort(409, 'This purchase order changed after it was loaded. Refresh before saving again.');
             $locked->update(['company_id' => $data['company_id'], 'branch_id' => $data['branch_id'] ?? null, 'warehouse_id' => $data['warehouse_id'] ?? null, 'currency_id' => $data['currency_id'] ?? null, 'exchange_rate' => $rate, 'base_total' => Decimal::mul($totals['grand_total'], $rate), 'subtotal' => $totals['subtotal'], 'discount_total' => $totals['discount_total'], 'tax_total' => $totals['tax_total'], 'shipping_total' => $totals['shipping_total'], 'grand_total' => $totals['grand_total'], 'supplier_id' => $data['supplier_id'], 'order_date' => $data['order_date'] ?? $locked->order_date?->toDateString() ?? now()->toDateString(), 'expected_at' => $data['expected_at'] ?? null, 'supplier_reference' => $data['supplier_reference'] ?? null, 'payment_terms' => $data['payment_terms'] ?? null, 'delivery_address' => $data['delivery_address'] ?? null, 'notes' => $data['notes'] ?? null]);
             $locked->items()->delete();
-            foreach ($totals['items'] as $item) PurchaseOrderItem::create(['tenant_id' => $locked->tenant_id, 'purchase_order_id' => $locked->id, 'variant_id' => $item['variant_id'], 'description' => $item['description'] ?? null, 'ordered_quantity' => $item['ordered_quantity'], 'received_quantity' => '0', 'unit_price' => $item['unit_price'], 'discount_type' => $item['discount_type'], 'discount_amount' => $item['discount_amount'], 'tax_rate' => $item['tax_rate'], 'tax_amount' => $item['tax_amount'], 'line_subtotal' => $item['line_subtotal'], 'line_total' => $item['line_total']]);
+            foreach ($totals['items'] as $item) PurchaseOrderItem::create($this->itemPayload((string) $locked->tenant_id, $locked->id, $item));
         });
         $audit->record($request, 'purchase_order.updated', (string) $purchaseOrder->tenant_id, $purchaseOrder);
         return response()->json(['data' => $purchaseOrder->fresh()->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product'])]);
@@ -123,7 +123,7 @@ final class PurchaseOrderController
 
     private function validatedPayload(Request $request, string $tenantId): array
     {
-        $data = $request->validate(['company_id' => ['required', 'uuid'], 'branch_id' => ['nullable', 'uuid'], 'warehouse_id' => ['nullable', 'uuid'], 'currency_id' => ['nullable', 'uuid'], 'exchange_rate' => ['nullable', 'regex:/^\d+(\.\d{1,12})?$/'], 'supplier_id' => ['required', 'uuid'], 'order_date' => ['nullable', 'date'], 'expected_at' => ['nullable', 'date', 'after_or_equal:order_date'], 'supplier_reference' => ['nullable', 'string', 'max:120'], 'payment_terms' => ['nullable', 'string', 'max:500'], 'delivery_address' => ['nullable', 'string', 'max:2000'], 'shipping_total' => ['nullable', 'regex:/^\d+(\.\d{1,6})?$/'], 'notes' => ['nullable', 'string', 'max:5000'], 'updated_at' => ['nullable', 'date'], 'items' => ['required', 'array', 'min:1', 'max:500'], 'items.*.variant_id' => ['required', 'uuid'], 'items.*.description' => ['nullable', 'string', 'max:1000'], 'items.*.ordered_quantity' => ['required', 'regex:/^\d+(\.\d{1,6})?$/'], 'items.*.unit_price' => ['required', 'regex:/^\d+(\.\d{1,6})?$/'], 'items.*.discount_type' => ['nullable', 'in:amount,percent'], 'items.*.discount_amount' => ['nullable', 'regex:/^\d+(\.\d{1,6})?$/'], 'items.*.tax_rate' => ['nullable', 'regex:/^\d+(\.\d{1,6})?$/']]);
+        $data = $request->validate(['company_id' => ['required', 'uuid'], 'branch_id' => ['nullable', 'uuid'], 'warehouse_id' => ['nullable', 'uuid'], 'currency_id' => ['nullable', 'uuid'], 'exchange_rate' => ['nullable', 'regex:/^\d+(\.\d{1,12})?$/'], 'supplier_id' => ['required', 'uuid'], 'order_date' => ['nullable', 'date'], 'expected_at' => ['nullable', 'date', 'after_or_equal:order_date'], 'supplier_reference' => ['nullable', 'string', 'max:120'], 'payment_terms' => ['nullable', 'string', 'max:500'], 'delivery_address' => ['nullable', 'string', 'max:2000'], 'shipping_total' => ['nullable', 'regex:/^\d+(\.\d{1,6})?$/'], 'notes' => ['nullable', 'string', 'max:5000'], 'updated_at' => ['nullable', 'date'], 'items' => ['required', 'array', 'min:1', 'max:500'], 'items.*.variant_id' => ['required', 'uuid'], 'items.*.supplier_product_id' => ['nullable', 'uuid'], 'items.*.description' => ['nullable', 'string', 'max:1000'], 'items.*.ordered_quantity' => ['required', 'regex:/^\d+(\.\d{1,6})?$/'], 'items.*.unit_price' => ['required', 'regex:/^\d+(\.\d{1,6})?$/'], 'items.*.discount_type' => ['nullable', 'in:amount,percent'], 'items.*.discount_amount' => ['nullable', 'regex:/^\d+(\.\d{1,6})?$/'], 'items.*.tax_rate' => ['nullable', 'regex:/^\d+(\.\d{1,6})?$/']]);
         abort_unless(Company::where('tenant_id', $tenantId)->whereKey($data['company_id'])->where('is_active', true)->exists(), 404);
         if (! empty($data['branch_id'])) abort_unless(Branch::where('tenant_id', $tenantId)->whereKey($data['branch_id'])->where('company_id', $data['company_id'])->where('status', 'active')->exists(), 404);
         if (! empty($data['warehouse_id'])) abort_unless(Warehouse::where('tenant_id', $tenantId)->whereKey($data['warehouse_id'])->where('company_id', $data['company_id'])->when($data['branch_id'] ?? null, fn ($q, $branchId) => $q->where('branch_id', $branchId))->where('is_active', true)->exists(), 404);
@@ -131,8 +131,24 @@ final class PurchaseOrderController
         abort_unless(Supplier::whereKey($data['supplier_id'])->where('tenant_id', $tenantId)->where('status', 'active')->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $data['company_id']))->exists(), 404);
         $variantIds = collect($data['items'])->pluck('variant_id');
         if ($variantIds->duplicates()->isNotEmpty()) throw ValidationException::withMessages(['items' => ['The same product variant cannot be added twice. Use a separate variant or consolidate the quantity.']]);
-        foreach ($data['items'] as $item) abort_unless(ProductVariant::whereKey($item['variant_id'])->where('tenant_id', $tenantId)->where('is_active', true)->exists(), 404);
+        foreach ($data['items'] as &$item) {
+            abort_unless(ProductVariant::whereKey($item['variant_id'])->where('tenant_id', $tenantId)->where('is_active', true)->exists(), 404);
+            if (! empty($item['supplier_product_id'])) {
+                $catalog = SupplierProduct::where('tenant_id',$tenantId)->whereKey($item['supplier_product_id'])->where('company_id',$data['company_id'])->where('supplier_id',$data['supplier_id'])->where('status','active')->firstOrFail();
+                abort_unless($catalog->variant_id === $item['variant_id'], 422, 'Supplier catalog item does not match the selected product variant.');
+                abort_unless($catalog->availability_status !== 'discontinued', 422, 'This supplier catalog item is discontinued.');
+                if ((float) $catalog->minimum_order_quantity > 0) abort_unless((float) $item['ordered_quantity'] >= (float) $catalog->minimum_order_quantity, 422, 'The ordered quantity is below the supplier minimum order quantity.');
+                if ((float) $catalog->order_multiple > 0) abort_unless(fmod((float) $item['ordered_quantity'], (float) $catalog->order_multiple) === 0.0, 422, 'The ordered quantity must follow the supplier order multiple.');
+                $item['supplier_catalog_snapshot'] = ['supplier_product_id'=>$catalog->id,'supplier_sku_snapshot'=>$catalog->supplier_sku,'purchase_uom_snapshot'=>$catalog->purchase_uom,'minimum_order_quantity_snapshot'=>$catalog->minimum_order_quantity,'order_multiple_snapshot'=>$catalog->order_multiple,'lead_time_snapshot'=>$catalog->standard_lead_time];
+            }
+        }
+        unset($item);
         return $data;
+    }
+
+    private function itemPayload(string $tenantId, string $orderId, array $item): array
+    {
+        return ['tenant_id'=>$tenantId,'purchase_order_id'=>$orderId,'variant_id'=>$item['variant_id'],'supplier_product_id'=>$item['supplier_catalog_snapshot']['supplier_product_id']??$item['supplier_product_id']??null,'supplier_sku_snapshot'=>$item['supplier_catalog_snapshot']['supplier_sku_snapshot']??null,'purchase_uom_snapshot'=>$item['supplier_catalog_snapshot']['purchase_uom_snapshot']??null,'minimum_order_quantity_snapshot'=>$item['supplier_catalog_snapshot']['minimum_order_quantity_snapshot']??null,'order_multiple_snapshot'=>$item['supplier_catalog_snapshot']['order_multiple_snapshot']??null,'lead_time_snapshot'=>$item['supplier_catalog_snapshot']['lead_time_snapshot']??null,'price_source_type'=>$item['price_source_type']??null,'price_source_id'=>$item['price_source_id']??null,'description'=>$item['description']??null,'ordered_quantity'=>$item['ordered_quantity'],'received_quantity'=>'0','unit_price'=>$item['unit_price'],'discount_type'=>$item['discount_type'],'discount_amount'=>$item['discount_amount'],'tax_rate'=>$item['tax_rate'],'tax_amount'=>$item['tax_amount'],'line_subtotal'=>$item['line_subtotal'],'line_total'=>$item['line_total']];
     }
 
     private function assertWriteScope(Request $request, AuthorizationService $authorization, string $tenantId, string $companyId, ?string $branchId): void { abort_unless($authorization->allows($request->user(), $tenantId, 'procurement.manage', $companyId, $branchId), 403); }

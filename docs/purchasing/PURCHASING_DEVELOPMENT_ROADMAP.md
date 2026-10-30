@@ -69,3 +69,18 @@ Acceptance criteria:
 - [ ] External bank verification integration
 - [ ] Scheduler-backed financial document expiry reminders
 - [ ] Full financial profile and bank-account management UI
+
+## Suppliers Phase 4
+
+- [x] Company-scoped supplier catalog product schema and directory API
+- [x] Supplier SKU identity and internal variant validation
+- [x] MOQ, order-multiple, availability and discontinued-item PO validation
+- [x] Historical supplier catalog snapshots on PO lines
+- [x] Supplier purchase price lists with quantity tiers and conflict-safe resolution
+- [x] Supplier contract records and version snapshots
+- [x] Private document links for catalog, price-list and contract records
+- [x] Catalog summary and management UI foundation
+- [ ] Full product/variant selector and mapping-history UI
+- [ ] Dedicated price-list tier editor and contract renewal UI
+- [ ] Approval policy seed/configuration for supplier catalog scenarios
+- [ ] Database-backed Phase 4 feature/concurrency tests

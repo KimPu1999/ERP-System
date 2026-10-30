@@ -23,6 +23,7 @@ import { InventoryPage } from './pages/InventoryPage';
 import { SuppliersPage } from './pages/SuppliersPage';
 import { SupplierOnboardingPage } from './pages/SupplierOnboardingPage';
 import { SupplierFinancialPage } from './pages/SupplierFinancialPage';
+import { SupplierCatalogPage } from './pages/SupplierCatalogPage';
 import { PurchaseOrderDetailsPage } from './pages/PurchaseOrderDetailsPage';
 import { PurchaseOrdersPage } from './pages/PurchaseOrdersPage';
 import { PurchaseApprovalsPage } from './pages/PurchaseApprovalsPage';
@@ -93,6 +94,7 @@ export default function App() {
       <Route path="/purchasing/returns/:returnId" element={<PurchasingLayout />}><Route index element={<PurchaseReturnDetailsPage />} /></Route>
       <Route path="/purchasing/suppliers/onboarding" element={<PurchasingLayout />}><Route index element={<SupplierOnboardingPage />} /></Route>
       <Route path="/purchasing/suppliers/financial" element={<PurchasingLayout />}><Route index element={<SupplierFinancialPage />} /></Route>
+      <Route path="/purchasing/suppliers/catalog" element={<PurchasingLayout />}><Route index element={<SupplierCatalogPage />} /></Route>
       <Route path="/purchasing/settings" element={<PurchasingLayout />}><Route index element={<PurchasingSettingsPage />} /></Route>
       <Route path="/purchasing/supplier-credits" element={<PurchasingLayout />}><Route index element={<SupplierCreditsPage />} /></Route>
       <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="fulfillment" element={<SalesFulfillmentPage />} /><Route path="fulfillment/:fulfillmentId" element={<SalesFulfillmentDetailsPage />} /><Route path="orders" element={<SalesOrdersPage />} /><Route path="orders/:orderId" element={<SalesOrderDetailsPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="quotations/:quotationId" element={<SalesQuotationDetailsPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
