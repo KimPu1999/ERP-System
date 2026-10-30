@@ -67,6 +67,7 @@ import { SalesOrdersPage } from './pages/SalesOrdersPage';
 import { SalesOrderDetailsPage } from './pages/SalesOrderDetailsPage';
 import { SalesFulfillmentPage } from './pages/SalesFulfillmentPage';
 import { SalesFulfillmentDetailsPage } from './pages/SalesFulfillmentDetailsPage';
+import { SupplierIntelligencePage } from './pages/SupplierIntelligencePage';
 
 const client = new QueryClient();
 
@@ -101,6 +102,12 @@ export default function App() {
       <Route path="/purchasing/suppliers/financial" element={<PurchasingLayout />}><Route index element={<SupplierFinancialPage />} /></Route>
       <Route path="/purchasing/suppliers/catalog" element={<PurchasingLayout />}><Route index element={<SupplierCatalogPage />} /></Route>
       <Route path="/purchasing/suppliers/performance" element={<PurchasingLayout />}><Route index element={<SupplierPerformancePage />} /></Route>
+      <Route path="/purchasing/suppliers/analytics" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="analytics" />} /></Route>
+      <Route path="/purchasing/suppliers/reports" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="reports" />} /></Route>
+      <Route path="/purchasing/suppliers/automations" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="automations" />} /></Route>
+      <Route path="/purchasing/suppliers/notifications" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="notifications" />} /></Route>
+      <Route path="/purchasing/suppliers/portal-activity" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="portal" />} /></Route>
+      <Route path="/purchasing/suppliers/access-reviews" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="reviews" />} /></Route>
       <Route path="/supplier-portal" element={<SupplierPortalLayout />}><Route path="dashboard" element={<SupplierPortalDashboardPage />} /><Route path="purchase-orders" element={<SupplierPortalPurchaseOrdersPage />} /></Route>
       <Route path="/supplier-portal/accept-invitation" element={<SupplierPortalInvitationPage />} />
       <Route path="/purchasing/settings" element={<PurchasingLayout />}><Route index element={<PurchasingSettingsPage />} /></Route>

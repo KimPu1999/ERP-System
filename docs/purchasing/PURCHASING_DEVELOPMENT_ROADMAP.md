@@ -119,3 +119,16 @@ Acceptance criteria:
 - [ ] Portal notifications and queue deduplication
 - [ ] Full supplier team-management UI
 - [ ] Database-backed portal security and concurrency tests
+
+## Suppliers Phase 7
+
+- [x] Supplier intelligence dashboard with company-scoped KPI and trend aggregates
+- [x] Supplier report directory and queued private CSV export integration
+- [x] Saved report views and disabled-by-default report schedules
+- [x] Allowlisted supplier automation triggers/actions with version snapshots
+- [x] Supplier notification, portal activity and access-review API foundations
+- [x] Tenant RLS for Phase 7 configuration tables
+- [ ] Scheduler-backed report delivery and reminder execution verification
+- [ ] Queue retry/deduplication operational verification
+- [ ] Browser UAT and database-backed supplier Phase 7 tests
+- [ ] Production backup/restore and monitoring rehearsal
