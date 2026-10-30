@@ -194,6 +194,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/catalog/references', [CatalogReferenceController::class, 'index']);
         Route::post('/catalog/references', [CatalogReferenceController::class, 'store']);
         Route::get('/product-categories', [ProductCategoryController::class, 'index']);
+        Route::post('/product-categories', [ProductCategoryController::class, 'store']);
         Route::get('/products', [ProductController::class, 'index']);
         Route::post('/products', [ProductController::class, 'store']);
         Route::get('/products/export', [ProductController::class, 'export']);
