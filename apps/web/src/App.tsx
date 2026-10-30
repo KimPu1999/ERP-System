@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './lib/auth';
-import { AuthenticatedRoute, PlatformRoute } from './components/ProtectedRoute';
+import { AuthenticatedRoute, BusinessRoute, PlatformRoute } from './components/ProtectedRoute';
 import { AuthLayout } from './layouts/AuthLayout';
 import { CompanyLayout } from './layouts/CompanyLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
@@ -12,6 +12,8 @@ import { CompanySetup } from './pages/CompanySetup';
 import { BranchManagement } from './pages/BranchManagement';
 import { BranchDetailsPage } from './pages/BranchDetailsPage';
 import { LoginPage } from './pages/LoginPage';
+import { PlatformLoginPage } from './pages/PlatformLoginPage';
+import { BusinessLoginPage } from './pages/BusinessLoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -91,9 +93,12 @@ function HealthPage() {
 export default function App() {
   return <QueryClientProvider client={client}><BrowserRouter><I18nProvider><AuthProvider><Routes>
     <Route element={<AuthLayout />}>
+      <Route path="/platform/login" element={<PlatformLoginPage />} />
+      <Route path="/business/login" element={<BusinessLoginPage />} />
       <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} />
     </Route>
     <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
+    <Route element={<BusinessRoute />}><Route element={<CompanyLayout />}><Route path="/business/dashboard" element={<CompanyDashboard />} /></Route></Route>
     <Route element={<AuthenticatedRoute />}><Route element={<CompanyLayout />}>
       <Route path="/" element={<CompanyDashboard />} />
       <Route path="/catalog/references" element={<CatalogReferencesPage />} />
