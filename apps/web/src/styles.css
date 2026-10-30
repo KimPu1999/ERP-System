@@ -2016,3 +2016,77 @@ table { min-width: 0; }
 .sales-workspace-layout > .page-section .sales-page-heading h1 {
   display: none;
 }
+
+/* Purchase order workspace refinement: keep the document flow compact and filters usable. */
+.purchasing-page-header > div > .breadcrumb-line,
+.purchasing-page-header > div > .eyebrow,
+.purchasing-page-header > div > h1 + .muted,
+.purchasing-detail-header > div > .breadcrumb-line,
+.purchasing-detail-header > div > .eyebrow { display: none; }
+.purchasing-page-header h1,
+.purchasing-detail-header h1 { margin: 0; font-size: 25px; letter-spacing: -.03em; }
+.purchasing-page-header,
+.purchasing-detail-header { align-items: center; margin-bottom: 14px; }
+.purchasing-orders-page > .purchasing-page-header .purchasing-page-actions > .secondary { display: none; }
+.purchasing-filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.45fr) repeat(6, minmax(110px, .72fr)) minmax(126px, .76fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+.purchasing-filter-toolbar label:not(.purchasing-search) { min-width: 0; }
+.purchasing-filter-toolbar label span { font-size: 9px; }
+.purchasing-filter-toolbar select,
+.purchasing-filter-toolbar input,
+.purchasing-search,
+.purchasing-refresh,
+.purchasing-clear { min-height: 40px; height: 40px; border-radius: 9px; }
+.purchasing-filter-toolbar select,
+.purchasing-filter-toolbar input { width: 100%; font-size: 12px; }
+.purchasing-search { width: auto; min-width: 0; }
+.purchasing-filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; min-height: 40px; }
+.purchasing-clear,
+.purchasing-refresh { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 10px; border: 1px solid var(--border); color: var(--muted); background: var(--surface); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.purchasing-clear:hover:not(:disabled),
+.purchasing-refresh:hover:not(:disabled) { color: var(--blue); border-color: #bfdbfe; background: var(--blue-soft); }
+.purchasing-clear:disabled { cursor: not-allowed; opacity: .48; }
+.purchasing-refresh:disabled { cursor: wait; opacity: .7; }
+.is-spinning { animation: purchasing-spin .85s linear infinite; }
+@keyframes purchasing-spin { to { transform: rotate(360deg); } }
+.purchasing-kpi-card { min-height: 104px; }
+.purchasing-table-card .table-card-heading { min-height: 42px; }
+.purchasing-table-card .table-card-heading h2 { margin: 0; font-size: 16px; }
+.purchase-form-card .panel-heading .eyebrow,
+.purchase-form-summary > .eyebrow,
+.purchase-progress .panel-heading .eyebrow,
+.purchase-detail-columns .eyebrow,
+.purchase-detail-side .eyebrow { display: none; }
+.purchase-form-card .panel-heading h2,
+.purchase-form-summary h2 { margin: 0; }
+.purchase-form-card .panel-heading { margin-bottom: 2px; }
+.purchase-form-summary { border-radius: 12px; }
+.purchase-detail-tabs { margin-top: 12px; }
+.purchase-detail-tabs button { flex: 0 0 auto; padding: 9px 11px; border: 0; border-bottom: 2px solid transparent; color: var(--muted); background: transparent; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.purchase-detail-tabs button:hover,
+.purchase-detail-tabs button.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+@media (max-width: 1220px) {
+  .purchasing-filter-toolbar { grid-template-columns: minmax(240px, 1.3fr) repeat(6, minmax(100px, .8fr)) minmax(120px, .8fr) auto; }
+}
+@media (max-width: 980px) {
+  .purchasing-filter-toolbar { grid-template-columns: minmax(240px, 1fr) repeat(3, minmax(130px, 1fr)); }
+  .purchasing-filter-actions { justify-content: flex-start; }
+}
+@media (max-width: 680px) {
+  .purchasing-page-header h1,
+  .purchasing-detail-header h1 { font-size: 23px; }
+  .purchasing-filter-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 12px; }
+  .purchasing-search { grid-column: 1 / -1; }
+  .purchasing-filter-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .purchasing-clear,
+  .purchasing-refresh { flex: 1; }
+}
