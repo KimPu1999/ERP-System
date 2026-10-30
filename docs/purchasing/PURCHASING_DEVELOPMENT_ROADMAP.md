@@ -132,3 +132,15 @@ Acceptance criteria:
 - [ ] Queue retry/deduplication operational verification
 - [ ] Browser UAT and database-backed supplier Phase 7 tests
 - [ ] Production backup/restore and monitoring rehearsal
+
+## Suppliers Phase 8
+
+- [x] Full supplier Phase 1–7 implementation inventory and evidence-based gap report
+- [x] Supplier portal session-setting cleanup hardening
+- [x] Phase 8 test matrix, security report, UAT plan and release gate documentation
+- [ ] Database-backed supplier regression and integration suite
+- [ ] Restricted-role PostgreSQL RLS verification
+- [ ] Bank, portal, queue, scheduler and concurrency verification
+- [ ] Performance baseline, isolated backup restore and staging smoke test
+- [ ] Business UAT and release-owner sign-off
+- [ ] Production release approval
