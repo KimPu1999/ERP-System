@@ -2,7 +2,7 @@
 
 ## Required tools
 
-- PHP 8.3+, Composer 2+
+- PHP 8.4.1+, Composer 2+
 - Node.js 22+, npm 10+
 - Docker Desktop
 
