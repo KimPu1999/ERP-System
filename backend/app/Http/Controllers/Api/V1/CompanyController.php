@@ -102,6 +102,9 @@ final class CompanyController
         $this->assertCompany($company);
         abort_unless($this->allowed($authorization, $request, $company, ['company.manage', 'organization.manage']), 403);
         $data = $request->validate($this->profileRules($company));
+        if (! filled($data['base_currency'] ?? $company->base_currency)) {
+            throw ValidationException::withMessages(['base_currency' => ['Base accounting currency is required before company financial totals can be used.']]);
+        }
         $payload = collect($data)->except(['tenant_id', 'id'])->all();
         if (array_key_exists('legal_name', $payload) && filled($payload['legal_name'])) $payload['name'] = $payload['legal_name'];
         if (array_key_exists('base_currency', $payload) && filled($payload['base_currency'])) {

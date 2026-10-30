@@ -22,11 +22,11 @@ export type DashboardAnalyticsProps = {
 
 export function DashboardAnalytics({ revenue, growth, financial, revenueError, growthError, financialError, isLoading, year, onYearChange, onRetry }: DashboardAnalyticsProps) {
   return <div className="dashboard-analytics-phase3">
-    <div className="analytics-period-row"><div><p className="dashboard-section-kicker">Interactive analytics</p><h3>Performance trends</h3></div><AnalyticsPeriodSelector value={year} onChange={onYearChange} /></div>
+    <div className="analytics-period-row"><span className="analytics-period-note">Real-time authorized aggregates</span><AnalyticsPeriodSelector value={year} onChange={onYearChange} /></div>
     <div className="phase3-analytics-grid">
-      <AnalyticsCard title="Revenue overview" eyebrow="Current vs comparison period" className="phase3-revenue-card"><RevenueOverviewChart data={revenue} error={revenueError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
-      <AnalyticsCard title="Company growth" eyebrow="Recognized revenue change" className="phase3-growth-card"><CompanyGrowthWidget data={growth} error={growthError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
-      <AnalyticsCard title="Financial performance" eyebrow="Posted general ledger" className="phase3-financial-card"><FinancialPerformanceChart data={financial} error={financialError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
+      <AnalyticsCard title="Revenue Overview" eyebrow="Current vs comparison period" className="phase3-revenue-card"><RevenueOverviewChart data={revenue} error={revenueError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
+      <AnalyticsCard title="Company Growth" eyebrow="Recognized revenue change" className="phase3-growth-card"><CompanyGrowthWidget data={growth} error={growthError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
+      <AnalyticsCard title="Financial Performance" eyebrow="Posted general ledger" className="phase3-financial-card"><FinancialPerformanceChart data={financial} error={financialError} isLoading={isLoading} onRetry={onRetry} /></AnalyticsCard>
     </div>
   </div>;
 }

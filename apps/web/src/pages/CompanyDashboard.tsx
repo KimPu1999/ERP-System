@@ -94,9 +94,11 @@ export function CompanyDashboard() {
   const inactiveCompanyCount = companies.data?.meta?.inactive_count ?? 0;
   const hasNoActiveCompany = tenantReady && !companies.isPending && !companies.isError && activeCompanyCount === 0 && inactiveCompanyCount === 0;
   const hasInactiveCompany = tenantReady && !companies.isPending && !companies.isError && activeCompanyCount === 0 && inactiveCompanyCount > 0;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return <section className="page-section dashboard-page foundation-page">
-    <div className="dashboard-welcome"><div><p className="eyebrow">Company workspace</p><h1>Good morning</h1><p className="muted">A clear operating view for your company workspace.</p></div><div className="dashboard-meta"><span className="status-dot" />Live business data <span>·</span> {period === 'custom' ? 'Custom range' : 'Selected period'}</div></div>
+    <div className="dashboard-welcome"><h1>{greeting}</h1><div className="dashboard-meta" title="Dashboard data is loaded from authorized live records"><span className="status-dot" />Live</div></div>
     {tenantRows.length > 0 && <DashboardFilterBar tenantId={tenantId} tenants={tenantRows} period={period} companyId={companyId} branchId={branchId} dateFrom={dateFrom} dateTo={dateTo} companies={companyRows} branches={branchRows} dateError={dateError} isFetching={dashboard.isFetching} onTenantChange={(value) => { setActiveTenantId(value); setTenantId(value); updateFilter({ tenant_id: value, company_id: undefined, branch_id: undefined }); }} onPeriodChange={(value) => updateFilter({ period: value, date_from: value === 'custom' ? dateFrom : undefined, date_to: value === 'custom' ? dateTo : undefined, from: undefined, to: undefined })} onCompanyChange={(value) => updateFilter({ company_id: value, branch_id: undefined })} onBranchChange={(value) => updateFilter({ branch_id: value })} onDateFromChange={(value) => updateFilter({ date_from: value, from: undefined })} onDateToChange={(value) => updateFilter({ date_to: value, to: undefined })} onRefresh={() => void dashboard.refetch()} />}
     {workspaceAccess.isPending && <div className="dashboard-loading" role="status">Checking your workspace access…</div>}
     {tenantError && <div className="alert alert-danger dashboard-alert" role="alert">Unable to verify your workspace access. {tenantError} <button className="table-action" onClick={() => void workspaceAccess.refetch()}>Retry</button></div>}
