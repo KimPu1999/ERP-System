@@ -14,7 +14,7 @@ final class ModuleController
         $tenant = (string) app(TenantContext::class)->id();
         $stored = TenantModule::where('tenant_id', $tenant)->get()->keyBy('module_key');
         $definitions = [
-            'pos' => ['permission' => 'pos.manage', 'setup' => fn (array $companies) => PosRegister::where('tenant_id', $tenant)->when($companies !== [], fn ($q) => $q->whereIn('company_id', $companies))->exists()],
+            'pos' => ['permission' => 'pos.sell', 'setup' => fn (array $companies) => PosRegister::where('tenant_id', $tenant)->where('status', 'active')->whereNotNull('location_id')->when($companies !== [], fn ($q) => $q->whereIn('company_id', $companies))->exists()],
             'projects' => ['permission' => 'projects.manage', 'setup' => fn (array $companies) => true],
             'fixed_assets' => ['permission' => 'assets.manage', 'setup' => fn (array $companies) => AssetCategory::where('tenant_id', $tenant)->when($companies !== [], fn ($q) => $q->whereIn('company_id', $companies))->exists()],
         ];

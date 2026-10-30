@@ -474,11 +474,15 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/tenant-exports/{export}/download', [TenantExportController::class, 'download']);
         Route::get('/modules', [ModuleController::class, 'index']);
         Route::put('/modules', [ModuleController::class, 'update']);
+        Route::get('/pos/overview', [PosController::class, 'overview']);
+        Route::get('/pos/products', [PosController::class, 'products']);
         Route::get('/pos/registers', [PosController::class, 'registers']);
         Route::post('/pos/registers', [PosController::class, 'storeRegister']);
+        Route::get('/pos/shifts', [PosController::class, 'shifts']);
         Route::post('/pos/registers/{register}/shifts', [PosController::class, 'openShift']);
         Route::post('/pos/registers/{register}/sales', [PosController::class, 'sell']);
         Route::post('/pos/shifts/{shift}/close', [PosController::class, 'closeShift']);
+        Route::get('/pos/receipts', [PosController::class, 'receipts']);
         Route::get('/projects', [ProjectController::class, 'index']);
         Route::post('/projects', [ProjectController::class, 'store']);
         Route::post('/projects/{project}/tasks', [ProjectController::class, 'task']);
