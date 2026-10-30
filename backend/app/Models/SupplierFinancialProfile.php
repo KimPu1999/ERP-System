@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class SupplierFinancialProfile extends Model { use HasUuids; protected $fillable=['tenant_id','company_id','supplier_id','preferred_currency_id','payment_terms','default_payment_method','credit_limit','credit_currency_id','warning_threshold','credit_blocking_policy','credit_hold_status','credit_hold_reason','financial_notes','created_by','updated_by']; protected function casts():array{return ['credit_limit'=>'decimal:6','warning_threshold'=>'decimal:6'];} public function supplier(){return $this->belongsTo(Supplier::class);} public function currency(){return $this->belongsTo(AccountingCurrency::class,'preferred_currency_id');} public function creditCurrency(){return $this->belongsTo(AccountingCurrency::class,'credit_currency_id');} }

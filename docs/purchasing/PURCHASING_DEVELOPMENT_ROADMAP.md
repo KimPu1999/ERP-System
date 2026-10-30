@@ -57,3 +57,15 @@ Acceptance criteria:
 - [x] Existing approval engine integration
 - [ ] Scheduler-backed supplier expiry reminders
 - [ ] Full onboarding form and document-review UI
+
+## Suppliers Phase 3
+
+- [x] Company-scoped supplier financial profiles
+- [x] Encrypted and masked supplier beneficiary accounts
+- [x] Manual maker-checker beneficiary verification
+- [x] Controlled default beneficiary selection
+- [x] Payment holds enforced at payment posting
+- [x] AP summary integration from existing posted ledgers
+- [ ] External bank verification integration
+- [ ] Scheduler-backed financial document expiry reminders
+- [ ] Full financial profile and bank-account management UI
