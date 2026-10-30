@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\RoleAssignmentController;
 use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\CatalogReferenceController;
+use App\Http\Controllers\Api\V1\ProductCategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductMediaController;
 use App\Http\Controllers\Api\V1\WarehouseController;
@@ -192,6 +193,7 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('/branches/{branch}', [BranchController::class, 'update']);
         Route::get('/catalog/references', [CatalogReferenceController::class, 'index']);
         Route::post('/catalog/references', [CatalogReferenceController::class, 'store']);
+        Route::get('/product-categories', [ProductCategoryController::class, 'index']);
         Route::get('/products', [ProductController::class, 'index']);
         Route::post('/products', [ProductController::class, 'store']);
         Route::get('/products/export', [ProductController::class, 'export']);
