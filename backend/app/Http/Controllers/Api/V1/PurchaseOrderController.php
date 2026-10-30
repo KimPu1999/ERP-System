@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct, Warehouse};
+use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct, SupplierPurchasingHold, Warehouse};
 use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService, PurchaseOrderApprovalService};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
@@ -129,6 +129,9 @@ final class PurchaseOrderController
         if (! empty($data['warehouse_id'])) abort_unless(Warehouse::where('tenant_id', $tenantId)->whereKey($data['warehouse_id'])->where('company_id', $data['company_id'])->when($data['branch_id'] ?? null, fn ($q, $branchId) => $q->where('branch_id', $branchId))->where('is_active', true)->exists(), 404);
         if (! empty($data['currency_id'])) abort_unless(AccountingCurrency::where('tenant_id', $tenantId)->whereKey($data['currency_id'])->exists(), 404);
         abort_unless(Supplier::whereKey($data['supplier_id'])->where('tenant_id', $tenantId)->where('status', 'active')->where(fn ($q) => $q->whereNull('company_id')->orWhere('company_id', $data['company_id']))->exists(), 404);
+        $purchasingHold = SupplierPurchasingHold::where('tenant_id',$tenantId)->where('company_id',$data['company_id'])->where('supplier_id',$data['supplier_id'])->where('status','active')->whereDate('effective_from','<=',now()->toDateString())->where(fn($q)=>$q->whereNull('review_due_date')->orWhereDate('review_due_date','>=',now()->toDateString()))->first();
+        abort_if($purchasingHold && $purchasingHold->type === 'temporary_hold', 422, 'This supplier is under an active purchasing hold.');
+        if ($purchasingHold && $purchasingHold->type === 'additional_approval') throw ValidationException::withMessages(['supplier_id' => ['This supplier requires additional approval before a purchase order can be created.']]);
         $variantIds = collect($data['items'])->pluck('variant_id');
         if ($variantIds->duplicates()->isNotEmpty()) throw ValidationException::withMessages(['items' => ['The same product variant cannot be added twice. Use a separate variant or consolidate the quantity.']]);
         foreach ($data['items'] as &$item) {

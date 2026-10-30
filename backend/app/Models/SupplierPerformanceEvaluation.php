@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; use Illuminate\Database\Eloquent\Model;
+class SupplierPerformanceEvaluation extends Model { use HasUuids; protected $fillable=['tenant_id','company_id','supplier_id','policy_id','number','period_from','period_to','methodology_version','status','overall_score','rating','reviewer_comments','reviewer_id','submitted_at','approved_at','created_by']; protected function casts():array{return ['period_from'=>'date','period_to'=>'date','overall_score'=>'decimal:4','submitted_at'=>'datetime','approved_at'=>'datetime'];} public function supplier(){return $this->belongsTo(Supplier::class);} public function policy(){return $this->belongsTo(SupplierPerformancePolicy::class,'policy_id');} public function metrics(){return $this->hasMany(SupplierPerformanceMetricResult::class,'evaluation_id');} }

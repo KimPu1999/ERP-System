@@ -84,3 +84,19 @@ Acceptance criteria:
 - [ ] Dedicated price-list tier editor and contract renewal UI
 - [ ] Approval policy seed/configuration for supplier catalog scenarios
 - [ ] Database-backed Phase 4 feature/concurrency tests
+
+## Suppliers Phase 5
+
+- [x] Company-scoped performance policy and methodology snapshots
+- [x] Evidence-aware supplier evaluation metrics
+- [x] Human-reviewed supplier scorecard workflow
+- [x] Risk assessment matrix, override reason and approval history
+- [x] Compliance summary from verified supplier documents
+- [x] Corrective action plans with verification-required completion
+- [x] Separate purchasing holds and PO-boundary enforcement
+- [x] Tenant RLS and company-scoped performance APIs
+- [x] Supplier Performance dashboard foundation
+- [ ] Policy administration and trend-chart UI
+- [ ] Queued scheduled reminders and notification deduplication
+- [ ] Secure report export adapters
+- [ ] Database-backed feature, concurrency and regression tests

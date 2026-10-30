@@ -12,6 +12,7 @@ const purchasingNavItems: PurchasingNavItem[] = [
   { label: 'Supplier Onboarding', to: '/purchasing/suppliers/onboarding', icon: FileCheck2 },
   { label: 'Supplier Financials', to: '/purchasing/suppliers/financial', icon: Banknote },
   { label: 'Supplier Catalogs', to: '/purchasing/suppliers/catalog', icon: ClipboardList },
+  { label: 'Supplier Performance', to: '/purchasing/suppliers/performance', icon: BarChart3 },
   { label: 'Purchase Requests', icon: ClipboardList, unavailable: 'Purchase request management UI is planned for the next purchasing phase.' },
   { label: 'Purchase Orders', to: '/purchasing', icon: ShoppingCart },
   { label: 'Purchase Approvals', to: '/purchasing/approvals', icon: ClipboardCheck },
