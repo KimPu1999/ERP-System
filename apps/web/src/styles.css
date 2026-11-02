@@ -1334,6 +1334,10 @@ tr:last-child td { border-bottom: 0; }
 :root.dark .dashboard-toolbar > label select, :root.dark .dashboard-toolbar > label input, .dark .dashboard-toolbar > label select, .dark .dashboard-toolbar > label input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
 @media (max-width: 680px) { .dashboard-toolbar { grid-template-columns: 1fr; } .dashboard-toolbar > .refresh-dashboard { justify-self: start; } }
 
+/* Supplier intelligence states: do not present an in-flight request as empty data. */
+.supplier-intelligence-state { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 72px; padding: 16px; text-align: center; }
+.supplier-intelligence-state.card { margin: 0 0 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+
 /* Staff & Membership: compact profile, access and assignment workspace. */
 .member-detail-page { min-width: 0; }
 .member-detail-header {
