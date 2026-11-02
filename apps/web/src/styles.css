@@ -1077,6 +1077,62 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 640px) { .customer-directory-header, .customer-profile-header { align-items: stretch; flex-direction: column; } .customer-directory-header .primary, .customer-profile-header .primary { align-self: flex-start; } .customer-filter-toolbar, .customer-modal-body, .customer-details-grid { grid-template-columns: 1fr; } .customer-filter-search, .customer-form-wide, .customer-detail-card:nth-child(3) { grid-column: auto; } .customer-pagination { align-items: stretch; flex-direction: column; } .customer-pagination > div { justify-content: space-between; } .customer-modal-backdrop { align-items: start; padding: 10px; } .customer-modal { max-height: calc(100dvh - 20px); } .customer-info-grid { grid-template-columns: 1fr; } .customer-detail-row { align-items: flex-start; flex-direction: column; gap: 3px; } .customer-detail-row span { text-align: left; } }
 :root.dark .customer-filter-toolbar, :root.dark .customer-table-card, :root.dark .customer-modal, :root.dark .customer-detail-card, :root.dark .customer-profile-header, :root.dark .customer-actions > div { background: var(--surface); }
 
+/* Leads and opportunities: compact CRM workspace */
+.crm-modern-page { display: grid; gap: 14px; min-width: 0; }
+.crm-modern-toolbar, .crm-modern-actions-row { display: flex; align-items: center; gap: 10px; }
+.crm-modern-toolbar { justify-content: space-between; min-width: 0; }
+.crm-modern-toolbar .eyebrow { margin: 0; }
+.crm-modern-actions-row { flex-wrap: wrap; justify-content: flex-end; }
+.crm-modern-filter { display: grid; grid-template-columns: minmax(250px, 1.5fr) repeat(2, minmax(140px, .75fr)) auto auto; align-items: end; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); min-width: 0; }
+.crm-modern-filter label, .crm-modern-form label, .crm-conversion-form label { display: grid; gap: 6px; min-width: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 18px; }
+.crm-modern-filter label > span { display: block; }
+.crm-modern-filter input, .crm-modern-filter select, .crm-modern-form input, .crm-modern-form select, .crm-modern-form textarea, .crm-conversion-form select { box-sizing: border-box; width: 100%; min-width: 0; height: 40px; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; }
+.crm-modern-form textarea { height: auto; min-height: 74px; padding: 9px 11px; resize: vertical; }
+.crm-modern-search > div { display: flex; align-items: center; gap: 8px; min-width: 0; height: 40px; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.crm-modern-search svg { flex: 0 0 auto; color: var(--muted); }
+.crm-modern-search input { height: 38px; padding: 0; border: 0; outline: 0; }
+.crm-modern-filter input:focus, .crm-modern-filter select:focus, .crm-modern-form input:focus, .crm-modern-form select:focus, .crm-modern-form textarea:focus, .crm-conversion-form select:focus { outline: 2px solid color-mix(in srgb, var(--blue) 25%, transparent); outline-offset: 1px; border-color: var(--blue); }
+.crm-modern-table { min-width: 0; overflow: hidden; }
+.crm-modern-table-heading { padding: 16px; border-bottom: 1px solid var(--border); }
+.crm-modern-table-heading h2 { margin: 0; font-size: 15px; }
+.crm-modern-table-heading span, .crm-modern-table td small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+.crm-modern-table table { min-width: 820px; }
+.crm-modern-table th, .crm-modern-table td { padding: 11px 14px; vertical-align: middle; }
+.crm-modern-table td strong { color: var(--text); }
+.crm-modern-pagination { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.crm-modern-pagination label { display: inline-flex; align-items: center; gap: 7px; }
+.crm-modern-pagination select { width: 70px; height: 34px; padding: 0 8px; }
+.crm-modern-actions { position: relative; display: inline-block; }
+.crm-modern-actions summary { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid transparent; border-radius: 7px; color: var(--muted); cursor: pointer; list-style: none; }
+.crm-modern-actions summary::-webkit-details-marker { display: none; }
+.crm-modern-actions summary:hover, .crm-modern-actions[open] summary { border-color: var(--border); background: var(--surface-muted); color: var(--text); }
+.crm-modern-actions > div { position: absolute; z-index: 10; right: 0; top: calc(100% + 4px); display: grid; min-width: 130px; padding: 5px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-soft); }
+.crm-modern-actions button { display: flex; align-items: center; gap: 6px; padding: 8px 9px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.crm-modern-actions button:hover { background: var(--surface-muted); }
+.crm-modern-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(15 23 42 / 42%); overflow-y: auto; }
+.crm-modern-modal { width: min(760px, 100%); max-height: min(760px, calc(100dvh - 36px)); display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 18px 45px rgb(15 23 42 / 18%); }
+.crm-modern-modal > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; border-bottom: 1px solid var(--border); }
+.crm-modern-modal > header h2 { margin: 0; font-size: 18px; }
+.crm-modern-form, .crm-conversion-form { min-height: 0; overflow-y: auto; padding: 18px; }
+.crm-modern-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.crm-form-wide { grid-column: 1 / -1; }
+.crm-modern-form footer, .crm-conversion-form footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.crm-form-error { margin: 10px 0 0; color: var(--danger); font-size: 12px; line-height: 1.4; }
+.crm-check-row { display: flex !important; grid-template-columns: auto 1fr; align-items: center; margin-top: 14px; }
+.crm-check-row input { width: 16px; height: 16px; }
+.crm-modern-pipeline { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 12px; min-width: 0; overflow-x: auto; }
+.crm-modern-stage { min-width: 0; padding: 13px; background: var(--surface-muted); }
+.crm-modern-stage > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.crm-modern-stage h2 { margin: 0; color: var(--text); font-size: 13px; text-transform: capitalize; }
+.crm-modern-stage > header span { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: var(--surface); color: var(--muted); font-size: 11px; }
+.crm-modern-opportunity { display: grid; gap: 6px; margin-top: 9px; padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.crm-modern-opportunity strong { color: var(--text); font-size: 13px; }
+.crm-modern-opportunity small, .crm-modern-opportunity span { color: var(--muted); font-size: 11px; }
+.crm-modern-opportunity select { width: 100%; height: 32px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 12px; }
+@media (max-width: 900px) { .crm-modern-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); } .crm-modern-search { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .crm-modern-toolbar { align-items: stretch; flex-direction: column; } .crm-modern-actions-row { justify-content: flex-start; } .crm-modern-filter, .crm-modern-form-grid { grid-template-columns: 1fr; } .crm-modern-search, .crm-form-wide { grid-column: auto; } .crm-modern-pagination { justify-content: flex-start; } .crm-modern-backdrop { align-items: start; padding: 10px; } .crm-modern-modal { max-height: calc(100dvh - 20px); } }
+:root.dark .crm-modern-filter, :root.dark .crm-modern-table, :root.dark .crm-modern-modal, :root.dark .crm-modern-actions > div, :root.dark .crm-modern-stage, :root.dark .crm-modern-opportunity { background: var(--surface); }
+
 /* Purchase requests: compact, content-driven request workspace. */
 .purchase-requests-page { min-width: 0; }
 .purchase-request-toolbar { display: flex; justify-content: flex-end; min-height: 0; margin-bottom: 12px; }
