@@ -2696,6 +2696,54 @@ html { scroll-padding-top: var(--app-sticky-offset); }
 .sidebar-collapsed + .app-viewport { padding-left: 68px; }
 .app-header { height: var(--app-header-height); }
 .content > section:not(.page-section) { width: 100%; min-width: 0; padding: 24px clamp(20px, 2.2vw, 32px) 40px; }
+
+/* Platform control center: compact, data-driven administration surfaces. */
+.platform-page { min-width: 0; }
+.platform-toolbar, .platform-table-heading, .platform-modal-header, .platform-modal-footer, .platform-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.platform-toolbar { margin-bottom: 16px; }
+.platform-toolbar h1 { margin: 2px 0 0; }
+.platform-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.platform-kpi { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 10px; min-width: 0; padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.platform-kpi span:not(.platform-kpi-icon) { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.platform-kpi strong { grid-column: 2; color: var(--text); font-size: 22px; line-height: 1; }
+.platform-kpi-icon { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 7px; background: var(--blue-soft); color: var(--blue); }
+.platform-dashboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.platform-dashboard-grid .panel { min-width: 0; margin-top: 0; }
+.platform-filter-bar { display: grid; grid-template-columns: minmax(220px, 1.5fr) minmax(150px, .7fr) auto; align-items: end; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.platform-filter-bar label, .platform-form-grid label { display: grid; gap: 6px; min-width: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 18px; }
+.platform-filter-bar input, .platform-filter-bar select, .platform-form-grid input, .platform-form-grid select { width: 100%; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 14px; }
+.platform-search { position: relative; min-width: 0; }
+.platform-search svg { position: absolute; top: 12px; left: 11px; color: var(--muted); pointer-events: none; }
+.platform-search input { padding-left: 34px; }
+.platform-table-card { min-width: 0; margin-top: 14px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.platform-table-card table { width: 100%; min-width: 980px; border-collapse: collapse; }
+.platform-table-card th, .platform-table-card td { height: 46px; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); text-align: left; vertical-align: middle; white-space: nowrap; }
+.platform-table-card th { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.platform-table-card td { font-size: 13px; }
+.platform-table-card tbody tr:hover { background: var(--surface-hover); }
+.platform-table-card td small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.platform-table-footer { padding: 12px 14px; color: var(--muted); font-size: 12px; }
+.platform-status, .platform-role-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-size: 11px; font-weight: 700; }
+.platform-status.active { background: #dcfce7; color: #166534; }
+.platform-status.pending { background: #fef3c7; color: #92400e; }
+.platform-status.suspended, .platform-status.revoked { background: #fee2e2; color: #991b1b; }
+.platform-role-badge { margin: 2px 4px 2px 0; background: var(--blue-soft); color: var(--blue); }
+.platform-role-select { min-width: 160px; height: 34px; padding: 0 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 13px; }
+.platform-table-heading { padding: 14px; border-bottom: 1px solid var(--border); }
+.platform-table-heading h2 { margin: 0; font-size: 15px; }
+.platform-module-toggles, .platform-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.platform-scope-note { align-self: center; color: var(--muted); font-size: 13px; }
+.button-small { min-height: 32px; padding: 0 9px; font-size: 12px; }
+.platform-modal-overlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 18px; overflow-y: auto; background: rgb(15 23 42 / 50%); }
+.platform-modal { width: min(680px, 100%); border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 20px 60px rgb(15 23 42 / 20%); }
+.platform-modal-header, .platform-modal-footer { padding: 16px 18px; }
+.platform-modal-header { border-bottom: 1px solid var(--border); }
+.platform-modal-header h2 { margin: 2px 0 0; }
+.platform-modal-footer { justify-content: flex-end; border-top: 1px solid var(--border); }
+.platform-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; padding: 18px; }
+.platform-modal .field-error { margin: 0 18px 14px; }
+@media (max-width: 760px) { .platform-dashboard-grid, .platform-form-grid { grid-template-columns: 1fr; } .platform-filter-bar { grid-template-columns: 1fr; } .platform-filter-bar .button { justify-self: start; } .platform-toolbar { align-items: flex-start; } }
+@media (max-width: 520px) { .platform-toolbar { display: grid; } .platform-toolbar .button { justify-self: start; } .platform-modal-overlay { padding: 10px; } .platform-modal-header, .platform-modal-footer { padding: 14px; } .platform-form-grid { padding: 14px; } }
 .page-section, .organization-page, .company-profile-page, .sales-page, .purchasing-page { width: 100%; max-width: none; margin: 0; padding: 24px clamp(20px, 2.2vw, 32px) 40px; }
 .organization-layout, .sales-workspace-layout, .purchasing-workspace-layout { width: 100%; max-width: none; margin: 0; }
 .organization-nav-inner, .sales-nav-inner, .purchasing-nav-inner { width: 100%; max-width: none; }

@@ -14,4 +14,5 @@ class Tenant extends Model
     public function memberships() { return $this->hasMany(TenantMembership::class); }
     public function companies() { return $this->hasMany(Company::class); }
     public function modules() { return $this->hasMany(TenantModule::class); }
+    public function subscription() { return $this->hasOne(TenantSubscription::class); }
 }

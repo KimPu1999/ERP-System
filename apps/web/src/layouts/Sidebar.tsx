@@ -18,7 +18,7 @@ const companyGroups: Group[] = [
   { key: 'nav.approvalsReports', items: [{ key: 'nav.approvals', to: '/workflow', icon: ClipboardCheck }, { key: 'nav.reports', to: '/workflow', icon: FileBarChart2 }] },
   { key: 'nav.settings', items: [{ key: 'nav.accessSettings', to: '/organization/roles', icon: Settings }] },
 ];
-const platformItems: Item[] = [{ key: 'nav.overview', to: '/platform', icon: LayoutDashboard }, { key: 'nav.tenantManagement', to: '/platform/tenants', icon: Building2 }, { key: 'nav.monitoring', to: '/platform/monitoring', icon: ClipboardCheck }, { key: 'nav.subscriptions', to: '/platform/control', icon: WalletCards }];
+const platformItems: Item[] = [{ key: 'nav.overview', to: '/platform', icon: LayoutDashboard }, { key: 'nav.tenantManagement', to: '/platform/tenants', icon: Building2 }, { key: 'nav.businessAdministrators', to: '/platform/administrators', icon: Users }, { key: 'nav.monitoring', to: '/platform/monitoring', icon: ClipboardCheck }, { key: 'nav.subscriptions', to: '/platform/control', icon: WalletCards }];
 
 export function Sidebar({ platform = false, collapsed, mobileOpen, onCollapse, onClose }: { platform?: boolean; collapsed: boolean; mobileOpen: boolean; onCollapse: () => void; onClose: () => void }) {
   const { t } = useI18n();
