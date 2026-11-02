@@ -117,6 +117,8 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware(['verified', 'platform.admin'])->prefix('platform')->group(function (): void {
             Route::get('/tenants', [PlatformTenantController::class, 'index']);
             Route::post('/tenants', [PlatformTenantController::class, 'store']);
+            Route::get('/tenants/{tenant}/modules', [ModuleController::class, 'platformIndex']);
+            Route::put('/tenants/{tenant}/modules', [ModuleController::class, 'platformUpdate']);
             Route::get('/billing/plans', [PlatformBillingController::class, 'plans']);
             Route::post('/billing/plans', [PlatformBillingController::class, 'storePlan']);
             Route::get('/billing/subscriptions', [PlatformBillingController::class, 'subscriptions']);
@@ -498,7 +500,6 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/tenant-exports', [TenantExportController::class, 'index']);
         Route::get('/tenant-exports/{export}/download', [TenantExportController::class, 'download']);
         Route::get('/modules', [ModuleController::class, 'index']);
-        Route::put('/modules', [ModuleController::class, 'update']);
         Route::get('/pos/overview', [PosController::class, 'overview']);
         Route::get('/pos/products', [PosController::class, 'products']);
         Route::get('/pos/registers', [PosController::class, 'registers']);

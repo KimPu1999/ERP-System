@@ -22,6 +22,7 @@ export const clearActiveTenantId = (): void => {
 export class ApiError extends Error {
   constructor(public readonly status: number, message: string, public readonly errors: Record<string, string[]> = {}) { super(message); }
 }
+export const isApiNotFound = (error: unknown): error is ApiError => error instanceof ApiError && error.status === 404;
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
@@ -83,7 +84,9 @@ export type DashboardProductRanking = { available: boolean; reason: string | nul
 const dashboardBusiness = <T>(path: string, params: DashboardBusinessParams, extra: Record<string, string> = {}) => { const entries = Object.entries({ ...params, ...extra }).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: T }>(path + '?' + query.toString()); };
 export const getDashboardRecentTransactions = (params: DashboardBusinessParams) => dashboardBusiness<DashboardRecentTransactions>('/dashboard/recent-transactions', params);
 export const getDashboardTopProducts = (params: DashboardBusinessParams, ranking: 'sales' | 'volume') => dashboardBusiness<DashboardProductRanking>('/dashboard/top-products', params, { ranking });
-export type Tenant = { id: string; name: string; slug: string; status?: string };
+export type ModuleKey = 'pos' | 'projects' | 'fixed_assets';
+export type TenantModule = { id: string; module_key: ModuleKey; enabled: boolean; settings?: Record<string, unknown> | null };
+export type Tenant = { id: string; name: string; slug: string; status?: string; modules?: TenantModule[] };
 export type WorkspaceAccessWorkspace = Tenant & { tenant_status: string; membership_status: string; has_active_company: boolean };
 export type WorkspaceInvitation = { id: string; tenant_id: string; tenant_name: string | null; company_id: string; company_name: string | null; expires_at: string };
 export type WorkspaceAccess = { platform_admin: boolean; active_workspaces: Array<WorkspaceAccessWorkspace & { status: 'active' }>; restricted_workspaces: Array<WorkspaceAccessWorkspace & { status: string }>; pending_invitations: WorkspaceInvitation[]; can_create_workspace: boolean };
@@ -105,6 +108,7 @@ export type BranchListResponse = { data: { data: Branch[]; current_page: number;
 export const getTenants = () => api<{ data: Tenant[] }>('/tenants');
 export const getWorkspaceAccess = () => api<{ data: WorkspaceAccess }>('/workspace-access');
 export const getPlatformTenants = () => api<{ data: { data: Tenant[]; current_page: number; last_page: number; total: number } }>('/platform/tenants');
+export const updatePlatformTenantModule = (tenantId: string, module_key: ModuleKey, enabled: boolean) => api<{ data: TenantModule }>(`/platform/tenants/${tenantId}/modules`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ module_key, enabled }) });
 export const getCompanies = () => api<{ data: { data: Company[] } }>('/companies');
 export const getCompany = (companyId: string) => api<{ data: Company }>(`/companies/${companyId}`);
 export const updateCompany = (companyId: string, data: Partial<Company>) => api<{ data: Company }>(`/companies/${companyId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -449,8 +453,8 @@ export const updateEmployee = (id: string, data: Record<string, unknown>) => api
 export const updateEmployeeStatus = (id: string, status: string) => api<{ data: Employee }>(`/hr/employees/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
 export type PayrollPage = { data: { data: PayrollRun[]; current_page: number; last_page: number; per_page: number; total: number }; summary: { total: number; finalized: number; pending: number } };
 export const getPayrollRuns = (companyId?: string) => api<PayrollPage>(`/hr/payroll-runs${queryString({ company_id: companyId }) ? `?${queryString({ company_id: companyId })}` : ''}`);
-export type ModuleStatus = 'available' | 'disabled' | 'setup_required' | 'unavailable';
-export type ModuleFlag = { id: string | null; module_key: 'pos' | 'projects' | 'fixed_assets'; enabled: boolean; status?: ModuleStatus; reason?: string | null; can_open?: boolean; can_configure?: boolean };
+export type ModuleStatus = 'enabled' | 'disabled' | 'unavailable' | 'error' | 'loading' | 'available' | 'setup_required';
+export type ModuleFlag = { id: string | null; module_key: ModuleKey; enabled: boolean; status?: ModuleStatus; reason?: string | null; can_open?: boolean; can_configure?: boolean };
 export const getModules = () => api<{ data: ModuleFlag[] }>('/modules');
 export type OptionalListMeta = { current_page: number; last_page: number; per_page: number; total: number };
 export type OptionalProject = { id: string; company_id: string; code: string; name: string; state: string; budget_amount: string; starts_on?: string | null; ends_on?: string | null; tasks_count?: number; milestones_count?: number; manager?: { id: string; legal_name: string; preferred_name?: string | null } | null; tasks?: Array<{ id: string; title: string; state: string }> };

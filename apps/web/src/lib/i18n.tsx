@@ -7,11 +7,19 @@ const STORAGE_KEY = 'erp_cloud.locale';
 const localeEvent = 'erp-cloud-locale-change';
 
 const optionalEnglish = {
+  'optional.status.enabled': 'Enabled',
+  'optional.status.error': 'Error',
+  'optional.status.loading': 'Checking status',
   'optional.status.available': 'Available',
   'optional.status.disabled': 'Disabled',
   'optional.status.setup_required': 'Setup required',
   'optional.status.unavailable': 'Unavailable',
   'optional.apiFailure': 'API connection failed. Retry to check again.',
+  'optional.statusError': 'Module status could not be checked. Retry to check again.',
+  'optional.dataError': 'Module data could not be loaded. Retry to check again.',
+  'optional.retryDetail': 'The module data is temporarily unavailable.',
+  'optional.unavailableDetail': 'This module is not available for your access scope.',
+  'optional.checking': 'Checking module status…',
   'optional.setupTitle': 'Setup required',
   'optional.setupDetail': 'Required module configuration is incomplete.',
   'optional.unavailableTitle': 'Module unavailable',
@@ -59,11 +67,19 @@ const optionalEnglish = {
 } as const;
 
 const optionalBurmese = {
+  'optional.status.enabled': 'အသုံးပြုနိုင်သည်',
+  'optional.status.error': 'အမှား',
+  'optional.status.loading': 'အခြေအနေ စစ်ဆေးနေသည်',
   'optional.status.available': 'အသုံးပြုနိုင်သည်',
   'optional.status.disabled': 'ပိတ်ထားသည်',
   'optional.status.setup_required': 'စတင်သတ်မှတ်ရန် လိုအပ်သည်',
   'optional.status.unavailable': 'မရရှိနိုင်',
   'optional.apiFailure': 'API ချိတ်ဆက်မှု မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။',
+  'optional.statusError': 'Module အခြေအနေ စစ်ဆေး၍ မရပါ။ ထပ်မံကြိုးစားပါ။',
+  'optional.dataError': 'Module ဒေတာ ဖွင့်၍ မရပါ။ ထပ်မံကြိုးစားပါ။',
+  'optional.retryDetail': 'Module ဒေတာ ယာယီမရရှိနိုင်ပါ။',
+  'optional.unavailableDetail': 'သင့်အသုံးပြုခွင့်အတွက် ဤ module မရရှိနိုင်ပါ။',
+  'optional.checking': 'Module အခြေအနေ စစ်ဆေးနေသည်…',
   'optional.setupTitle': 'စတင်သတ်မှတ်ရန် လိုအပ်သည်',
   'optional.setupDetail': 'Module အတွက် လိုအပ်သော ဆက်တင် မပြည့်စုံသေးပါ။',
   'optional.unavailableTitle': 'Module မရရှိနိုင်ပါ',

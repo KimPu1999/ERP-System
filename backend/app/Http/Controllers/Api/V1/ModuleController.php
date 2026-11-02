@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\{AssetCategory, Company, PosRegister, TenantModule};
+use App\Models\{AssetCategory, Company, PosRegister, Tenant, TenantModule};
 use App\Services\{AuthorizationService, OptionalModuleService};
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
@@ -23,15 +23,27 @@ final class ModuleController
             $companyIds = $accessible ?? Company::where('tenant_id', $tenant)->pluck('id')->all(); $hasCompanyAccess = $companyIds !== [];
             $status = 'disabled'; $reason = 'The module is disabled for this tenant.';
             if ($enabled && ! $hasCompanyAccess) { $status = 'unavailable'; $reason = 'No authorized company access is available for this module.'; }
-            elseif ($enabled && ! $definition['setup']($companyIds)) { $status = 'setup_required'; $reason = 'Required module configuration is incomplete.'; }
-            elseif ($enabled) { $status = 'available'; $reason = null; }
-            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $status, 'reason' => $reason, 'can_open' => $status === 'available', 'can_configure' => false];
+            elseif ($enabled) { $status = 'enabled'; $reason = null; }
+            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $status, 'reason' => $reason, 'can_open' => $status === 'enabled', 'can_configure' => false];
         })->values();
         return response()->json(['data' => $rows]);
     }
 
-    public function update(Request $request, OptionalModuleService $modules, AuthorizationService $auth)
+    public function platformIndex(Tenant $tenant)
     {
-        $tenant = app(TenantContext::class)->id(); abort_unless($auth->allows($request->user(), $tenant, 'organization.manage'), 403); $data = $request->validate(['module_key' => 'required|in:pos,projects,fixed_assets', 'enabled' => 'required|boolean']); return response()->json(['data' => $modules->set($tenant, $data['module_key'], $data['enabled'])]);
+        $stored = TenantModule::where('tenant_id', $tenant->id)->get()->keyBy('module_key');
+        $rows = collect(['pos', 'projects', 'fixed_assets'])->map(function (string $key) use ($stored): array {
+            $record = $stored->get($key);
+            $enabled = (bool) ($record?->enabled ?? false);
+            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $enabled ? 'enabled' : 'disabled', 'reason' => $enabled ? null : 'The module is disabled for this tenant.', 'can_open' => $enabled, 'can_configure' => true];
+        })->values();
+        return response()->json(['data' => $rows]);
     }
+
+    public function platformUpdate(Request $request, Tenant $tenant, OptionalModuleService $modules)
+    {
+        $data = $request->validate(['module_key' => 'required|in:pos,projects,fixed_assets', 'enabled' => 'required|boolean']);
+        return response()->json(['data' => $modules->set($tenant->id, $data['module_key'], $data['enabled'])]);
+    }
+
 }

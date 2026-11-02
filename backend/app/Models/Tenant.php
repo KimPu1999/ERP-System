@@ -13,4 +13,5 @@ class Tenant extends Model
     public function users() { return $this->belongsToMany(User::class, 'tenant_memberships')->withPivot('status')->withTimestamps(); }
     public function memberships() { return $this->hasMany(TenantMembership::class); }
     public function companies() { return $this->hasMany(Company::class); }
+    public function modules() { return $this->hasMany(TenantModule::class); }
 }

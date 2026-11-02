@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Activity, BriefcaseBusiness, CheckCircle2, CircleAlert, Clock3, KanbanSquare, ListTodo, Milestone, Plus, RefreshCw, Users, WalletCards } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { ApiError, createProject, getDashboardCompanies, getProjectDashboard, getProjectExpenses, getProjectList, getProjectMilestones, getProjectTasks, getProjectTimesheets, updateProjectTask, type OptionalProject, type ProjectExpense, type ProjectTask } from '../lib/api';
+import { createProject, getDashboardCompanies, getModules, getProjectDashboard, getProjectExpenses, getProjectList, getProjectMilestones, getProjectTasks, getProjectTimesheets, isApiNotFound, updateProjectTask, type OptionalProject, type ProjectExpense, type ProjectTask } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 
 type Tab = 'overview' | 'projects' | 'tasks' | 'kanban' | 'milestones' | 'timesheets' | 'expenses';
@@ -11,7 +11,7 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Activity }> = [
   { id: 'tasks', label: 'Tasks', icon: ListTodo }, { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
   { id: 'milestones', label: 'Milestones', icon: Milestone }, { id: 'timesheets', label: 'Timesheets', icon: Clock3 }, { id: 'expenses', label: 'Expenses', icon: WalletCards },
 ];
-const errorText = (error: unknown) => error instanceof ApiError ? `${error.message} (HTTP ${error.status})` : error instanceof Error ? error.message : 'Unable to load project data.';
+const errorText = (error?: unknown) => { void error; return 'Project data could not be loaded. Retry to check again.'; };
 const dateText = (value?: string | null) => value ? new Date(value).toLocaleDateString() : '—';
 
 export function ProjectWorkspacePage() {
@@ -23,16 +23,20 @@ export function ProjectWorkspacePage() {
   const [state, setState] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ code: '', name: '', budget_amount: '', starts_on: '', ends_on: '' });
+  const modules = useQuery({ queryKey: ['modules'], queryFn: getModules });
+  const moduleFlag = modules.data?.data.find((item) => item.module_key === 'projects');
+  const moduleStatus = modules.isLoading ? 'loading' : modules.isError ? isApiNotFound(modules.error) ? 'unavailable' : 'error' : moduleFlag?.status === 'enabled' || moduleFlag?.status === 'available' ? 'enabled' : moduleFlag?.status === 'unavailable' ? 'unavailable' : 'disabled';
+  const moduleEnabled = moduleStatus === 'enabled';
   const companies = useQuery({ queryKey: ['project-companies'], queryFn: getDashboardCompanies });
   const companyRows = companies.data?.data.data ?? [];
   const companyId = params.get('company_id') ?? (companyRows.length === 1 ? companyRows[0].id : '');
   const queryParams = { company_id: companyId || undefined, page: 1, per_page: 50, search: search || undefined, state: state || undefined };
-  const dashboard = useQuery({ queryKey: ['projects-dashboard', companyId], queryFn: () => getProjectDashboard({ company_id: companyId || undefined }), enabled: Boolean(companyId) });
-  const projects = useQuery({ queryKey: ['projects', queryParams], queryFn: () => getProjectList(queryParams), enabled: Boolean(companyId) });
-  const tasks = useQuery({ queryKey: ['project-tasks', companyId, search, state], queryFn: () => getProjectTasks({ company_id: companyId || undefined, per_page: 100, search: search || undefined, state: state || undefined }), enabled: Boolean(companyId) && ['tasks', 'kanban'].includes(tab) });
-  const milestones = useQuery({ queryKey: ['project-milestones', companyId], queryFn: () => getProjectMilestones({ company_id: companyId || undefined, per_page: 100 }), enabled: Boolean(companyId) && tab === 'milestones' });
-  const timesheets = useQuery({ queryKey: ['project-timesheets', companyId], queryFn: () => getProjectTimesheets({ company_id: companyId || undefined, per_page: 100 }), enabled: Boolean(companyId) && tab === 'timesheets' });
-  const expenses = useQuery({ queryKey: ['project-expenses', companyId], queryFn: () => getProjectExpenses({ company_id: companyId || undefined, per_page: 100 }), enabled: Boolean(companyId) && tab === 'expenses' });
+  const dashboard = useQuery({ queryKey: ['projects-dashboard', companyId], queryFn: () => getProjectDashboard({ company_id: companyId || undefined }), enabled: Boolean(companyId) && moduleEnabled });
+  const projects = useQuery({ queryKey: ['projects', queryParams], queryFn: () => getProjectList(queryParams), enabled: Boolean(companyId) && moduleEnabled });
+  const tasks = useQuery({ queryKey: ['project-tasks', companyId, search, state], queryFn: () => getProjectTasks({ company_id: companyId || undefined, per_page: 100, search: search || undefined, state: state || undefined }), enabled: Boolean(companyId) && moduleEnabled && ['tasks', 'kanban'].includes(tab) });
+  const milestones = useQuery({ queryKey: ['project-milestones', companyId], queryFn: () => getProjectMilestones({ company_id: companyId || undefined, per_page: 100 }), enabled: Boolean(companyId) && moduleEnabled && tab === 'milestones' });
+  const timesheets = useQuery({ queryKey: ['project-timesheets', companyId], queryFn: () => getProjectTimesheets({ company_id: companyId || undefined, per_page: 100 }), enabled: Boolean(companyId) && moduleEnabled && tab === 'timesheets' });
+  const expenses = useQuery({ queryKey: ['project-expenses', companyId], queryFn: () => getProjectExpenses({ company_id: companyId || undefined, per_page: 100 }), enabled: Boolean(companyId) && moduleEnabled && tab === 'expenses' });
   const create = useMutation({ mutationFn: () => createProject({ company_id: companyId, code: form.code, name: form.name, budget_amount: form.budget_amount || undefined, starts_on: form.starts_on || undefined, ends_on: form.ends_on || undefined, state: 'draft' }), onSuccess: () => { setShowCreate(false); setForm({ code: '', name: '', budget_amount: '', starts_on: '', ends_on: '' }); void queryClient.invalidateQueries({ queryKey: ['projects'] }); void queryClient.invalidateQueries({ queryKey: ['projects-dashboard'] }); } });
   const changeTask = useMutation({ mutationFn: ({ id, next }: { id: string; next: string }) => updateProjectTask(id, { state: next }), onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['project-tasks'] }); void queryClient.invalidateQueries({ queryKey: ['projects-dashboard'] }); } });
   const loading = dashboard.isLoading || projects.isLoading;
@@ -43,14 +47,16 @@ export function ProjectWorkspacePage() {
   const projectRows = projects.data?.data.data ?? [];
   const taskRows = useMemo(() => tasks.data?.data.data ?? [], [tasks.data]);
   const groupedTasks = useMemo(() => ['todo', 'in_progress', 'done'].map((column) => ({ column, rows: taskRows.filter((row) => row.state === column) })), [taskRows]);
-  const error = [companies.error, dashboard.error, projects.error, tasks.error, milestones.error, timesheets.error, expenses.error].find(Boolean);
+  const error = [modules.error, companies.error, dashboard.error, projects.error, tasks.error, milestones.error, timesheets.error, expenses.error].find((item) => item && !isApiNotFound(item));
 
   return <section className="project-page page-section">
     <header className="project-header"><div><div className="project-eyebrow">Projects</div><h1>Project Management</h1></div><div className="project-header-actions"><select aria-label="Company" value={companyId} onChange={(event) => setCompany(event.target.value)}><option value="">Select company</option>{companyRows.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select><button className="icon-button" type="button" onClick={refresh} disabled={loading} aria-label={t('common.refresh')}><RefreshCw size={16} className={loading ? 'is-spinning' : ''} /></button></div></header>
     <nav className="project-tabs" aria-label="Project sections">{tabs.map(({ id, label, icon: Icon }) => <button type="button" key={id} className={tab === id ? 'active' : ''} onClick={() => setTabValue(id)}><Icon size={15} />{label}</button>)}</nav>
     {error && <div className="alert alert-danger project-alert" role="alert"><CircleAlert size={16} /><span>{errorText(error)}</span><button className="table-action" type="button" onClick={refresh}>{t('common.retry')}</button></div>}
-    {!companyId && !companies.isLoading && <div className="project-empty"><BriefcaseBusiness size={22} /><strong>Select an authorized company</strong><span>Project records are scoped to the selected company.</span></div>}
-    {companyId && !error && <>
+    {modules.isLoading && <div className="project-empty"><strong>Checking Projects status…</strong></div>}
+    {!modules.isLoading && !moduleEnabled && !error && <div className="project-empty"><BriefcaseBusiness size={22} /><strong>{moduleStatus === 'unavailable' ? 'Module unavailable' : 'Module is not enabled'}</strong><span>{moduleFlag?.reason ?? 'Ask an authorized administrator to enable Projects for this tenant.'}</span></div>}
+    {!companyId && moduleEnabled && !companies.isLoading && <div className="project-empty"><BriefcaseBusiness size={22} /><strong>Select an authorized company</strong><span>Project records are scoped to the selected company.</span></div>}
+    {companyId && moduleEnabled && !error && <>
       {tab === 'overview' && <Overview dash={dash} loading={dashboard.isLoading} onCreate={() => setShowCreate(true)} />}
       {tab === 'projects' && <ProjectsTable rows={projectRows} loading={projects.isLoading} search={search} state={state} setSearch={setSearch} setState={setState} onCreate={() => setShowCreate(true)} formatCurrency={formatCurrency} />}
       {tab === 'tasks' && <TasksTable rows={taskRows} loading={tasks.isLoading} search={search} state={state} setSearch={setSearch} setState={setState} />}

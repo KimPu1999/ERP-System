@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Banknote, Boxes, CheckCircle2, Clock3, Plus, RefreshCw, Search, ShoppingCart, Store, X } from 'lucide-react';
-import { ApiError, closePosShift, getDashboardBranches, getDashboardCompanies, getModules, getPosOverview, getPosProducts, getPosReceipts, getPosRegisters, getPosShifts, openPosShift, postPosSale, type Branch, type Company, type PosProduct, type PosReceipt, type PosRegister, type PosShift } from '../lib/api';
+import { closePosShift, getDashboardBranches, getDashboardCompanies, getModules, getPosOverview, getPosProducts, getPosReceipts, getPosRegisters, getPosShifts, isApiNotFound, openPosShift, postPosSale, type Branch, type Company, type PosProduct, type PosReceipt, type PosRegister, type PosShift } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
 
 type Tab = 'overview' | 'checkout' | 'registers' | 'shifts' | 'history';
 type CartLine = PosProduct & { quantity: number };
 
-const errorText = (error: unknown) => error instanceof ApiError ? `${error.message} (HTTP ${error.status})` : error instanceof Error ? error.message : 'Unable to load POS data.';
+const errorText = (error?: unknown) => { void error; return 'POS data could not be loaded. Retry to check again.'; };
 const money = (value: string | number, currency: string | null) => `${currency ? `${currency} ` : ''}${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function PosWorkspacePage() {
@@ -26,15 +26,15 @@ export function PosWorkspacePage() {
 
   const modules = useQuery({ queryKey: ['modules'], queryFn: getModules });
   const flag = modules.data?.data.find((item) => item.module_key === 'pos');
-  const status = flag?.status ?? (flag?.enabled ? 'unavailable' : 'disabled');
-  const enabled = status === 'available';
+  const status = modules.isLoading ? 'loading' : modules.isError ? isApiNotFound(modules.error) ? 'unavailable' : 'error' : flag?.status ?? (flag?.enabled ? 'unavailable' : 'disabled');
+  const enabled = status === 'enabled' || status === 'available';
   const companies = useQuery({ queryKey: ['pos-companies'], queryFn: getDashboardCompanies });
   const companyRows = companies.data?.data.data ?? [];
   const effectiveCompanyId = companyId || (companyRows.length === 1 ? companyRows[0].id : '');
   const branches = useQuery({ queryKey: ['pos-branches', effectiveCompanyId], queryFn: () => getDashboardBranches(effectiveCompanyId), enabled: Boolean(effectiveCompanyId) });
   const branchRows = useMemo(() => branches.data?.data.data ?? [], [branches.data]);
   const params = { company_id: effectiveCompanyId || undefined, branch_id: branchId || undefined, per_page: 50 };
-  const registers = useQuery({ queryKey: ['pos-registers', params], queryFn: () => getPosRegisters(params), enabled: status !== 'disabled' });
+  const registers = useQuery({ queryKey: ['pos-registers', params], queryFn: () => getPosRegisters(params), enabled });
   const overview = useQuery({ queryKey: ['pos-overview', params], queryFn: () => getPosOverview(params), enabled });
   const shifts = useQuery({ queryKey: ['pos-shifts', params], queryFn: () => getPosShifts({ ...params, state: tab === 'checkout' ? 'open' : undefined }), enabled });
   const products = useQuery({ queryKey: ['pos-products', params, search], queryFn: () => getPosProducts({ ...params, search: search || undefined }), enabled: enabled && tab === 'checkout' });
@@ -66,9 +66,9 @@ export function PosWorkspacePage() {
   });
   const changeQuantity = (id: string, quantity: number) => setCart((current) => current.map((line) => line.id === id ? { ...line, quantity: Math.min(Math.max(quantity, 0), Number(line.available_quantity)) } : line).filter((line) => line.quantity > 0));
 
-  const error = modules.error || companies.error || registers.error || (enabled && (overview.error || shifts.error));
+  const error = [modules.error, companies.error, registers.error, enabled ? overview.error : null, enabled ? shifts.error : null].find((item) => item && !isApiNotFound(item));
   if (error) return <section className="pos-page page-section"><div className="pos-error"><AlertCircle size={20} /><strong>{t('optional.error')}</strong><span>{errorText(error)}</span><button className="secondary" type="button" onClick={refresh}>{t('common.retry')}</button></div></section>;
-  if (!modules.isLoading && status !== 'available') return <section className="pos-page page-section"><header className="pos-header"><div><span className="eyebrow">{t('optional.title')}</span><h1>{t('pos.title')}</h1></div><button className="icon-button" type="button" onClick={refresh} aria-label={t('pos.refresh')}><RefreshCw size={16} /></button></header><div className="pos-setup"><Store size={24} /><div><h2>{status === 'setup_required' ? t('pos.setupTitle') : t('optional.disabledTitle')}</h2><p>{flag?.reason ?? (status === 'setup_required' ? t('pos.setupDetail') : t('optional.disabledDetail'))}</p></div></div></section>;
+  if (!modules.isLoading && !enabled) return <section className="pos-page page-section"><header className="pos-header"><div><span className="eyebrow">{t('optional.title')}</span><h1>{t('pos.title')}</h1></div><button className="icon-button" type="button" onClick={refresh} aria-label={t('pos.refresh')}><RefreshCw size={16} /></button></header><div className="pos-setup"><Store size={24} /><div><h2>{status === 'error' ? t('optional.status.error') : status === 'unavailable' ? t('optional.unavailableTitle') : t('optional.disabledTitle')}</h2><p>{status === 'error' ? t('optional.statusError') : flag?.reason ?? (status === 'unavailable' ? t('optional.unavailableDetail') : t('optional.disabledDetail'))}</p>{status === 'error' && <button className="secondary" type="button" onClick={refresh}>{t('common.retry')}</button>}</div></div></section>;
 
   return <section className="pos-page page-section">
     <header className="pos-header"><div><span className="eyebrow">{t('optional.title')}</span><h1>{t('pos.title')}</h1><p>{t('pos.subtitle')}</p></div><button className="icon-button" type="button" onClick={refresh} disabled={overview.isFetching || registers.isFetching} aria-label={t('pos.refresh')}><RefreshCw size={16} className={overview.isFetching ? 'is-spinning' : ''} /></button></header>
