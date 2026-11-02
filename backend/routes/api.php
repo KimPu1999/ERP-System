@@ -443,9 +443,11 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/sales/invoices/{invoice}/print', [SalesInvoiceController::class, 'print']);
         Route::get('/sales/invoices/{invoice}', [SalesInvoiceController::class, 'show']);
         Route::get('/sales/payments', [PaymentController::class, 'index']);
+        Route::get('/sales/payments/summary', [PaymentController::class, 'summary']);
         Route::post('/sales/payments', [PaymentController::class, 'store']);
         Route::post('/sales/payments/{payment}/verify', [PaymentController::class, 'verify']);
         Route::post('/sales/payments/{payment}/allocate', [PaymentController::class, 'allocate']);
+        Route::get('/sales/payments/{payment}/print', [PaymentController::class, 'print']);
         Route::get('/sales/analytics/customer-balances', [SalesAnalyticsController::class, 'customerBalances']);
         Route::get('/accounting/accounts', [AccountingController::class, 'accounts']);
         Route::get('/accounting/accounts/summary', [AccountingController::class, 'accountSummary']);
