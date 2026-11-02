@@ -1396,6 +1396,17 @@ tr:last-child td { border-bottom: 0; }
 .supplier-onboarding-search input::placeholder { color: var(--muted); opacity: 1; }
 @media (max-width: 620px) { .supplier-onboarding-filter { grid-template-columns: 1fr; }.supplier-onboarding-actions { justify-content: stretch; }.supplier-onboarding-actions button { flex: 1; } }
 
+/* Supplier financials: keep the search field independent from generic CRM search rules. */
+.supplier-financial-page { min-width: 0; }
+.supplier-financial-filter { display: grid; grid-template-columns: minmax(240px, 360px); margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.supplier-financial-field { display: grid; gap: 6px; min-width: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 18px; }
+.supplier-financial-search { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); }
+.supplier-financial-search input { flex: 1 1 auto; width: 100%; min-width: 0; height: 38px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 14px; }
+.supplier-financial-search input::placeholder { color: var(--muted); opacity: 1; }
+.supplier-financial-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; color: var(--danger); }
+.supplier-financial-error p { margin: 0; }
+@media (max-width: 620px) { .supplier-financial-filter { grid-template-columns: 1fr; }.supplier-financial-error { align-items: flex-start; flex-direction: column; } }
+
 /* Supplier intelligence states: do not present an in-flight request as empty data. */
 .supplier-intelligence-state { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 72px; padding: 16px; text-align: center; }
 .supplier-intelligence-state.card { margin: 0 0 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
