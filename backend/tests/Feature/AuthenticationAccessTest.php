@@ -19,6 +19,39 @@ it('blocks suspended accounts at login', function (): void {
     $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'secret-password'])->assertStatus(423);
 });
 
+it('keeps platform and business login contexts separate', function (): void {
+    $business = User::factory()->create(['password' => 'secret-password']);
+    $platform = User::factory()->create(['is_platform_super_admin' => true, 'password' => 'secret-password']);
+
+    $this->postJson('/api/v1/auth/platform/login', ['email' => $business->email, 'password' => 'secret-password'])
+        ->assertForbidden();
+    $this->postJson('/api/v1/auth/business/login', ['email' => $platform->email, 'password' => 'secret-password'])
+        ->assertForbidden();
+});
+
+it('requires a verified active platform administrator for platform login', function (): void {
+    $unverified = User::factory()->create(['is_platform_super_admin' => true, 'email_verified_at' => null, 'password' => 'secret-password']);
+    $this->postJson('/api/v1/auth/platform/login', ['email' => $unverified->email, 'password' => 'secret-password'])
+        ->assertForbidden();
+
+    $admin = User::factory()->create(['is_platform_super_admin' => true, 'password' => 'secret-password']);
+    $this->postJson('/api/v1/auth/platform/login', ['email' => $admin->email, 'password' => 'secret-password'])
+        ->assertOk()
+        ->assertJsonPath('data.id', $admin->id);
+});
+
+it('requires an active business membership while preserving pending invitation onboarding', function (): void {
+    $unassigned = User::factory()->create(['password' => 'secret-password']);
+    $this->postJson('/api/v1/auth/business/login', ['email' => $unassigned->email, 'password' => 'secret-password'])
+        ->assertForbidden();
+
+    $tenant = Tenant::factory()->create();
+    TenantMembership::create(['tenant_id' => $tenant->id, 'user_id' => $unassigned->id, 'status' => 'active']);
+    $this->postJson('/api/v1/auth/business/login', ['email' => $unassigned->email, 'password' => 'secret-password'])
+        ->assertOk()
+        ->assertJsonMissing(['workspace_access_required' => true]);
+});
+
 it('requires authentication for session management', function (): void {
     $this->getJson('/api/v1/auth/sessions')->assertUnauthorized();
 });

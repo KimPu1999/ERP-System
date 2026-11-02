@@ -15,7 +15,7 @@ export function PlatformRoute() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="route-loading" role="status">Checking your session…</div>;
   if (!user) return <Navigate to="/platform/login" replace />;
-  if (!user.email_verified_at) return <Navigate to="/verify-email" replace state={{ from: '/platform' }} />;
+  if (!user.email_verified_at || user.status !== 'active') return <Navigate to="/platform/login" replace />;
   if (!user.is_platform_super_admin) return <Navigate to="/" replace />;
   return <Outlet />;
 }

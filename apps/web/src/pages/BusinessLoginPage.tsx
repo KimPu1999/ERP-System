@@ -1,5 +1,5 @@
 import { LoginPage } from './LoginPage';
 
 export function BusinessLoginPage() {
-  return <LoginPage />;
+  return <LoginPage mode="business" />;
 }

@@ -11,7 +11,16 @@ final class RequirePlatformSuperAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        abort_unless($request->user()?->is_platform_super_admin === true, 403, 'Platform administrator access required.');
+        $user = $request->user();
+        abort_unless(
+            $user
+            && $user->is_platform_super_admin === true
+            && $user->status === 'active'
+            && ! $user->suspended_at
+            && $user->hasVerifiedEmail(),
+            403,
+            'Active verified platform administrator access required.',
+        );
         $context = app(TenantContext::class);
         $context->setPlatformAdmin(true);
         try { return $next($request); } finally { $context->setPlatformAdmin(false); }

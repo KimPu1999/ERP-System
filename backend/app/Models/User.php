@@ -29,5 +29,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function roleAssignments() { return $this->hasMany(RoleAssignment::class); }
     public function companyMemberships() { return $this->hasMany(CompanyMembership::class); }
     public function staffAssignments() { return $this->hasMany(StaffAssignment::class); }
+    public function invitations() { return $this->hasMany(Invitation::class, 'email', 'email'); }
     public function tenants() { return $this->belongsToMany(Tenant::class, 'tenant_memberships')->withPivot('status')->withTimestamps(); }
 }

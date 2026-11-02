@@ -76,9 +76,11 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class);
     Route::post('/billing/webhooks/{provider}', [PlatformBillingController::class, 'webhook']);
     Route::get('/invitations/{token}/preview', [InvitationController::class, 'preview'])->where('token', '[A-Za-z0-9]+')->middleware('throttle:30,1');
-    Route::middleware('throttle:10,1')->prefix('auth')->group(function (): void {
+    Route::middleware(['web', 'throttle:10,1'])->prefix('auth')->group(function (): void {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/business/login', [AuthController::class, 'businessLogin']);
+        Route::post('/platform/login', [AuthController::class, 'platformLogin']);
         Route::post('/password/email', [PasswordResetController::class, 'requestLink']);
         Route::post('/password/reset', [PasswordResetController::class, 'reset']);
         Route::post('/mfa/verify', [MfaController::class, 'verifyLogin']);

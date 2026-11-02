@@ -26,13 +26,61 @@ final class AuthController
 
     public function login(Request $request, SecurityEventLogger $events): JsonResponse
     {
+        return $this->authenticate($request, $events, 'business');
+    }
+
+    public function businessLogin(Request $request, SecurityEventLogger $events): JsonResponse
+    {
+        return $this->authenticate($request, $events, 'business');
+    }
+
+    public function platformLogin(Request $request, SecurityEventLogger $events): JsonResponse
+    {
+        return $this->authenticate($request, $events, 'platform');
+    }
+
+    private function authenticate(Request $request, SecurityEventLogger $events, string $mode): JsonResponse
+    {
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string'], 'remember' => ['sometimes', 'boolean']]);
         $user = User::where('email', $data['email'])->first();
         if (! $user || ! Hash::check($data['password'], $user->password)) { $events->record($request, 'auth.login_failed', $user?->id, null, ['reason' => 'invalid_credentials']); throw ValidationException::withMessages(['email' => [__('auth.failed')]]); }
         if ($user->status !== 'active' || $user->suspended_at) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'account_suspended']); abort(423, __('auth.suspended')); }
-        if ($user->mfa_enabled_at) { $request->session()->put(['auth.mfa_user_id' => $user->id, 'auth.mfa_remember' => (bool) ($data['remember'] ?? false)]); return response()->json(['mfa_required' => true], 202); }
-        Auth::login($user, (bool) ($data['remember'] ?? false)); $request->session()->regenerate(); $user->forceFill(['last_login_at' => now()])->saveQuietly(); $events->record($request, 'auth.login_succeeded', $user->id);
-        return response()->json(['data' => $user->only(['id', 'name', 'email', 'status'])]);
+
+        $hasActiveMembership = false;
+        if ($mode === 'platform') {
+            abort_unless($user->is_platform_super_admin === true, 403, 'Platform administrator access required.');
+            abort_unless($user->hasVerifiedEmail(), 403, 'Platform administrator email verification is required.');
+        } else {
+            abort_if($user->is_platform_super_admin === true, 403, 'Use the platform administrator sign-in.');
+
+            $hasActiveMembership = $user->tenantMemberships()->where('status', 'active')->exists();
+            $hasPendingInvitation = ! $hasActiveMembership && $user->invitations()
+                ->where('status', 'pending')
+                ->whereNull('accepted_at')
+                ->where('expires_at', '>', now())
+                ->exists();
+
+            abort_unless($hasActiveMembership || $hasPendingInvitation, 403, 'An active business workspace membership is required.');
+        }
+
+        if ($user->mfa_enabled_at) {
+            $request->session()->put([
+                'auth.mfa_user_id' => $user->id,
+                'auth.mfa_remember' => (bool) ($data['remember'] ?? false),
+                'auth.mfa_mode' => $mode,
+            ]);
+            return response()->json(['mfa_required' => true], 202);
+        }
+
+        Auth::login($user, (bool) ($data['remember'] ?? false));
+        $request->session()->regenerate();
+        $user->forceFill(['last_login_at' => now()])->saveQuietly();
+        $events->record($request, $mode === 'platform' ? 'auth.platform_login_succeeded' : 'auth.business_login_succeeded', $user->id);
+
+        return response()->json([
+            'data' => $user->only(['id', 'name', 'email', 'status']),
+            'workspace_access_required' => $mode === 'business' && ! $hasActiveMembership,
+        ]);
     }
 
     public function logout(Request $request, SecurityEventLogger $events): JsonResponse
