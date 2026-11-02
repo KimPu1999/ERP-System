@@ -2038,6 +2038,225 @@ table { min-width: 0; }
   }
 }
 
+/* Shared ERP search and filter controls. Keep labels visible and aligned across data tables. */
+.erp-filter-bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  min-width: 0;
+}
+.erp-filter-field {
+  position: relative;
+  display: flex;
+  flex: 0 1 180px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 150px;
+  color: var(--text);
+}
+.erp-filter-field.erp-filter-search { flex: 1 1 280px; min-width: 220px; }
+.erp-filter-label,
+.erp-filter-field > span:not(.sr-only) {
+  display: block;
+  position: static;
+  min-height: 18px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: normal;
+  text-transform: none;
+  opacity: 1;
+  visibility: visible;
+}
+.erp-filter-control {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+}
+.erp-filter-control::placeholder { color: #64748b; opacity: 1; }
+.erp-filter-control:hover { border-color: #94a3b8; }
+.erp-filter-control:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, .14); }
+.erp-filter-control:disabled { cursor: not-allowed; opacity: .65; }
+.erp-filter-search > svg { position: absolute; bottom: 12px; left: 12px; z-index: 1; color: #64748b; pointer-events: none; }
+.erp-filter-search > .erp-filter-control { padding-left: 36px; }
+.erp-filter-reset { height: 40px; min-height: 40px; white-space: nowrap; }
+
+:root.dark .erp-filter-label,
+:root.dark .erp-filter-field > span:not(.sr-only),
+.dark .erp-filter-label,
+.dark .erp-filter-field > span:not(.sr-only) { color: #e2e8f0; }
+:root.dark .erp-filter-control,
+.dark .erp-filter-control { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+:root.dark .erp-filter-control::placeholder,
+.dark .erp-filter-control::placeholder { color: #cbd5e1; }
+:root.dark .erp-filter-control:hover,
+.dark .erp-filter-control:hover { border-color: #94a3b8; }
+:root.dark .erp-filter-search > svg,
+.dark .erp-filter-search > svg { color: #cbd5e1; }
+
+/* Bring legacy filter bars into the same rhythm while their existing filter state remains unchanged. */
+.purchasing-filter-toolbar,
+.product-catalog-filter-toolbar,
+.inventory-filter-toolbar,
+.branch-filter-bar,
+.department-filter-bar,
+.sales-filter-toolbar,
+.supplier-filter-toolbar,
+.hr-filter-toolbar,
+.accounting-account-filters,
+.dashboard-toolbar,
+.report-toolbar { gap: 12px 16px; min-width: 0; }
+.purchasing-filter-toolbar > label,
+.product-catalog-filter-toolbar > label,
+.inventory-filter-toolbar > label,
+.branch-filter-bar > label,
+.department-filter-bar > label,
+.sales-filter-toolbar > label,
+.supplier-filter-toolbar > label,
+.hr-filter-toolbar > label,
+.accounting-account-filters > label,
+.dashboard-toolbar > label,
+.report-toolbar > label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.purchasing-filter-toolbar > label > span:not(.sr-only),
+.product-catalog-filter-toolbar > label > span:not(.sr-only),
+.inventory-filter-toolbar > label > span:not(.sr-only),
+.branch-filter-bar > label > span:not(.sr-only),
+.department-filter-bar > label > span:not(.sr-only),
+.sales-filter-toolbar > label > span:not(.sr-only),
+.supplier-filter-toolbar > label > span:not(.sr-only),
+.hr-filter-toolbar > label > span:not(.sr-only),
+.accounting-account-filters > label > span:not(.sr-only),
+.dashboard-toolbar > label > span:not(.sr-only),
+.report-toolbar > label > span:not(.sr-only) { color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; opacity: 1; visibility: visible; }
+.purchasing-filter-toolbar input,
+.purchasing-filter-toolbar select,
+.product-catalog-filter-toolbar input,
+.product-catalog-filter-toolbar select,
+.inventory-filter-toolbar input,
+.inventory-filter-toolbar select,
+.branch-filter-bar input,
+.branch-filter-bar select,
+.department-filter-bar input,
+.department-filter-bar select,
+.sales-filter-toolbar input,
+.sales-filter-toolbar select,
+.supplier-filter-toolbar input,
+.supplier-filter-toolbar select,
+.hr-filter-toolbar input,
+.hr-filter-toolbar select,
+.accounting-account-filters input,
+.accounting-account-filters select,
+.dashboard-toolbar input,
+.dashboard-toolbar select,
+.report-toolbar input,
+.report-toolbar select { height: 40px; min-height: 40px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; color: #0f172a; font-size: 14px; }
+.purchasing-filter-toolbar > label.purchasing-search,
+.product-catalog-filter-toolbar > label.product-catalog-search,
+.inventory-filter-toolbar > label.inventory-search,
+.branch-filter-bar > label.branch-search,
+.department-filter-bar > label.department-search { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+.purchasing-filter-toolbar > label.purchasing-search::before,
+.product-catalog-filter-toolbar > label.product-catalog-search::before { content: 'Search'; display: block; min-height: 18px; color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; }
+.purchasing-filter-toolbar > label.purchasing-search > svg,
+.product-catalog-filter-toolbar > label.product-catalog-search > svg,
+.inventory-filter-toolbar > label.inventory-search > svg,
+.branch-filter-bar > label.branch-search > svg,
+.department-filter-bar > label.department-search > svg { position: absolute; bottom: 12px; left: 12px; color: #64748b; pointer-events: none; }
+.purchasing-filter-toolbar > label.purchasing-search > input,
+.product-catalog-filter-toolbar > label.product-catalog-search > input,
+.inventory-filter-toolbar > label.inventory-search > input,
+.branch-filter-bar > label.branch-search > input,
+.department-filter-bar > label.department-search > input { padding-left: 36px; }
+:root.dark .purchasing-filter-toolbar > label > span:not(.sr-only),
+:root.dark .product-catalog-filter-toolbar > label > span:not(.sr-only),
+:root.dark .inventory-filter-toolbar > label > span:not(.sr-only),
+:root.dark .branch-filter-bar > label > span:not(.sr-only),
+:root.dark .hr-filter-toolbar > label > span:not(.sr-only),
+:root.dark .accounting-account-filters > label > span:not(.sr-only),
+.dark .purchasing-filter-toolbar > label > span:not(.sr-only),
+.dark .product-catalog-filter-toolbar > label > span:not(.sr-only),
+.dark .inventory-filter-toolbar > label > span:not(.sr-only),
+.dark .branch-filter-bar > label > span:not(.sr-only),
+.dark .hr-filter-toolbar > label > span:not(.sr-only),
+.dark .accounting-account-filters > label > span:not(.sr-only) { color: #e2e8f0; }
+:root.dark .purchasing-filter-toolbar input,
+:root.dark .purchasing-filter-toolbar select,
+:root.dark .product-catalog-filter-toolbar input,
+:root.dark .product-catalog-filter-toolbar select,
+:root.dark .inventory-filter-toolbar input,
+:root.dark .inventory-filter-toolbar select,
+:root.dark .branch-filter-bar input,
+:root.dark .branch-filter-bar select,
+:root.dark .department-filter-bar input,
+:root.dark .department-filter-bar select,
+:root.dark .sales-filter-toolbar input,
+:root.dark .sales-filter-toolbar select,
+:root.dark .supplier-filter-toolbar input,
+:root.dark .supplier-filter-toolbar select,
+:root.dark .hr-filter-toolbar input,
+:root.dark .hr-filter-toolbar select,
+:root.dark .accounting-account-filters input,
+:root.dark .accounting-account-filters select,
+.dark .purchasing-filter-toolbar input,
+.dark .purchasing-filter-toolbar select,
+.dark .product-catalog-filter-toolbar input,
+.dark .product-catalog-filter-toolbar select,
+.dark .inventory-filter-toolbar input,
+.dark .inventory-filter-toolbar select,
+.dark .branch-filter-bar input,
+.dark .branch-filter-bar select,
+.dark .department-filter-bar input,
+.dark .department-filter-bar select,
+.dark .sales-filter-toolbar input,
+.dark .sales-filter-toolbar select,
+.dark .supplier-filter-toolbar input,
+.dark .supplier-filter-toolbar select,
+.dark .hr-filter-toolbar input,
+.dark .hr-filter-toolbar select,
+.dark .accounting-account-filters input,
+.dark .accounting-account-filters select { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+.supplier-filter-toolbar .crm-search { width: 100%; min-width: 0; height: 40px; min-height: 40px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; }
+.supplier-filter-toolbar .crm-search input { height: 38px; padding: 0; border: 0; background: transparent; color: inherit; font-size: 14px; }
+:root.dark .supplier-filter-toolbar .crm-search,
+.dark .supplier-filter-toolbar .crm-search { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+@media (max-width: 900px) {
+  .erp-filter-field { flex: 1 1 180px; }
+  .erp-filter-field.erp-filter-search { flex-basis: 100%; }
+}
+@media (max-width: 680px) {
+  .erp-filter-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 12px; }
+  .erp-filter-field,
+  .erp-filter-field.erp-filter-search { width: 100%; min-width: 0; }
+  .erp-filter-field.erp-filter-search,
+  .erp-filter-reset { grid-column: 1 / -1; }
+  .erp-filter-reset { justify-self: start; }
+}
+@media (max-width: 460px) {
+  .erp-filter-bar { grid-template-columns: minmax(0, 1fr); }
+  .erp-filter-field.erp-filter-search,
+  .erp-filter-reset { grid-column: auto; }
+  .erp-filter-reset { width: 100%; justify-content: center; }
+}
+
 /* POS Phase 2 workspace */
 .pos-page { max-width: 1500px; margin: 0 auto; }
 .pos-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
