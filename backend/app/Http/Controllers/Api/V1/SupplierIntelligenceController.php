@@ -195,6 +195,117 @@ final class SupplierIntelligenceController
     private function validatedAutomation(Request $r, string $tenant, AuthorizationService $auth): array { $d=$r->validate(['company_id'=>'nullable|uuid','branch_id'=>'nullable|uuid','automation_type'=>'required|string','name'=>'required|string|max:150','configuration'=>'nullable|array','frequency'=>'nullable|in:once,daily,weekly,monthly','channels'=>'nullable|array','channels.*'=>'in:in_app,email','recipients'=>'nullable|array','recipients.*'=>'uuid']); $type=(string)$d['automation_type']; abort_unless(in_array($type,self::TRIGGERS,true),422); $config=$d['configuration']??[]; $allowed=$this->configurationKeys($type); $unknown=array_diff(array_keys($config),$allowed); if($unknown)throw ValidationException::withMessages(['configuration'=>['Unsupported configuration key: '.reset($unknown)]]); if(isset($config['supplier_id'])){abort_unless(is_string($config['supplier_id']) && Supplier::where('tenant_id',$tenant)->whereKey($config['supplier_id'])->when($d['company_id']??null,fn($q)=>$q->where(fn($x)=>$x->whereNull('company_id')->orWhere('company_id',$d['company_id'])))->exists(),422,'The selected supplier is not available.');} foreach(['days_before','days_overdue','days_open','window_days'] as $key)if(array_key_exists($key,$config)&&(!is_int($config[$key])||$config[$key]<0||$config[$key]>3650))throw ValidationException::withMessages(['configuration'=>[$key.' must be a whole number between 0 and 3650.']]); if(array_key_exists('threshold',$config)&&(!is_numeric($config['threshold'])||$config['threshold']<0||$config['threshold']>100))throw ValidationException::withMessages(['configuration'=>['threshold must be between 0 and 100.']]); $company=$d['company_id']??null; if($company){abort_unless($auth->allows($r->user(),$tenant,'automation.manage',$company),403); abort_unless(Company::where('tenant_id',$tenant)->whereKey($company)->where('is_active',true)->exists(),422,'The selected company is not available.');} if(!empty($d['branch_id']))abort_unless(Branch::where('tenant_id',$tenant)->whereKey($d['branch_id'])->exists() && Branch::whereKey($d['branch_id'])->where('company_id',$company)->exists(),422,'The selected branch is not available for this company.'); $recipients=array_values($d['recipients']??[]); if($recipients){$valid=User::whereIn('id',$recipients)->where('status','active')->whereHas('tenantMemberships',fn($q)=>$q->where('tenant_id',$tenant)->where('status','active'))->count(); abort_unless($valid===count($recipients),422,'All recipients must be active members of this tenant.');} $channels=array_values($d['channels']??[]); return ['company_id'=>$company,'branch_id'=>$d['branch_id']??null,'event_key'=>$type,'name'=>$d['name'],'conditions'=>$config,'frequency'=>$d['frequency']??null,'channels'=>$channels!==[]?$channels:['in_app'],'recipients'=>$recipients]; }
     private function configurationKeys(string $type): array { return match($type){ 'supplier_onboarding_reminder'=>['supplier_id','days_before'], 'supplier_missing_document_reminder'=>['supplier_id','days_before'], 'supplier_risk_alert'=>['supplier_id','threshold'], 'supplier_overdue_bill_reminder'=>['supplier_id','days_overdue'], 'supplier_purchase_approval_reminder'=>['days_overdue'], 'supplier_hold_review_alert'=>['supplier_id','days_open'], default=>[] }; }
     private function rejectDuplicate(string $tenant,array $data,?string $ignore=null): void { $exists=AutomationRule::where('tenant_id',$tenant)->where('event_key',$data['event_key'])->where('name',$data['name'])->when($data['company_id']??null,fn($q)=>$q->where('company_id',$data['company_id']),fn($q)=>$q->whereNull('company_id'))->when($ignore,fn($q)=>$q->where('id','<>',$ignore))->exists(); if($exists)throw ValidationException::withMessages(['name'=>['An automation rule with this name already exists in this company scope.']]); }
-    public function portalActivity(Request $r, AuthorizationService $auth): JsonResponse { [$t,$ids]=$this->scope($r,$auth,$this->companyId($r)); return response()->json(['data'=>PlatformAuditLog::where('tenant_id',$t)->where('action','like','supplier_portal.%')->when(is_array($ids),fn($q)=>$q->whereIn('metadata->company_id',$ids))->latest()->paginate(30)]); }
-    public function accessReviews(Request $r, AuthorizationService $auth): JsonResponse { [$t,$ids]=$this->scope($r,$auth,$this->companyId($r)); return response()->json(['data'=>SupplierAccessReview::where('tenant_id',$t)->when(is_array($ids),fn($q)=>$q->whereIn('company_id',$ids))->with(['supplier','membership'])->latest()->paginate(25)]); }
+    public function portalActivity(Request $r, AuthorizationService $auth): JsonResponse
+    {
+        [$tenant, $companies] = $this->scope($r, $auth, $this->companyId($r));
+        $query = $this->portalActivityQuery($r, $tenant, $companies);
+        $total = (clone $query)->count();
+        $failed = (clone $query)->where(fn ($q) => $q->where('action', 'like', '%delivery_failed')->orWhereRaw("lower(coalesce(metadata->>'result', metadata->>'status', '')) in ('failed', 'failure', 'error')"))->count();
+        $actors = (clone $query)->whereNotNull('actor_user_id')->distinct('actor_user_id')->count('actor_user_id');
+        $page = (clone $query)->with('actor')->orderBy($this->portalActivitySort($r), $this->sortDirection($r))->paginate($this->monitoringPageSize($r));
+        $supplierIds = $page->getCollection()->map(fn (PlatformAuditLog $row) => $this->auditSupplierId($row))->filter()->unique()->values();
+        $suppliers = $supplierIds->isEmpty() ? collect() : Supplier::where('tenant_id', $tenant)->whereIn('id', $supplierIds)->pluck('name', 'id');
+        $page->setCollection($page->getCollection()->map(fn (PlatformAuditLog $row) => $this->portalActivityPayload($row, $suppliers)));
+        return response()->json(['data' => ['kpis' => ['total_activities' => $total, 'failed_activities' => $failed, 'recent_active_actors' => $actors], 'activities' => $page]]);
+    }
+
+    public function portalActivityDetail(Request $r, string $activity, AuthorizationService $auth): JsonResponse
+    {
+        [$tenant, $companies] = $this->scope($r, $auth, $this->companyId($r));
+        $row = $this->portalActivityQuery($r, $tenant, $companies)->with('actor')->whereKey($activity)->firstOrFail();
+        $supplierId = $this->auditSupplierId($row);
+        $supplier = $supplierId ? Supplier::where('tenant_id', $tenant)->whereKey($supplierId)->first() : null;
+        return response()->json(['data' => ['id' => $row->id, 'supplier' => $supplier?->only(['id', 'name', 'code']), 'actor' => $row->actor?->only(['id', 'name', 'email']), 'action' => $row->action, 'event_time' => $row->created_at, 'related_record' => ['type' => $row->auditable_type, 'id' => $row->auditable_id], 'result' => $this->auditResult($row), 'context' => $this->safeAuditContext($row->metadata ?? [])]]);
+    }
+
+    public function portalActivityExport(Request $r, AuthorizationService $auth)
+    {
+        [$tenant, $companies] = $this->scope($r, $auth, $this->companyId($r));
+        abort_unless($auth->allows($r->user(), $tenant, 'reports.export', $this->companyId($r)), 403);
+        abort_unless($r->string('format', 'csv')->toString() === 'csv', 422, 'Only CSV export is available for portal activity records.');
+        $query = $this->portalActivityQuery($r, $tenant, $companies)->with('actor')->orderByDesc('created_at');
+        return response()->streamDownload(function () use ($query, $tenant): void {
+            $out = fopen('php://output', 'wb');
+            fputcsv($out, ['Activity ID', 'Supplier', 'Actor', 'Event Type', 'Related Record', 'Result', 'Timestamp']);
+            $query->chunkById(250, function ($rows) use ($out, $tenant): void {
+                $supplierIds = $rows->map(fn (PlatformAuditLog $row) => $this->auditSupplierId($row))->filter()->unique()->values();
+                $suppliers = $supplierIds->isEmpty() ? collect() : Supplier::where('tenant_id', $tenant)->whereIn('id', $supplierIds)->pluck('name', 'id');
+                foreach ($rows as $row) {
+                    $payload = $this->portalActivityPayload($row, $suppliers);
+                    fputcsv($out, [$payload['id'], $payload['supplier']['name'] ?? '—', $payload['actor']['name'] ?? 'System', $payload['event_type'], $payload['related_record']['id'] ?? '—', $payload['result'], $payload['timestamp']]);
+                }
+            });
+            fclose($out);
+        }, 'supplier-portal-activity.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function accessReviews(Request $r, AuthorizationService $auth): JsonResponse
+    {
+        [$tenant, $companies] = $this->scope($r, $auth, $this->companyId($r));
+        $query = $this->accessReviewQuery($r, $tenant, $companies);
+        $completed = $this->completedReviewStatuses();
+        $total = (clone $query)->count();
+        $pending = (clone $query)->whereNull('reviewed_at')->whereNotIn('status', $completed)->count();
+        $completedCount = (clone $query)->where(fn ($q) => $q->whereNotNull('reviewed_at')->orWhereIn('status', $completed))->count();
+        $overdue = (clone $query)->whereNull('reviewed_at')->whereNotIn('status', $completed)->whereNotNull('due_date')->whereDate('due_date', '<', now()->toDateString())->count();
+        $page = (clone $query)->with(['supplier', 'company', 'membership.user', 'reviewer'])->orderBy($this->accessReviewSort($r), $this->sortDirection($r))->paginate($this->monitoringPageSize($r));
+        $page->setCollection($page->getCollection()->map(fn (SupplierAccessReview $review) => $this->accessReviewPayload($review)));
+        return response()->json(['data' => ['kpis' => ['total_reviews' => $total, 'pending_reviews' => $pending, 'completed_reviews' => $completedCount, 'overdue_reviews' => $overdue], 'reviews' => $page, 'decision_workflow' => ['available' => false, 'reason' => 'Access-review decisions are managed by the existing access-management workflow.']]]);
+    }
+
+    public function accessReviewDetail(Request $r, string $review, AuthorizationService $auth): JsonResponse
+    {
+        [$tenant, $companies] = $this->scope($r, $auth, $this->companyId($r));
+        $row = $this->accessReviewQuery($r, $tenant, $companies)->with(['supplier', 'company', 'membership.user', 'reviewer'])->whereKey($review)->firstOrFail();
+        $history = SupplierAccessReview::where('tenant_id', $tenant)->where('membership_id', $row->membership_id)->when(is_array($companies), fn ($q) => $q->whereIn('company_id', $companies))->with('reviewer')->latest()->get()->map(fn (SupplierAccessReview $item) => ['id' => $item->id, 'status' => $item->status, 'reviewer' => $item->reviewer?->only(['id', 'name', 'email']), 'reviewed_at' => $item->reviewed_at, 'decision_notes' => $item->decision_notes])->values();
+        return response()->json(['data' => ['review' => $this->accessReviewPayload($row), 'current_access' => ['membership_id' => $row->membership?->id, 'status' => $row->membership?->status, 'role' => $row->membership?->role, 'last_login_at' => $row->membership?->last_login_at], 'history' => $history, 'decision_workflow' => ['available' => false, 'reason' => 'Review decisions are not enabled by the current access-management API.']]]);
+    }
+
+    public function accessReviewExport(Request $r, AuthorizationService $auth)
+    {
+        [$tenant, $companies] = $this->scope($r, $auth, $this->companyId($r));
+        abort_unless($auth->allows($r->user(), $tenant, 'reports.export', $this->companyId($r)), 403);
+        abort_unless($r->string('format', 'csv')->toString() === 'csv', 422, 'Only CSV export is available for access-review records.');
+        $query = $this->accessReviewQuery($r, $tenant, $companies)->with(['supplier', 'membership.user', 'reviewer'])->orderByDesc('created_at');
+        return response()->streamDownload(function () use ($query): void {
+            $out = fopen('php://output', 'wb');
+            fputcsv($out, ['Review ID', 'Supplier', 'User', 'Current Role', 'Requested Access', 'Reviewer', 'Status', 'Requested At', 'Reviewed At']);
+            $query->chunkById(250, function ($rows) use ($out): void { foreach ($rows as $review) { $payload = $this->accessReviewPayload($review); fputcsv($out, [$payload['id'], $payload['supplier']['name'] ?? '—', $payload['user']['email'] ?? '—', $payload['current_role'] ?? '—', $payload['requested_access'] ?? '—', $payload['reviewer']['name'] ?? '—', $payload['status'], $payload['requested_at'], $payload['reviewed_at'] ?? '—']); } });
+            fclose($out);
+        }, 'supplier-access-reviews.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function portalActivityQuery(Request $r, string $tenant, ?array $companies)
+    {
+        return PlatformAuditLog::where('tenant_id', $tenant)->where('action', 'like', 'supplier_portal.%')
+            ->when(is_array($companies), fn ($q) => $q->whereIn(DB::raw("metadata->>'company_id'"), $companies))
+            ->when($r->filled('supplier_id'), fn ($q) => $q->whereRaw("metadata->>'supplier_id' = ?", [$r->string('supplier_id')->toString()]))
+            ->when($r->filled('actor_id'), function ($q) use ($r): void { $actor = '%'.$r->string('actor_id')->toString().'%'; $q->where(fn ($x) => $x->where('actor_user_id', $r->string('actor_id')->toString())->orWhereHas('actor', fn ($u) => $u->where('name', 'ilike', $actor)->orWhere('email', 'ilike', $actor))); })
+            ->when($r->filled('event_type'), fn ($q) => $q->where('action', $r->string('event_type')->toString()))
+            ->when($r->filled('result'), fn ($q) => $q->whereRaw("lower(coalesce(metadata->>'result', metadata->>'status', '')) = ?", [strtolower($r->string('result')->toString())]))
+            ->when($r->filled('search'), function ($q) use ($r): void { $search = '%'.$r->string('search')->toString().'%'; $q->where(fn ($x) => $x->where('id', 'ilike', $search)->orWhere('action', 'ilike', $search)->orWhere('auditable_id', 'ilike', $search)->orWhereRaw('metadata::text ilike ?', [$search])); })
+            ->when($r->filled('date_from'), fn ($q) => $q->whereDate('created_at', '>=', $r->date('date_from')))
+            ->when($r->filled('date_to'), fn ($q) => $q->whereDate('created_at', '<=', $r->date('date_to')));
+    }
+
+    private function accessReviewQuery(Request $r, string $tenant, ?array $companies)
+    {
+        return SupplierAccessReview::where('tenant_id', $tenant)->when(is_array($companies), fn ($q) => $q->whereIn('company_id', $companies))
+            ->when($r->filled('supplier_id'), fn ($q) => $q->where('supplier_id', $r->string('supplier_id')->toString()))
+            ->when($r->filled('status'), fn ($q) => $q->where('status', $r->string('status')->toString()))
+            ->when($r->filled('search'), function ($q) use ($r): void { $search = '%'.$r->string('search')->toString().'%'; $q->where(fn ($x) => $x->where('id', 'ilike', $search)->orWhere('status', 'ilike', $search)->orWhereHas('supplier', fn ($s) => $s->where('name', 'ilike', $search))->orWhereHas('membership.user', fn ($u) => $u->where('name', 'ilike', $search)->orWhere('email', 'ilike', $search))); })
+            ->when($r->filled('date_from'), fn ($q) => $q->whereDate('created_at', '>=', $r->date('date_from')))
+            ->when($r->filled('date_to'), fn ($q) => $q->whereDate('created_at', '<=', $r->date('date_to')));
+    }
+
+    private function monitoringPageSize(Request $r): int { return min(max($r->integer('per_page', 25), 10), 100); }
+    private function sortDirection(Request $r): string { return $r->string('direction')->toString() === 'asc' ? 'asc' : 'desc'; }
+    private function portalActivitySort(Request $r): string { return in_array($r->string('sort')->toString(), ['created_at', 'action', 'actor_user_id'], true) ? $r->string('sort')->toString() : 'created_at'; }
+    private function accessReviewSort(Request $r): string { return in_array($r->string('sort')->toString(), ['created_at', 'due_date', 'reviewed_at', 'status'], true) ? $r->string('sort')->toString() : 'created_at'; }
+    private function auditSupplierId(PlatformAuditLog $row): ?string { return $row->metadata['supplier_id'] ?? $row->metadata['supplierId'] ?? null; }
+    private function auditResult(PlatformAuditLog $row): string { $result = $row->metadata['result'] ?? $row->metadata['status'] ?? null; return is_string($result) && $result !== '' ? $result : (str_ends_with($row->action, 'delivery_failed') ? 'failed' : 'recorded'); }
+    private function portalActivityPayload(PlatformAuditLog $row, $suppliers): array { $supplierId = $this->auditSupplierId($row); return ['id' => $row->id, 'supplier' => $supplierId ? ['id' => $supplierId, 'name' => $suppliers[$supplierId] ?? '—'] : null, 'actor' => $row->actor?->only(['id', 'name', 'email']), 'event_type' => $row->action, 'related_record' => ['type' => $row->auditable_type, 'id' => $row->auditable_id], 'result' => $this->auditResult($row), 'timestamp' => $row->created_at]; }
+    private function safeAuditContext(array $metadata): array { $allowed = ['company_id', 'supplier_id', 'branch_id', 'purchase_order_id', 'purchase_order_item_id', 'type', 'status', 'result', 'delivery']; return collect($metadata)->only($allowed)->map(fn ($value) => is_scalar($value) || $value === null ? $value : '[redacted]')->all(); }
+    private function completedReviewStatuses(): array { return ['approved', 'rejected', 'completed', 'closed', 'cancelled']; }
+    private function accessReviewPayload(SupplierAccessReview $review): array { return ['id' => $review->id, 'supplier' => $review->supplier?->only(['id', 'name', 'code']), 'user' => $review->membership?->user?->only(['id', 'name', 'email']), 'current_role' => $review->membership?->role, 'requested_access' => null, 'reviewer' => $review->reviewer?->only(['id', 'name', 'email']), 'company' => $review->company?->only(['id', 'name']), 'status' => $review->status, 'requested_at' => $review->created_at, 'due_date' => $review->due_date, 'reviewed_at' => $review->reviewed_at, 'decision_notes' => $review->decision_notes]; }
 }

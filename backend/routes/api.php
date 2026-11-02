@@ -199,7 +199,11 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('/purchasing/suppliers/notification-preferences', [SupplierIntelligenceController::class, 'saveNotificationPreference']);
         Route::get('/purchasing/suppliers/notification-deliveries', [SupplierIntelligenceController::class, 'notificationDeliveries']);
         Route::get('/purchasing/suppliers/portal-activity', [SupplierIntelligenceController::class, 'portalActivity']);
+        Route::get('/purchasing/suppliers/portal-activity/export', [SupplierIntelligenceController::class, 'portalActivityExport']);
+        Route::get('/purchasing/suppliers/portal-activity/{activity}', [SupplierIntelligenceController::class, 'portalActivityDetail']);
         Route::get('/purchasing/suppliers/access-reviews', [SupplierIntelligenceController::class, 'accessReviews']);
+        Route::get('/purchasing/suppliers/access-reviews/export', [SupplierIntelligenceController::class, 'accessReviewExport']);
+        Route::get('/purchasing/suppliers/access-reviews/{review}', [SupplierIntelligenceController::class, 'accessReviewDetail']);
         Route::get('/companies/{company}/branches', [BranchController::class, 'index']);
         Route::post('/companies/{company}/branches', [BranchController::class, 'store']);
         Route::get('/companies/{company}/branch-manager-candidates', [BranchController::class, 'managerCandidates']);
