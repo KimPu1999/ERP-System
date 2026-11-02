@@ -1529,7 +1529,25 @@ table { min-width: 0; }
 .supplier-filter-toolbar .crm-search { min-height: 38px; }
 .supplier-empty-state { display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 140px; gap: 6px; padding: 24px; text-align: center; }
 .supplier-empty-state p { margin: 0; }
+.supplier-modal-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: rgba(15, 23, 42, .45); }
+.supplier-modal { width: min(760px, calc(100vw - 40px)); max-height: min(720px, calc(100vh - 40px)); overflow: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
+.supplier-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 20px 15px; border-bottom: 1px solid var(--border); }
+.supplier-modal-header .eyebrow { margin: 0 0 5px; }
+.supplier-modal-header h2 { margin: 0; color: var(--text); font-size: 18px; letter-spacing: -.02em; }
+.supplier-modal-header p:last-child { margin: 5px 0 0; font-size: 12px; }
+.supplier-modal-body { padding: 18px 20px; }
+.supplier-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.supplier-form-grid label { display: grid; align-content: start; gap: 6px; min-width: 0; color: var(--text); font-size: 12px; font-weight: 700; }
+.supplier-form-grid input, .supplier-form-grid select { width: 100%; height: 40px; min-height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; outline: 0; color: var(--text); background: var(--surface); font: inherit; font-size: 13px; }
+.supplier-form-grid input::placeholder { color: var(--muted); opacity: .8; }
+.supplier-form-grid input:focus, .supplier-form-grid select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, .12); }
+.supplier-form-grid input[aria-invalid="true"], .supplier-form-grid select[aria-invalid="true"] { border-color: var(--danger); }
+.supplier-form-error { margin: 16px 0 0; padding: 9px 10px; border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--border)); border-radius: 7px; color: var(--danger); background: color-mix(in srgb, var(--danger) 7%, var(--surface)); font-size: 12px; }
+.supplier-modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px 18px; border-top: 1px solid var(--border); }
+.supplier-modal-footer .primary, .supplier-modal-footer .secondary { min-height: 40px; }
+.supplier-modal .icon-button { flex: 0 0 auto; }
 @media (max-width: 720px) { .supplier-context-card, .supplier-filter-toolbar { align-items: stretch; flex-direction: column; } .supplier-context-card label, .supplier-filter-toolbar label, .supplier-filter-toolbar label:first-child { width: 100%; min-width: 0; } .supplier-filter-toolbar > button { width: 100%; } }
+@media (max-width: 680px) { .supplier-modal-backdrop { place-items: start center; padding: 10px; } .supplier-modal { width: 100%; max-height: calc(100vh - 20px); } .supplier-modal-header, .supplier-modal-body { padding-left: 16px; padding-right: 16px; } .supplier-form-grid { grid-template-columns: 1fr; gap: 13px; } .supplier-modal-footer { padding-left: 16px; padding-right: 16px; } .supplier-modal-footer button { flex: 1; } }
 @keyframes supplier-catalog-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 @keyframes supplier-catalog-spin { to { transform: rotate(360deg); } }
 

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus, RefreshCw, Search, X } from 'lucide-react';
@@ -22,8 +22,11 @@ function SupplierDirectory({ params, setParams }: { params: URLSearchParams; set
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [type, setType] = useState('business');
   const [success, setSuccess] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const companies = useQuery({ queryKey: ['supplier-companies'], queryFn: getCompanies });
   const companyRows = useMemo<Company[]>(() => (companies.data?.data.data ?? []).filter(company => company.is_active), [companies.data]);
@@ -40,14 +43,36 @@ function SupplierDirectory({ params, setParams }: { params: URLSearchParams; set
   const query = useMemo(() => ({ company_id: companyId || undefined, search: search.trim() || undefined, status: status || undefined, per_page: 25 }), [companyId, search, status]);
   const list = useQuery({ queryKey: ['suppliers', 'directory', query], queryFn: () => getSuppliers(query), enabled: Boolean(companyId) });
   const create = useMutation({
-    mutationFn: () => createSupplier({ company_id: companyId, name: name.trim(), email: email.trim() || null, supplier_type: type }),
+    mutationFn: () => createSupplier({ company_id: companyId, name: name.trim(), email: email.trim() || null, phone: phone.trim() || null, supplier_type: type }),
     onSuccess: (response) => {
-      setOpen(false); setName(''); setEmail(''); setType('business'); setSuccess(`${response.data.name} was added successfully.`);
+      setOpen(false); setName(''); setEmail(''); setPhone(''); setType('business'); setSuccess(`${response.data.name} was added successfully.`);
       const next = new URLSearchParams(params); next.delete('search'); next.delete('status'); next.delete('page'); setParams(next, { replace: true });
       setSearch(''); setStatus('');
       void queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     },
   });
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    nameInputRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        create.reset();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled])');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', onKeyDown); };
+  }, [open, create]);
   const change = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => active ? activateSupplier(id) : deactivateSupplier(id),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
@@ -65,7 +90,7 @@ function SupplierDirectory({ params, setParams }: { params: URLSearchParams; set
     {success && <div className="inline-success"><span>{success}</span><button aria-label="Dismiss success message" onClick={() => setSuccess('')}><X size={15} /></button></div>}
     {!companies.isLoading && companyRows.length > 1 && <div className="supplier-context-card"><label>Company<span className="required-mark">*</span><select value={companyId} onChange={event => { const next = new URLSearchParams(params); next.set('company_id', event.target.value); next.delete('supplier_id'); setParams(next, { replace: true }); }}><option value="">Select an authorized company</option>{companyRows.map(company => <option key={company.id} value={company.id}>{company.name} ({company.code})</option>)}</select></label></div>}
     <div className="crm-grid">{[['Total suppliers', summary?.total], ['Active suppliers', summary?.active], ['Inactive suppliers', summary?.inactive], ['Added in 30 days', summary?.recently_added]].map(([label, value]) => <article className="crm-card" key={label}><span className="muted">{label}</span><strong>{companyId ? (value ?? '—') : '—'}</strong></article>)}</div>
-    {open && <form className="card purchase-form-card supplier-create-form" onSubmit={submit} noValidate><div className="form-section-heading"><div><h2>New supplier</h2><p className="muted">Add the supplier to the selected company.</p></div><button type="button" className="icon-button" aria-label="Close form" onClick={() => { create.reset(); setOpen(false); }}><X size={17} /></button></div><div className="crm-inline-form"><label>Legal supplier name<span className="required-mark">*</span><input autoFocus required value={name} onChange={event => setName(event.target.value)} aria-invalid={Boolean(fieldError(create.error, 'name'))} />{fieldError(create.error, 'name') && <small className="field-error">{fieldError(create.error, 'name')}</small>}</label><label>Business email <span className="optional-label">Optional</span><input type="email" value={email} onChange={event => setEmail(event.target.value)} aria-invalid={Boolean(fieldError(create.error, 'email'))} />{fieldError(create.error, 'email') && <small className="field-error">{fieldError(create.error, 'email')}</small>}</label><label>Supplier type<span className="required-mark">*</span><select value={type} onChange={event => setType(event.target.value)}><option value="business">Business</option><option value="individual">Individual</option></select></label></div>{create.isError && <p className="error-text">{errorMessage(create.error)}</p>}<div className="form-actions"><button type="submit" className="primary" disabled={!companyId || !name.trim() || create.isPending}>{create.isPending ? 'Saving…' : 'Save supplier'}</button><button type="button" className="secondary" onClick={() => { create.reset(); setOpen(false); }}>Cancel</button></div></form>}
+    {open && <div className="supplier-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) { create.reset(); setOpen(false); } }}><div className="supplier-modal" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="new-supplier-title" aria-describedby="new-supplier-description"><form onSubmit={submit} noValidate><header className="supplier-modal-header"><div><p className="eyebrow">Supplier master data</p><h2 id="new-supplier-title">New supplier</h2><p id="new-supplier-description" className="muted">Add a supplier to the selected company.</p></div><button type="button" className="icon-button" aria-label="Close new supplier dialog" onClick={() => { create.reset(); setOpen(false); }}><X size={17} /></button></header><div className="supplier-modal-body"><div className="supplier-form-grid"><label htmlFor="supplier-name">Legal supplier name <span className="required-mark" aria-hidden="true">*</span><span className="sr-only">required</span><input id="supplier-name" ref={nameInputRef} required value={name} onChange={event => setName(event.target.value)} placeholder="e.g. Golden Star Trading Co., Ltd." aria-invalid={Boolean(fieldError(create.error, 'name'))} aria-describedby={fieldError(create.error, 'name') ? 'supplier-name-error' : undefined} />{fieldError(create.error, 'name') && <small id="supplier-name-error" className="field-error" role="alert">{fieldError(create.error, 'name')}</small>}</label><label htmlFor="supplier-type">Supplier type <span className="required-mark" aria-hidden="true">*</span><span className="sr-only">required</span><select id="supplier-type" required value={type} onChange={event => setType(event.target.value)}><option value="business">Business</option><option value="individual">Individual</option></select></label><label htmlFor="supplier-email">Business email <span className="optional-label">Optional</span><input id="supplier-email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@company.com" aria-invalid={Boolean(fieldError(create.error, 'email'))} aria-describedby={fieldError(create.error, 'email') ? 'supplier-email-error' : undefined} />{fieldError(create.error, 'email') && <small id="supplier-email-error" className="field-error" role="alert">{fieldError(create.error, 'email')}</small>}</label><label htmlFor="supplier-phone">Phone number <span className="optional-label">Optional</span><input id="supplier-phone" type="tel" value={phone} onChange={event => setPhone(event.target.value)} placeholder="e.g. +95 9 000 000 000" aria-invalid={Boolean(fieldError(create.error, 'phone'))} aria-describedby={fieldError(create.error, 'phone') ? 'supplier-phone-error' : undefined} />{fieldError(create.error, 'phone') && <small id="supplier-phone-error" className="field-error" role="alert">{fieldError(create.error, 'phone')}</small>}</label></div>{create.isError && <p className="supplier-form-error" role="alert">{errorMessage(create.error)}</p>}</div><footer className="supplier-modal-footer"><button type="button" className="secondary" onClick={() => { create.reset(); setOpen(false); }}>Cancel</button><button type="submit" className="primary" disabled={!companyId || !name.trim() || create.isPending}>{create.isPending ? 'Saving…' : 'Save supplier'}</button></footer></form></div></div>}
     <div className="purchasing-filter-toolbar supplier-filter-toolbar"><label><span>Search suppliers</span><div className="crm-search"><Search size={15} /><input placeholder="Code, name, email or phone" value={search} onChange={event => setSearch(event.target.value)} /></div></label><label><span>Status</span><select value={status} onChange={event => setStatus(event.target.value)}><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="archived">Archived</option></select></label><button className="secondary" disabled={!search && !status} onClick={clearFilters}>Clear filters</button></div>
     {!companyId && !companies.isLoading && <div className="card supplier-empty-state"><strong>Select an authorized company</strong><p className="muted">Choose a company before viewing or creating suppliers.</p></div>}
     {companyId && <article className="purchasing-table-card table-card">{list.isError ? <div className="supplier-empty-state"><p className="error-text">{errorMessage(list.error)}</p><button className="secondary" onClick={() => void list.refetch()}>Retry</button></div> : <div className="table-scroll"><table><thead><tr><th>Code</th><th>Supplier</th><th>Type / Category</th><th>Primary contact</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead><tbody>{list.isLoading ? <tr><td colSpan={8}>Loading suppliers…</td></tr> : (list.data?.data.data ?? []).map(supplier => <tr key={supplier.id}><td><strong>{supplier.code}</strong></td><td><Link to={`/purchasing/suppliers?company_id=${companyId}&supplier_id=${supplier.id}`}>{supplier.trading_name ?? supplier.name}</Link></td><td>{supplier.supplier_type ?? '—'} · {supplier.category ?? 'Uncategorized'}</td><td>{supplier.contacts?.find(contact => contact.is_primary)?.name ?? '—'}</td><td>{supplier.email ?? '—'}</td><td>{supplier.phone ?? '—'}</td><td><span className="status-badge">{supplier.status}</span></td><td>{supplier.status === 'active' ? <button className="table-action" disabled={change.isPending} onClick={() => change.mutate({ id: supplier.id, active: false })}>Deactivate</button> : <button className="table-action" disabled={change.isPending} onClick={() => change.mutate({ id: supplier.id, active: true })}>Activate</button>}</td></tr>)}</tbody></table></div>}{list.data && !list.data.data.data.length && <div className="crm-empty">No suppliers for the selected filters.</div>}</article>}
