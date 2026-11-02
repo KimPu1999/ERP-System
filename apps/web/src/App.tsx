@@ -135,6 +135,7 @@ export default function App() {
       <Route path="/purchasing/suppliers/reports" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="reports" />} /></Route>
       <Route path="/purchasing/suppliers/automations" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="automations" />} /></Route>
       <Route path="/purchasing/suppliers/notifications" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="notifications" />} /></Route>
+      <Route path="/purchasing/suppliers/monitoring" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="monitoring" />} /></Route>
       <Route path="/purchasing/suppliers/portal-activity" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="portal" />} /></Route>
       <Route path="/purchasing/suppliers/access-reviews" element={<PurchasingLayout />}><Route index element={<SupplierIntelligencePage mode="reviews" />} /></Route>
       <Route path="/supplier-portal" element={<SupplierPortalLayout />}><Route path="dashboard" element={<SupplierPortalDashboardPage />} /><Route path="purchase-orders" element={<SupplierPortalPurchaseOrdersPage />} /></Route>
