@@ -112,6 +112,38 @@ final class PlatformBusinessAdminController
         return response()->json(['data' => $this->membershipPayload($membership->fresh(['user:id,name,email,status,email_verified_at,last_login_at']))]);
     }
 
+    public function transferOwnership(Request $request, Tenant $tenant, AuditLogger $audit): JsonResponse
+    {
+        $data = $request->validate([
+            'from_membership_id' => ['required', 'uuid'],
+            'to_membership_id' => ['required', 'uuid', 'different:from_membership_id'],
+            'replacement_role_id' => ['required', 'uuid'],
+        ]);
+        $ownerRole = Role::where('tenant_id', $tenant->id)->whereIn('slug', ['business-owner', 'tenant-owner'])->first();
+        abort_unless($ownerRole, 422, 'This business does not have an ownership role configured.');
+        $replacementRole = Role::whereKey($data['replacement_role_id'])->where('tenant_id', $tenant->id)->with('permissions')->firstOrFail();
+        abort_if($replacementRole->id === $ownerRole->id, 422, 'The outgoing owner must be assigned a non-owner role.');
+        abort_if($replacementRole->permissions->pluck('name')->intersect(['organization.manage', 'members.invite'])->isEmpty(), 422, 'The replacement role must retain administrator access.');
+
+        $result = DB::transaction(function () use ($request, $tenant, $data, $ownerRole, $replacementRole, $audit): TenantMembership {
+            $source = TenantMembership::whereKey($data['from_membership_id'])->where('tenant_id', $tenant->id)->with('user')->lockForUpdate()->firstOrFail();
+            $target = TenantMembership::whereKey($data['to_membership_id'])->where('tenant_id', $tenant->id)->with('user')->lockForUpdate()->firstOrFail();
+            abort_if($source->status !== 'active' || $target->status !== 'active', 422, 'Both memberships must be active before ownership can be transferred.');
+            abort_if(!$target->user?->email_verified_at, 422, 'The incoming owner must have a verified email address.');
+            abort_unless($this->isAdministrator($source), 422, 'The outgoing membership is not an active administrator.');
+            $sourceAssignment = RoleAssignment::where('tenant_id', $tenant->id)->where('user_id', $source->user_id)->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')->lockForUpdate()->first();
+            $targetAssignment = RoleAssignment::where('tenant_id', $tenant->id)->where('user_id', $target->user_id)->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')->lockForUpdate()->first();
+            abort_unless($sourceAssignment && $sourceAssignment->role_id === $ownerRole->id, 422, 'The outgoing membership is not the current owner.');
+            $sourceAssignment->update(['role_id' => $replacementRole->id]);
+            if ($targetAssignment) $targetAssignment->update(['role_id' => $ownerRole->id]);
+            else RoleAssignment::create(['tenant_id' => $tenant->id, 'role_id' => $ownerRole->id, 'user_id' => $target->user_id]);
+            $audit->record($request, 'platform.business_owner.transferred', $tenant->id, $target, ['from_membership_id' => $source->id, 'to_membership_id' => $target->id, 'replacement_role_id' => $replacementRole->id]);
+            return $target;
+        }, 3);
+
+        return response()->json(['data' => $this->membershipPayload($result->fresh(['user:id,name,email,status,email_verified_at,last_login_at']))]);
+    }
+
     public function resendInvitation(Request $request, Tenant $tenant, Invitation $invitation, AuditLogger $audit): JsonResponse
     {
         abort_unless($invitation->tenant_id === $tenant->id, 404);

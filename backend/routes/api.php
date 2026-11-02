@@ -125,11 +125,14 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/tenants/{tenant}', [PlatformTenantController::class, 'show']);
             Route::put('/tenants/{tenant}', [PlatformTenantController::class, 'update']);
             Route::patch('/tenants/{tenant}/status', [PlatformTenantController::class, 'changeStatus']);
+            Route::get('/tenants/{tenant}/security', [PlatformTenantController::class, 'security']);
+            Route::get('/tenants/{tenant}/activity', [PlatformTenantController::class, 'activity']);
             Route::get('/tenants/{tenant}/administrators', [PlatformBusinessAdminController::class, 'index']);
             Route::get('/tenants/{tenant}/administrators/invitations', [PlatformBusinessAdminController::class, 'invitations']);
             Route::post('/tenants/{tenant}/administrators/invitations', [PlatformBusinessAdminController::class, 'invite']);
             Route::post('/tenants/{tenant}/administrators/invitations/{invitation}/resend', [PlatformBusinessAdminController::class, 'resendInvitation']);
             Route::patch('/tenants/{tenant}/memberships/{membership}', [PlatformBusinessAdminController::class, 'updateMembership']);
+            Route::post('/tenants/{tenant}/ownership-transfer', [PlatformBusinessAdminController::class, 'transferOwnership']);
             Route::get('/tenants/{tenant}/modules', [ModuleController::class, 'platformIndex']);
             Route::put('/tenants/{tenant}/modules', [ModuleController::class, 'platformUpdate']);
             Route::get('/billing/plans', [PlatformBillingController::class, 'plans']);

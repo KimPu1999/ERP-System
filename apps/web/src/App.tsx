@@ -9,6 +9,7 @@ import { getHealth } from './lib/api';
 import { PlatformDashboard } from './pages/PlatformDashboard';
 import { TenantManagement } from './pages/TenantManagement';
 import { PlatformAdministratorsPage } from './pages/PlatformAdministratorsPage';
+import { PlatformBusinessDetailPage } from './pages/PlatformBusinessDetailPage';
 import { CompanySetup } from './pages/CompanySetup';
 import { BranchManagement } from './pages/BranchManagement';
 import { BranchDetailsPage } from './pages/BranchDetailsPage';
@@ -106,7 +107,7 @@ export default function App() {
       <Route path="/business/login" element={<BusinessLoginPage />} />
       <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} />
     </Route>
-    <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/administrators" element={<PlatformAdministratorsPage />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
+    <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/tenants/:tenantId" element={<PlatformBusinessDetailPage />} /><Route path="/platform/administrators" element={<PlatformAdministratorsPage />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
     <Route element={<BusinessRoute />}><Route element={<CompanyLayout />}><Route path="/business/dashboard" element={<CompanyDashboard />} /></Route></Route>
     <Route element={<AuthenticatedRoute />}><Route element={<CompanyLayout />}>
       <Route path="/" element={<CompanyDashboard />} />

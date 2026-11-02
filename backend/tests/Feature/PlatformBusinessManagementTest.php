@@ -31,7 +31,7 @@ it('creates, approves, suspends and restores a business without deleting its rec
     $tenantId = $created->json('data.id');
 
     $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenantId.'/status', ['status' => 'active'])->assertOk()->assertJsonPath('data.status', 'active');
-    $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenantId.'/status', ['status' => 'suspended'])->assertOk()->assertJsonPath('data.status', 'suspended');
+    $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenantId.'/status', ['status' => 'suspended', 'reason' => 'Security review'])->assertOk()->assertJsonPath('data.status', 'suspended');
     $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenantId.'/status', ['status' => 'active'])->assertOk()->assertJsonPath('data.status', 'active');
 
     expect(Tenant::find($tenantId)->status)->toBe('active');
@@ -61,4 +61,52 @@ it('allows a platform administrator to update an administrator membership when a
 
     $this->actingAs($f['platform'])->patchJson('/api/v1/platform/tenants/'.$f['tenant']->id.'/memberships/'.$membership->id, ['status' => 'revoked'])->assertOk()->assertJsonPath('data.status', 'revoked');
     expect(\App\Models\PlatformAuditLog::where('action', 'platform.business_admin.membership_updated')->where('tenant_id', $f['tenant']->id)->exists())->toBeTrue();
+});
+
+it('creates the default company and owner invitation from business registration data', function (): void {
+    Mail::fake();
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+
+    $response = $this->actingAs($platform)->postJson('/api/v1/platform/tenants', [
+        'name' => 'Yangon Retail Group',
+        'slug' => 'yangon-retail-group',
+        'owner_email' => 'owner@yangon-retail.test',
+        'business_email' => 'hello@yangon-retail.test',
+        'contact_phone' => '+95 1 555 0101',
+        'country_code' => 'MM',
+        'timezone' => 'Asia/Yangon',
+        'base_currency' => 'MMK',
+        'business_type' => 'Retail',
+        'registration_number' => 'REG-001',
+    ])->assertCreated();
+
+    $tenantId = $response->json('data.id');
+    expect(Company::where('tenant_id', $tenantId)->where('email', 'hello@yangon-retail.test')->where('base_currency', 'MMK')->exists())->toBeTrue();
+    expect(Invitation::where('tenant_id', $tenantId)->where('email', 'owner@yangon-retail.test')->where('status', 'pending')->exists())->toBeTrue();
+    Mail::assertSent(\App\Mail\CompanyInvitationMail::class);
+});
+
+it('requires a reason for suspension and rejects invalid business transitions', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    $tenant = Tenant::factory()->create(['status' => 'pending']);
+    Company::create(['tenant_id' => $tenant->id, 'name' => 'Transition Business', 'code' => 'TRANS']);
+
+    $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenant->id.'/status', ['status' => 'suspended'])->assertUnprocessable();
+    $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenant->id.'/status', ['status' => 'active'])->assertOk();
+    $this->actingAs($platform)->patchJson('/api/v1/platform/tenants/'.$tenant->id.'/status', ['status' => 'pending'])->assertUnprocessable();
+});
+
+it('transfers ownership only to an active verified administrator', function (): void {
+    $f = platformBusinessFixture();
+    $manager = User::factory()->create(['email_verified_at' => now()]);
+    TenantMembership::create(['tenant_id' => $f['tenant']->id, 'user_id' => $manager->id, 'status' => 'active']);
+    $managerRole = Role::create(['tenant_id' => $f['tenant']->id, 'name' => 'Business Manager', 'slug' => 'business-manager']);
+    $managerRole->permissions()->sync([Permission::where('name', 'members.invite')->firstOrFail()->id]);
+    RoleAssignment::create(['tenant_id' => $f['tenant']->id, 'role_id' => $managerRole->id, 'user_id' => $manager->id]);
+    $source = TenantMembership::where('tenant_id', $f['tenant']->id)->where('user_id', $f['owner']->id)->firstOrFail();
+    $target = TenantMembership::where('tenant_id', $f['tenant']->id)->where('user_id', $manager->id)->firstOrFail();
+
+    $this->actingAs($f['platform'])->postJson('/api/v1/platform/tenants/'.$f['tenant']->id.'/ownership-transfer', ['from_membership_id' => $source->id, 'to_membership_id' => $target->id, 'replacement_role_id' => $managerRole->id])->assertOk();
+    expect(RoleAssignment::where('tenant_id', $f['tenant']->id)->where('user_id', $f['owner']->id)->value('role_id'))->toBe($managerRole->id);
+    expect(RoleAssignment::where('tenant_id', $f['tenant']->id)->where('user_id', $manager->id)->value('role_id'))->toBe($f['role']->id);
 });
