@@ -43,6 +43,21 @@ it('requires a verified active platform administrator for platform login', funct
         ->assertJsonPath('data.id', $admin->id);
 });
 
+it('rejects inactive platform administrators before creating a session', function (): void {
+    $inactive = User::factory()->create([
+        'status' => 'inactive',
+        'password' => 'secret-password',
+        'is_platform_super_admin' => true,
+    ]);
+
+    $this->postJson('/api/v1/auth/platform/login', [
+        'email' => $inactive->email,
+        'password' => 'secret-password',
+    ])->assertStatus(423);
+
+    expect(auth()->check())->toBeFalse();
+});
+
 it('verifies signed email links and redirects browser clients to the frontend result page', function (): void {
     $user = User::factory()->create(['email_verified_at' => null]);
     $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
