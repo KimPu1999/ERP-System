@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\PlatformTenantController;
 use App\Http\Controllers\Api\V1\PlatformBusinessAdminController;
+use App\Http\Controllers\Api\V1\PlatformAdminInvitationController;
 use App\Http\Controllers\Api\V1\TenantContextController;
 use App\Http\Controllers\Api\V1\TenantOnboardingController;
 use App\Http\Controllers\Api\V1\TenantMemberController;
@@ -82,6 +83,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/business/login', [AuthController::class, 'businessLogin']);
         Route::post('/platform/login', [AuthController::class, 'platformLogin']);
+        Route::post('/platform/invitations/accept', [PlatformAdminInvitationController::class, 'accept']);
         Route::post('/password/email', [PasswordResetController::class, 'requestLink']);
         Route::post('/password/reset', [PasswordResetController::class, 'reset']);
         Route::post('/mfa/verify', [MfaController::class, 'verifyLogin']);
@@ -120,6 +122,10 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/supplier-portal/corrective-actions/{action}/responses', [SupplierPortalController::class, 'respondAction'])->middleware('supplier.portal');
         Route::middleware(['verified', 'platform.admin'])->prefix('platform')->group(function (): void {
             Route::get('/summary', [PlatformTenantController::class, 'summary']);
+            Route::get('/invitations', [PlatformAdminInvitationController::class, 'index']);
+            Route::post('/invitations', [PlatformAdminInvitationController::class, 'store']);
+            Route::post('/invitations/{invitation}/resend', [PlatformAdminInvitationController::class, 'resend']);
+            Route::post('/invitations/{invitation}/revoke', [PlatformAdminInvitationController::class, 'revoke']);
             Route::get('/tenants', [PlatformTenantController::class, 'index']);
             Route::post('/tenants', [PlatformTenantController::class, 'store']);
             Route::get('/tenants/{tenant}', [PlatformTenantController::class, 'show']);
