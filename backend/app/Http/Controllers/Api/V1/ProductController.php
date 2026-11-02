@@ -44,6 +44,25 @@ final class ProductController
         $audit->record($request, 'product.created', $tenantId, $product); return response()->json(['data' => $product->load('brand')], 201);
     }
 
+    public function update(Request $request, Product $product, AuthorizationService $authorization, AuditLogger $audit): JsonResponse
+    {
+        $tenantId = app(TenantContext::class)->id();
+        abort_unless($product->tenant_id === $tenantId, 404);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'products.manage'), 403);
+        $data = $request->validate(['name' => ['required', 'string', 'max:200'], 'slug' => ['nullable', 'alpha_dash', 'max:200'], 'description' => ['nullable', 'string'], 'category_id' => ['nullable', 'uuid'], 'brand_id' => ['nullable', 'uuid'], 'status' => ['sometimes', 'in:active,inactive'], 'variant' => ['required', 'array'], 'variant.name' => ['nullable', 'string', 'max:150'], 'variant.sku' => ['required', 'alpha_dash', 'max:80'], 'variant.gs1_identifier' => ['nullable', 'string', 'max:32'], 'variant.unit_id' => ['required', 'uuid'], 'variant.cost' => ['required', 'regex:/^\d+(\.\d{1,6})?$/'], 'variant.price' => ['required', 'regex:/^\d+(\.\d{1,6})?$/']]);
+        $variant = $product->variants()->firstOrFail();
+        abort_if(ProductVariant::where('tenant_id', $tenantId)->where('sku', $data['variant']['sku'])->where('id', '<>', $variant->id)->exists(), 422, 'A product SKU with this value already exists in this workspace.');
+        if (! empty($data['variant']['gs1_identifier'])) abort_if(ProductVariant::where('tenant_id', $tenantId)->where('gs1_identifier', $data['variant']['gs1_identifier'])->where('id', '<>', $variant->id)->exists(), 422, 'A product barcode with this value already exists in this workspace.');
+        $this->assertReferences($tenantId, $data);
+        $updated = DB::transaction(function () use ($data, $product, $variant): Product {
+            $product->update(['name' => $data['name'], 'slug' => $data['slug'] ?? $product->slug, 'description' => $data['description'] ?? null, 'category_id' => $data['category_id'] ?? null, 'brand_id' => $data['brand_id'] ?? null, 'status' => $data['status'] ?? $product->status]);
+            $variant->update(['unit_id' => $data['variant']['unit_id'], 'name' => $data['variant']['name'] ?? null, 'sku' => $data['variant']['sku'], 'gs1_identifier' => $data['variant']['gs1_identifier'] ?? null, 'cost' => $data['variant']['cost'], 'price' => $data['variant']['price'], 'is_active' => ($data['status'] ?? $product->status) === 'active']);
+            return $product->fresh(['variants', 'brand']);
+        });
+        $audit->record($request, 'product.updated', $tenantId, $updated);
+        return response()->json(['data' => $updated]);
+    }
+
     public function export(Request $request): Response
     {
         $tenantId = app(TenantContext::class)->id(); $products = Product::where('tenant_id', $tenantId)->with('variants')->orderBy('name')->cursor(); return response()->streamDownload(function () use ($products): void { $out = fopen('php://output', 'w'); fputcsv($out, ['product_name', 'sku', 'internal_barcode', 'gs1_identifier', 'cost', 'price', 'status']); foreach ($products as $product) foreach ($product->variants as $variant) fputcsv($out, [$product->name, $variant->sku, $variant->internal_barcode, $variant->gs1_identifier, $variant->cost, $variant->price, $product->status]); fclose($out); }, 'products.csv', ['Content-Type' => 'text/csv']);

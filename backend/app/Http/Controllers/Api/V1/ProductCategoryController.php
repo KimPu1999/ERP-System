@@ -60,4 +60,35 @@ final class ProductCategoryController
 
         return response()->json(['data' => $query->paginate(min(max($request->integer('per_page', 25), 1), 100))]);
     }
+
+    public function update(Request $request, ProductCategory $productCategory, AuthorizationService $authorization, AuditLogger $audit): JsonResponse
+    {
+        $tenantId = (string) app(TenantContext::class)->id();
+        abort_unless($productCategory->tenant_id === $tenantId, 404);
+        abort_unless($authorization->allows($request->user(), $tenantId, 'products.manage'), 403);
+        $data = $request->validate(['name' => ['required', 'string', 'max:255'], 'slug' => ['nullable', 'alpha_dash', 'max:255'], 'parent_id' => ['nullable', 'uuid']]);
+        $slug = $data['slug'] ?? Str::slug($data['name']);
+        abort_if($slug === '', 422, 'A valid category slug could not be generated from this name.');
+        abort_if(ProductCategory::where('tenant_id', $tenantId)->where('slug', $slug)->where('id', '<>', $productCategory->id)->exists(), 422, 'A category with this slug already exists in this workspace.');
+        if (! empty($data['parent_id'])) {
+            abort_unless(ProductCategory::where('tenant_id', $tenantId)->whereKey($data['parent_id'])->exists(), 422, 'The selected parent category is not available in this workspace.');
+            abort_if($data['parent_id'] === $productCategory->id || $this->isDescendant($productCategory, $data['parent_id'], $tenantId), 422, 'A category cannot be assigned to itself or one of its descendants.');
+        }
+        $updated = DB::transaction(function () use ($data, $productCategory, $slug): ProductCategory {
+            $productCategory->update(['name' => $data['name'], 'slug' => $slug, 'parent_id' => $data['parent_id'] ?? null]);
+            return $productCategory->fresh('parent:id,name,slug');
+        });
+        $audit->record($request, 'product_category.updated', $tenantId, $updated);
+        return response()->json(['data' => $updated]);
+    }
+
+    private function isDescendant(ProductCategory $category, string $candidateParentId, string $tenantId): bool
+    {
+        $parentId = ProductCategory::where('tenant_id', $tenantId)->whereKey($candidateParentId)->value('parent_id');
+        while ($parentId) {
+            if ($parentId === $category->id) return true;
+            $parentId = ProductCategory::where('tenant_id', $tenantId)->whereKey($parentId)->value('parent_id');
+        }
+        return false;
+    }
 }
