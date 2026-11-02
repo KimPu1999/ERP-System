@@ -440,6 +440,10 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/sales/invoices/summary', [SalesInvoiceController::class, 'summary']);
         Route::post('/sales/orders/{order}/invoices', [SalesInvoiceController::class, 'store']);
         Route::post('/sales/orders/{order}/returns', [SalesReturnController::class, 'post']);
+        Route::get('/sales/returns', [SalesReturnController::class, 'index']);
+        Route::post('/sales/returns', [SalesReturnController::class, 'store']);
+        Route::get('/sales/returns/{return}', [SalesReturnController::class, 'show']);
+        Route::post('/sales/returns/{return}/receive', [SalesReturnController::class, 'receive']);
         Route::get('/sales/invoices/{invoice}/print', [SalesInvoiceController::class, 'print']);
         Route::get('/sales/invoices/{invoice}', [SalesInvoiceController::class, 'show']);
         Route::get('/sales/payments', [PaymentController::class, 'index']);
