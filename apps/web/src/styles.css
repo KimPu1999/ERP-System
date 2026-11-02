@@ -1004,6 +1004,97 @@ tr:last-child td { border-bottom: 0; }
   background: transparent;
 }
 .purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search::before { content: none; }
+
+/* Final dashboard filter cascade: compact content-sized controls. */
+.dashboard-filter-region { width: 100%; min-width: 0; }
+.dashboard-toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end; gap: 12px 16px; width: 100%; min-width: 0; min-height: 0; height: auto; box-sizing: border-box; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: none; }
+.dashboard-toolbar > label { display: grid; gap: 6px; min-width: 0; width: 100%; color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; text-transform: none; letter-spacing: normal; }
+.dashboard-toolbar > label select, .dashboard-toolbar > label input { width: 100%; min-width: 0; height: 40px; min-height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font-size: 14px; }
+.dashboard-toolbar > .refresh-dashboard { align-self: end; justify-self: end; width: 40px; height: 40px; min-height: 40px; }
+:root.dark .dashboard-toolbar > label, .dark .dashboard-toolbar > label { color: #e2e8f0; }
+:root.dark .dashboard-toolbar > label select, :root.dark .dashboard-toolbar > label input, .dark .dashboard-toolbar > label select, .dark .dashboard-toolbar > label input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+@media (max-width: 680px) { .dashboard-toolbar { grid-template-columns: 1fr; } .dashboard-toolbar > .refresh-dashboard { justify-self: start; } }
+
+/* Dashboard filter layout final contract. */
+.dashboard-toolbar { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: flex-end !important; justify-content: flex-start !important; align-content: flex-start !important; height: auto !important; min-height: 0 !important; max-height: none !important; }
+.dashboard-toolbar > label { flex: 1 1 180px !important; width: auto !important; min-width: 180px !important; height: auto !important; min-height: 0 !important; }
+.dashboard-toolbar > .refresh-dashboard { flex: 0 0 40px !important; margin-left: auto; }
+@media (max-width: 680px) { .dashboard-toolbar { flex-direction: column !important; align-items: stretch !important; } .dashboard-toolbar > label { flex: 0 0 auto !important; width: 100% !important; min-width: 0 !important; } .dashboard-toolbar > .refresh-dashboard { flex: 0 0 40px !important; margin-left: 0; } }
+
+.dashboard-toolbar-compact {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  align-content: flex-start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 110px !important;
+}
+.dashboard-toolbar-compact > label { flex: 1 1 180px !important; width: auto !important; min-width: 180px !important; height: auto !important; min-height: 0 !important; }
+.dashboard-toolbar-compact > .refresh-dashboard { flex: 0 0 40px !important; margin-left: auto; }
+@media (max-width: 680px) {
+  .dashboard-toolbar-compact { flex-direction: column !important; align-items: stretch !important; max-height: none !important; }
+  .dashboard-toolbar-compact > label { flex: 0 0 auto !important; width: 100% !important; min-width: 0 !important; }
+  .dashboard-toolbar-compact > .refresh-dashboard { flex: 0 0 40px !important; margin-left: 0; }
+}
+
+/* Dashboard filter layout final contract. */
+.dashboard-toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  align-content: flex-start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+.dashboard-toolbar > label {
+  flex: 1 1 180px !important;
+  width: auto !important;
+  min-width: 180px !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+.dashboard-toolbar > .refresh-dashboard { flex: 0 0 40px !important; margin-left: auto; }
+@media (max-width: 680px) {
+  .dashboard-toolbar { flex-direction: column !important; align-items: stretch !important; }
+  .dashboard-toolbar > label { flex: 0 0 auto !important; width: 100% !important; min-width: 0 !important; }
+  .dashboard-toolbar > .refresh-dashboard { flex: 0 0 40px !important; margin-left: 0; }
+}
+
+/* Dashboard context filters must size to their contents instead of stretching
+   into a full-height column. */
+.dashboard-filter-region { width: 100%; min-width: 0; }
+.dashboard-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+  gap: 12px 16px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: none;
+}
+.dashboard-toolbar > label { display: grid; gap: 6px; min-width: 0; width: 100%; color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; text-transform: none; letter-spacing: normal; }
+.dashboard-toolbar > label select,
+.dashboard-toolbar > label input { width: 100%; min-width: 0; height: 40px; min-height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font-size: 14px; }
+.dashboard-toolbar > .refresh-dashboard { align-self: end; justify-self: end; width: 40px; height: 40px; min-height: 40px; }
+:root.dark .dashboard-toolbar > label, .dark .dashboard-toolbar > label { color: #e2e8f0; }
+:root.dark .dashboard-toolbar > label select, :root.dark .dashboard-toolbar > label input, .dark .dashboard-toolbar > label select, .dark .dashboard-toolbar > label input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+@media (max-width: 680px) {
+  .dashboard-toolbar { grid-template-columns: 1fr; }
+  .dashboard-toolbar > .refresh-dashboard { justify-self: start; }
+}
 .purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search > svg {
   position: absolute;
   top: 38px;
@@ -3467,3 +3558,82 @@ table { min-width: 0; }
 @media (max-width: 1220px) { .purchasing-orders-page .purchasing-filter-toolbar { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(120px, 1fr)) repeat(2, minmax(120px, 1fr)); } .purchasing-orders-page .purchasing-filter-actions { grid-column: 1 / -1; justify-content: flex-end; } }
 @media (max-width: 900px) { .purchasing-orders-page .purchasing-filter-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); } .purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search { grid-column: span 3; } }
 @media (max-width: 680px) { .purchasing-orders-page .purchasing-filter-toolbar { grid-template-columns: 1fr; gap: 12px; padding: 12px; } .purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search, .purchasing-orders-page .purchasing-filter-actions { grid-column: auto; } .purchasing-orders-page .purchasing-filter-actions { justify-content: stretch; } .purchasing-orders-page .purchasing-filter-actions button { flex: 1 1 0; } }
+
+/* Employee filters use the shared vertical field contract. The older HR toolbar rules
+   must not turn the search field back into a fixed-height horizontal wrapper. */
+.hr-filter-toolbar.erp-filter-bar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px 16px; min-width: 0; }
+.hr-filter-toolbar.erp-filter-bar > label.erp-filter-field { display: flex; flex: 0 1 180px; flex-direction: column; align-items: stretch; gap: 6px; min-width: 150px; height: auto; padding: 0; border: 0; border-radius: 0; color: var(--text); background: transparent; }
+.hr-filter-toolbar.erp-filter-bar > label.erp-filter-search { flex: 1 1 280px; min-width: 220px; }
+.hr-filter-toolbar.erp-filter-bar > label.erp-filter-field > .erp-filter-label { display: block; min-height: 18px; color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; }
+.hr-filter-toolbar.erp-filter-bar > label.erp-filter-field > .erp-filter-control { display: block; width: 100%; min-width: 0; height: 40px; min-height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font-size: 14px; }
+.hr-filter-toolbar.erp-filter-bar > label.erp-filter-search > svg { position: absolute; top: 38px; bottom: auto; left: 12px; color: #64748b; pointer-events: none; }
+.hr-filter-toolbar.erp-filter-bar > label.erp-filter-search > .erp-filter-control { padding-left: 36px; }
+:root.dark .hr-filter-toolbar.erp-filter-bar > label.erp-filter-field > .erp-filter-label, .dark .hr-filter-toolbar.erp-filter-bar > label.erp-filter-field > .erp-filter-label { color: #e2e8f0; }
+:root.dark .hr-filter-toolbar.erp-filter-bar > label.erp-filter-field > .erp-filter-control, .dark .hr-filter-toolbar.erp-filter-bar > label.erp-filter-field > .erp-filter-control { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+@media (max-width: 900px) { .hr-filter-toolbar.erp-filter-bar > label.erp-filter-search { flex-basis: 100%; } }
+@media (max-width: 720px) { .hr-filter-toolbar.erp-filter-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; } .hr-filter-toolbar.erp-filter-bar > label.erp-filter-search, .hr-filter-toolbar.erp-filter-bar > .erp-filter-reset { grid-column: 1 / -1; } }
+@media (max-width: 460px) { .hr-filter-toolbar.erp-filter-bar { grid-template-columns: 1fr; } .hr-filter-toolbar.erp-filter-bar > label.erp-filter-search, .hr-filter-toolbar.erp-filter-bar > .erp-filter-reset { grid-column: auto; } }
+
+/* Global search-field contract: every ERP filter search uses separate label and control rows. */
+.erp-filter-bar > label.erp-filter-field.erp-filter-search {
+  position: relative;
+  display: flex;
+  flex: 1 1 280px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 220px;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.erp-filter-bar > label.erp-filter-field.erp-filter-search > .erp-filter-label { display: block; min-height: 18px; }
+.erp-filter-bar > label.erp-filter-field.erp-filter-search > svg { position: absolute; top: 38px; bottom: auto; left: 12px; z-index: 1; pointer-events: none; }
+.erp-filter-bar > label.erp-filter-field.erp-filter-search > .erp-filter-control { display: block; width: 100%; min-width: 0; height: 40px; min-height: 40px; box-sizing: border-box; padding-left: 36px; }
+
+/* Legacy catalog and purchasing search wrappers now follow the same two-row geometry. */
+.product-catalog-filter-toolbar > label.product-catalog-search,
+.purchasing-filter-toolbar > label.purchasing-search {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 220px;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.product-catalog-filter-toolbar > label.product-catalog-search::before,
+.purchasing-filter-toolbar > label.purchasing-search::before { content: 'Search'; display: block; order: -2; min-height: 18px; color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; }
+.product-catalog-filter-toolbar > label.product-catalog-search > svg,
+.purchasing-filter-toolbar > label.purchasing-search > svg { position: absolute; top: 38px; bottom: auto; left: 12px; z-index: 1; pointer-events: none; }
+.product-catalog-filter-toolbar > label.product-catalog-search > input,
+.purchasing-filter-toolbar > label.purchasing-search > input { width: 100%; min-width: 0; height: 40px; min-height: 40px; box-sizing: border-box; padding-left: 36px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font-size: 14px; }
+:root.dark .product-catalog-filter-toolbar > label.product-catalog-search::before,
+:root.dark .purchasing-filter-toolbar > label.purchasing-search::before,
+.dark .product-catalog-filter-toolbar > label.product-catalog-search::before,
+.dark .purchasing-filter-toolbar > label.purchasing-search::before { color: #e2e8f0; }
+:root.dark .product-catalog-filter-toolbar > label.product-catalog-search > input,
+:root.dark .purchasing-filter-toolbar > label.purchasing-search > input,
+.dark .product-catalog-filter-toolbar > label.product-catalog-search > input,
+.dark .purchasing-filter-toolbar > label.purchasing-search > input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+.purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search::before { content: none; }
+
+/* Final dashboard filter cascade: compact content-sized controls. */
+.dashboard-filter-region { width: 100%; min-width: 0; }
+.dashboard-toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end; gap: 12px 16px; width: 100%; min-width: 0; min-height: 0; height: auto; box-sizing: border-box; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: none; }
+.dashboard-toolbar > label { display: grid; gap: 6px; min-width: 0; width: 100%; color: #334155; font-size: 13px; font-weight: 600; line-height: 18px; text-transform: none; letter-spacing: normal; }
+.dashboard-toolbar > label select, .dashboard-toolbar > label input { width: 100%; min-width: 0; height: 40px; min-height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font-size: 14px; }
+.dashboard-toolbar > .refresh-dashboard { align-self: end; justify-self: end; width: 40px; height: 40px; min-height: 40px; }
+:root.dark .dashboard-toolbar > label, .dark .dashboard-toolbar > label { color: #e2e8f0; }
+:root.dark .dashboard-toolbar > label select, :root.dark .dashboard-toolbar > label input, .dark .dashboard-toolbar > label select, .dark .dashboard-toolbar > label input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
+@media (max-width: 680px) { .dashboard-toolbar { grid-template-columns: 1fr; } .dashboard-toolbar > .refresh-dashboard { justify-self: start; } }
