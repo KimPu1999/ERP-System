@@ -1465,6 +1465,7 @@ tr:last-child td { border-bottom: 0; }
 /* Sales settings: compact, backend-backed configuration surface. */
 .sales-settings-page { min-width: 0; }
 .sales-settings-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; max-width: 1000px; margin: 0 auto 14px; }
+.sales-settings-context { display: flex; justify-content: flex-end; width: min(100%, 1100px); min-height: 34px; margin: 0 auto 10px; }
 .sales-settings-header h1 { margin: 4px 0 5px; color: var(--text); font-size: 24px; letter-spacing: -.03em; }
 .sales-settings-header p { max-width: 680px; margin: 0; color: var(--muted); font-size: 13px; }
 .sales-settings-scope { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); font-size: 12px; font-weight: 650; white-space: nowrap; }
@@ -1484,7 +1485,26 @@ tr:last-child td { border-bottom: 0; }
 .sales-setting-toggle input { position: absolute; width: 1px; height: 1px; opacity: 0; }.sales-setting-toggle i { position: relative; flex: 0 0 auto; width: 38px; height: 22px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-muted); transition: background .15s ease, border-color .15s ease; }.sales-setting-toggle i::after { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); content: ''; transition: transform .15s ease, background .15s ease; }.sales-setting-toggle input:checked + i { border-color: var(--blue); background: var(--blue); }.sales-setting-toggle input:checked + i::after { background: #fff; transform: translateX(16px); }.sales-setting-toggle input:focus-visible + i { outline: 3px solid rgba(59, 130, 246, .25); outline-offset: 2px; }
 .sales-settings-note { margin: 4px 0; padding: 12px; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-size: 13px; }
 .sales-settings-state { display: grid; justify-items: center; gap: 8px; width: min(100%, 1000px); min-height: 170px; margin: 0 auto; padding: 28px; place-content: center; text-align: center; }.sales-settings-state svg { color: var(--blue); }.sales-settings-state h2 { margin: 0; color: var(--text); font-size: 16px; }.sales-settings-state p { margin: 0; color: var(--muted); font-size: 13px; }
-@media (max-width: 680px) { .sales-settings-header { align-items: stretch; flex-direction: column; }.sales-settings-scope { align-self: flex-start; }.sales-settings-form { padding: 14px; }.sales-settings-form-heading { align-items: stretch; flex-direction: column; }.sales-settings-actions { align-self: flex-start; }.sales-settings-form-heading .primary { align-self: flex-start; } }
+@media (max-width: 680px) { .sales-settings-header { align-items: stretch; flex-direction: column; }.sales-settings-context { justify-content: flex-start; }.sales-settings-scope { align-self: flex-start; }.sales-settings-form { padding: 14px; }.sales-settings-form-heading { align-items: stretch; flex-direction: column; }.sales-settings-actions { align-self: flex-start; }.sales-settings-form-heading .primary { align-self: flex-start; } }
+
+/* Keep operational actions and the workspace navigation, while removing repeated
+   marketing-style page copy from the content area. Headings remain in the DOM for
+   screen readers and browser landmarks. */
+.sales-workspace-layout > .page-section > .page-heading > div:first-child,
+.sales-workspace-layout > .page-section > .sales-deliveries-header > div:first-child,
+.sales-workspace-layout > .page-section > .sales-invoices-heading > div:first-child,
+.sales-workspace-layout > .page-section > .sales-payments-heading > div:first-child,
+.sales-workspace-layout > .page-section > .sales-returns-heading > div:first-child,
+.sales-workspace-layout > .page-section > .sales-page-heading,
+.sales-workspace-layout > .page-section > .sales-reports-header > div:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sales-workspace-layout > .page-section > .page-heading,
+.sales-workspace-layout > .page-section > .sales-deliveries-header,
+.sales-workspace-layout > .page-section > .sales-invoices-heading,
+.sales-workspace-layout > .page-section > .sales-payments-heading,
+.sales-workspace-layout > .page-section > .sales-returns-heading,
+.sales-workspace-layout > .page-section > .sales-page-heading,
+.sales-workspace-layout > .page-section > .sales-reports-header { min-height: 34px; margin-bottom: 10px; }
+.sales-workspace-layout > .page-section > .sales-reports-header { align-items: center; }
 
 /* Purchasing workspace: compact procurement controls, tables, forms, and detail states. */
 .purchasing-workspace-layout { max-width: 1440px; margin: 0 auto; }

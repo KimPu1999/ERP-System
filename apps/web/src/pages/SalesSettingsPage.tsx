@@ -25,7 +25,7 @@ export function SalesSettingsPage() {
   useEffect(() => { if (settings.data?.data && !dirty) setForm(settings.data.data); }, [settings.data, dirty]);
   const set = (key: keyof FormState, value: boolean) => { setDirty(true); setForm((current) => ({ ...current, [key]: value })); };
 
-  return <section className="page-section sales-settings-page"><header className="sales-settings-header"><div><span className="eyebrow">{t('sales.settings.eyebrow')}</span><h1>{t('sales.settings.title')}</h1><p>{t('sales.settings.subtitle')}</p></div><div className="sales-settings-scope"><Settings2 size={15} /><span>{t('sales.settings.tenantScope')}</span></div></header>
+  return <section className="page-section sales-settings-page"><h1 className="sr-only">{t('sales.settings.title')}</h1><div className="sales-settings-context"><div className="sales-settings-scope"><Settings2 size={15} /><span>{t('sales.settings.tenantScope')}</span></div></div>
     <nav className="sales-settings-tabs" aria-label={t('sales.settings.title')}>{tabs.map(([key, label, supported]) => <button key={key} className={tab === key ? 'active' : ''} type="button" disabled={!supported} title={!supported ? t('sales.settings.unsupported') : undefined} onClick={() => setTab(key)}>{label}{!supported && <small>Unavailable</small>}</button>)}</nav>
     {settings.isLoading && <div className="sales-settings-state card"><Settings2 size={20} /><h2>{t('sales.settings.loading')}</h2><p>{t('sales.settings.loadingDetail')}</p></div>}
     {settings.isError && <div className="sales-settings-state card"><h2>{t('sales.settings.error')}</h2><p>{errorText(settings.error)}</p><button className="secondary" type="button" onClick={() => void settings.refetch()}>Retry</button></div>}
