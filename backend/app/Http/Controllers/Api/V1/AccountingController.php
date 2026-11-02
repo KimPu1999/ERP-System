@@ -118,6 +118,7 @@ final class AccountingController
         $companyId = $data['company_id'] ?? null;
         abort_unless($authorization->allows($request->user(), $tenantId, 'accounting.manage', $companyId), 403);
         if ($companyId) abort_unless(Company::where('tenant_id', $tenantId)->whereKey($companyId)->where('is_active', true)->exists(), 404);
+        $this->validateNormalBalance($data['type'], $data['normal_balance']);
         $this->validateAccountParent($data['parent_id'] ?? null, $tenantId, $companyId, $data['type']);
         $account = DB::transaction(function () use ($data, $tenantId, $companyId, $request): ChartAccount {
             abort_unless(! ChartAccount::where('tenant_id', $tenantId)->where('company_id', $companyId)->where('code', $data['code'])->exists(), 409);
@@ -139,6 +140,7 @@ final class AccountingController
         $referenced = $account->journalLines()->exists();
         if ($referenced && array_intersect(array_keys($data), ['code', 'type', 'parent_id', 'normal_balance', 'is_control', 'posting_allowed'])) throw ValidationException::withMessages(['account' => ['Accounting-critical fields cannot be changed after the account is referenced by a journal.']]);
         $type = $data['type'] ?? $account->type;
+        if (isset($data['normal_balance'])) $this->validateNormalBalance($type, $data['normal_balance']);
         $this->validateAccountParent($data['parent_id'] ?? $account->parent_id, $account->tenant_id, $account->company_id, $type, $account->id);
         if (isset($data['code']) && ChartAccount::where('tenant_id', $account->tenant_id)->where('company_id', $account->company_id)->where('code', $data['code'])->where($account->getKeyName(), '!=', $account->id)->exists()) throw ValidationException::withMessages(['code' => ['The account code is already used in this company.']]);
         $account->update([...$data, 'updated_by' => $request->user()->id]);
@@ -383,6 +385,12 @@ final class AccountingController
             if ($parent->id === $accountId) throw ValidationException::withMessages(['parent_id' => ['An account cannot be placed below its descendant.']]);
             $parent = $parent->parent_id ? ChartAccount::where('tenant_id', $tenantId)->whereKey($parent->parent_id)->first() : null;
         }
+    }
+
+    private function validateNormalBalance(string $type, string $normalBalance): void
+    {
+        $expected = in_array($type, ['asset', 'expense'], true) ? 'debit' : 'credit';
+        if ($normalBalance !== $expected) throw ValidationException::withMessages(['normal_balance' => ["{$type} accounts must use a {$expected} normal balance."]]);
     }
 
     private function authorizeJournal(Request $request, JournalEntry $entry, AuthorizationService $authorization, string $permission): void
