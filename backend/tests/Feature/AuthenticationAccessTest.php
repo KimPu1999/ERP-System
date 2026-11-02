@@ -2,10 +2,12 @@
 
 use App\Models\Company;
 use App\Models\Invitation;
+use App\Models\PlatformAuditLog;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Support\TenantContext;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 it('rejects invalid credentials without creating a session', function (): void {
@@ -38,6 +40,19 @@ it('requires a verified active platform administrator for platform login', funct
     $this->postJson('/api/v1/auth/platform/login', ['email' => $admin->email, 'password' => 'secret-password'])
         ->assertOk()
         ->assertJsonPath('data.id', $admin->id);
+});
+
+it('provisions platform access only for an existing verified active user', function (): void {
+    $unverified = User::factory()->create(['email' => 'unverified-platform@example.test', 'email_verified_at' => null]);
+
+    expect(Artisan::call('platform:provision-admin', ['email' => $unverified->email, '--yes' => true]))->toBe(1);
+    expect($unverified->fresh()->is_platform_super_admin)->toBeFalse();
+
+    $verified = User::factory()->create(['email' => 'verified-platform@example.test']);
+
+    expect(Artisan::call('platform:provision-admin', ['email' => $verified->email, '--yes' => true]))->toBe(0);
+    expect($verified->fresh()->is_platform_super_admin)->toBeTrue();
+    expect(PlatformAuditLog::where('action', 'platform.admin.provisioned')->where('auditable_id', $verified->id)->exists())->toBeTrue();
 });
 
 it('requires an active business membership while preserving pending invitation onboarding', function (): void {
@@ -80,6 +95,17 @@ it('offers verified users without memberships the workspace setup flow', functio
     expect($response->json('data.active_workspaces'))->toBe([])
         ->and($response->json('data.restricted_workspaces'))->toBe([])
         ->and($response->json('data.can_create_workspace'))->toBeTrue();
+});
+
+it('creates a workspace once and returns it for a retried onboarding request', function (): void {
+    $user = User::factory()->create(['email' => 'workspace-owner@example.test']);
+    $payload = ['name' => 'Acme Workspace', 'slug' => 'acme-workspace'];
+
+    $this->actingAs($user)->postJson('/api/v1/tenants', $payload)->assertCreated()->assertJsonPath('already_exists', false);
+    $this->actingAs($user)->postJson('/api/v1/tenants', $payload)->assertOk()->assertJsonPath('already_exists', true);
+
+    expect(TenantMembership::where('user_id', $user->id)->count())->toBe(1);
+    expect(Tenant::where('slug', $payload['slug'])->count())->toBe(1);
 });
 
 it('returns only active workspace memberships and classifies restricted access', function (): void {

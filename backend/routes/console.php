@@ -1,12 +1,58 @@
 <?php
 
 use App\Jobs\{EvaluateSupplierAutomationRule, RunAutomationRule};
-use App\Models\AutomationRule;
+use App\Models\{AutomationRule, PlatformAuditLog, User};
 use Illuminate\Support\Facades\{Artisan, Cache, Schedule};
 
 Artisan::command('erp:status', function (): void {
     $this->info('Enterprise ERP Cloud API foundation is configured.');
 });
+
+Artisan::command('platform:provision-admin {email} {--yes : Confirm the platform-admin promotion without an interactive prompt}', function (string $email): int {
+    $email = strtolower(trim($email));
+    $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+
+    if (! $user) {
+        $this->error('No existing user was found for that email address. Register the user first.');
+        return 1;
+    }
+
+    if ($user->status !== 'active' || $user->suspended_at) {
+        $this->error('The user must be active and not suspended before platform access can be granted.');
+        return 1;
+    }
+
+    if (! $user->hasVerifiedEmail()) {
+        $this->error('The user email must be verified before platform access can be granted.');
+        return 1;
+    }
+
+    if ($user->is_platform_super_admin === true) {
+        $this->info('This user is already a Platform Super Admin.');
+        return 0;
+    }
+
+    if (! $this->option('yes') && ! $this->confirm("Grant Platform Control Center access to {$user->email}?")) {
+        $this->warn('No changes were made.');
+        return 1;
+    }
+
+    $user->forceFill(['is_platform_super_admin' => true])->save();
+
+    PlatformAuditLog::create([
+        'actor_user_id' => null,
+        'tenant_id' => null,
+        'action' => 'platform.admin.provisioned',
+        'auditable_type' => User::class,
+        'auditable_id' => $user->id,
+        'metadata' => ['source' => 'artisan', 'target_email' => $user->email],
+        'ip_address' => null,
+    ]);
+
+    $this->info("Platform Control Center access granted to {$user->email}.");
+    $this->line('The user must sign in at /platform/login.');
+    return 0;
+})->purpose('Provision an existing verified user as a Platform Super Admin');
 
 Artisan::command('erp:health', function (): void {
     $this->call('about');
