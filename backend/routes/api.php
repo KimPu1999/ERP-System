@@ -437,9 +437,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/sales/shipments/{shipment}/proof-of-delivery', [DeliveryOrderController::class, 'pod']);
         Route::post('/sales/shipments/{shipment}/exceptions', [DeliveryOrderController::class, 'exception']);
         Route::get('/sales/invoices', [SalesInvoiceController::class, 'index']);
+        Route::get('/sales/invoices/summary', [SalesInvoiceController::class, 'summary']);
         Route::post('/sales/orders/{order}/invoices', [SalesInvoiceController::class, 'store']);
         Route::post('/sales/orders/{order}/returns', [SalesReturnController::class, 'post']);
         Route::get('/sales/invoices/{invoice}/print', [SalesInvoiceController::class, 'print']);
+        Route::get('/sales/invoices/{invoice}', [SalesInvoiceController::class, 'show']);
         Route::get('/sales/payments', [PaymentController::class, 'index']);
         Route::post('/sales/payments', [PaymentController::class, 'store']);
         Route::post('/sales/payments/{payment}/verify', [PaymentController::class, 'verify']);
