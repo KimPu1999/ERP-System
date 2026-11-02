@@ -44,12 +44,7 @@ final class DashboardController
 
         $previousTo = $from->subDay()->endOfDay();
         $previousFrom = $previousTo->subDays($from->diffInDays($to))->startOfDay();
-        $currency = $companyId
-            ? AccountingCurrency::query()
-                ->where('tenant_id', $tenantId)
-                ->where('code', Company::where('tenant_id', $tenantId)->whereKey($companyId)->value('base_currency'))
-                ->first(['code', 'decimal_places'])
-            : AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places']);
+        $currency = $this->accountingCurrency($tenantId, $companyId);
         $financialAvailable = $currency !== null;
 
         $revenue = $this->invoiceTotal($tenantId, $companyId, $branchId, $from, $to);
@@ -419,18 +414,25 @@ final class DashboardController
             $previousTo = $from->subDay()->endOfDay();
             $previousFrom = $previousTo->subDays($from->diffInDays($to))->startOfDay();
         }
-        $currency = $companyId
-            ? AccountingCurrency::query()
-                ->where('tenant_id', $tenantId)
-                ->where('code', Company::where('tenant_id', $tenantId)->whereKey($companyId)->value('base_currency'))
-                ->first(['code', 'decimal_places'])
-            : AccountingCurrency::where('tenant_id', $tenantId)->where('is_base', true)->first(['code', 'decimal_places']);
+        $currency = $this->accountingCurrency($tenantId, $companyId);
         return ['tenant_id' => $tenantId, 'company_id' => $companyId, 'branch_id' => $branchId, 'timezone' => $timezone, 'period' => $period, 'year' => $year, 'comparison_period' => $comparison, 'from' => $from, 'to' => $to, 'previous_from' => $previousFrom, 'previous_to' => $previousTo, 'currency' => $currency];
     }
 
     private function analyticsFilters(array $context): array
     {
         return ['period' => $context['period'], 'year' => $context['year'], 'comparison_period' => $context['comparison_period'], 'from' => $context['from']->toDateString(), 'to' => $context['to']->toDateString(), 'company_id' => $context['company_id'], 'branch_id' => $context['branch_id'], 'timezone' => $context['timezone']];
+    }
+
+    private function accountingCurrency(string $tenantId, ?string $companyId): ?AccountingCurrency
+    {
+        $baseCurrency = $companyId
+            ? Company::where('tenant_id', $tenantId)->whereKey($companyId)->value('base_currency')
+            : null;
+
+        return AccountingCurrency::query()
+            ->where('tenant_id', $tenantId)
+            ->when($baseCurrency, fn ($query) => $query->where('code', $baseCurrency), fn ($query) => $query->where('is_base', true))
+            ->first(['code', 'decimal_places']);
     }
 
     private function analyticsUnavailable(array $context, string $reason): JsonResponse

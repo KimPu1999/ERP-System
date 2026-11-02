@@ -417,7 +417,7 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('/sales/orders/{order}', [SalesOrderController::class, 'update']);
         Route::post('/sales/orders/{order}/submit', [SalesOrderController::class, 'submit']);
         Route::post('/sales/orders/{order}/approve', [SalesOrderController::class, 'approve']);
-        Route::post('/sales/orders/{order}/confirm', [SalesOrderController::class, 'confirm']);
+        Route::post('/sales/orders/{order}/confirm', [SalesOrderController::class, 'confirmIdempotent']);
         Route::post('/sales/orders/{order}/hold', [SalesOrderController::class, 'hold']);
         Route::post('/sales/orders/{order}/release-hold', [SalesOrderController::class, 'releaseHold']);
         Route::post('/sales/orders/{order}/cancel', [SalesOrderController::class, 'cancel']);

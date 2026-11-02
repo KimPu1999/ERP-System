@@ -22,9 +22,8 @@ final class ModuleController
             $record = $stored->get($key); $enabled = (bool) ($record?->enabled ?? false); $accessible = $authorization->accessibleCompanyIds($request->user(), $tenant, $definition['permission']);
             $companyIds = $accessible ?? Company::where('tenant_id', $tenant)->pluck('id')->all(); $hasCompanyAccess = $companyIds !== [];
             $status = 'disabled'; $reason = 'The module is disabled for this tenant.';
-            if ($enabled && ! $hasCompanyAccess) { $status = 'unavailable'; $reason = 'No authorized company access is available for this module.'; }
-            elseif ($enabled) { $status = 'enabled'; $reason = null; }
-            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $status, 'reason' => $reason, 'can_open' => $status === 'enabled', 'can_configure' => false];
+            if ($enabled) { $status = 'enabled'; $reason = $hasCompanyAccess ? null : 'The module is enabled, but no authorized company access is available.'; }
+            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $status, 'reason' => $reason, 'can_open' => $status === 'enabled' && $hasCompanyAccess, 'can_configure' => false];
         })->values();
         return response()->json(['data' => $rows]);
     }

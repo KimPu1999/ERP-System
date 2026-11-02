@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{Company, Permission, Product, ProductVariant, PurchaseOrder, PurchaseOrderItem, Role, RoleAssignment, Supplier, Tenant, TenantMembership, UnitOfMeasure, User, Warehouse};
+use App\Models\{Company, Permission, Product, ProductVariant, PurchaseOrder, PurchaseOrderItem, Role, RoleAssignment, Supplier, SupplierPurchasingHold, Tenant, TenantMembership, UnitOfMeasure, User, Warehouse};
 
 function purchaseOrderWorkspaceFixture(): array
 {
@@ -38,6 +38,30 @@ it('creates a draft without posting stock and rejects unauthorized company acces
     $unauthorized = User::factory()->create();
     TenantMembership::create(['tenant_id' => $tenant->id, 'user_id' => $unauthorized->id, 'status' => 'active']);
     $this->actingAs($unauthorized)->getJson('/api/v1/purchase-orders?company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])->assertForbidden();
+});
+
+it('enforces an active supplier purchasing hold before draft creation', function (): void {
+    [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
+    SupplierPurchasingHold::create([
+        'tenant_id' => $tenant->id,
+        'company_id' => $company->id,
+        'supplier_id' => $supplier->id,
+        'type' => 'temporary_hold',
+        'reason' => 'Supplier compliance review is pending.',
+        'effective_from' => now()->toDateString(),
+        'status' => 'active',
+        'applied_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)->postJson('/api/v1/purchase-orders', [
+        'company_id' => $company->id,
+        'supplier_id' => $supplier->id,
+        'items' => [['variant_id' => $variant->id, 'ordered_quantity' => '1', 'unit_price' => '10']],
+    ], ['X-Tenant-Id' => $tenant->id])
+        ->assertUnprocessable()
+        ->assertJsonPath('message', 'This supplier is under an active purchasing hold.');
+
+    expect(PurchaseOrder::where('tenant_id', $tenant->id)->count())->toBe(0);
 });
 
 it('persists decimal-safe phase two totals and validates warehouse scope', function (): void {
