@@ -479,7 +479,7 @@ export const updateEmployeeStatus = (id: string, status: string) => api<{ data: 
 export type PayrollPage = { data: { data: PayrollRun[]; current_page: number; last_page: number; per_page: number; total: number }; summary: { total: number; finalized: number; pending: number } };
 export const getPayrollRuns = (companyId?: string) => api<PayrollPage>(`/hr/payroll-runs${queryString({ company_id: companyId }) ? `?${queryString({ company_id: companyId })}` : ''}`);
 export type ModuleStatus = 'enabled' | 'disabled' | 'unavailable' | 'error' | 'loading' | 'available' | 'setup_required';
-export type ModuleFlag = { id: string | null; module_key: ModuleKey; enabled: boolean; status?: ModuleStatus; reason?: string | null; can_open?: boolean; can_configure?: boolean };
+export type ModuleFlag = { id: string | null; module_key: ModuleKey; enabled: boolean; status?: ModuleStatus; readiness?: 'disabled' | 'ready' | 'setup_required' | 'permission_required'; reason?: string | null; can_open?: boolean; can_configure?: boolean };
 export const getModules = () => api<{ data: ModuleFlag[] }>('/modules');
 export type OptionalListMeta = { current_page: number; last_page: number; per_page: number; total: number };
 export type OptionalProject = { id: string; company_id: string; code: string; name: string; state: string; budget_amount: string; starts_on?: string | null; ends_on?: string | null; tasks_count?: number; milestones_count?: number; manager?: { id: string; legal_name: string; preferred_name?: string | null } | null; tasks?: Array<{ id: string; title: string; state: string }> };

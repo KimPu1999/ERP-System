@@ -20,7 +20,7 @@ export function OptionalModulesPage() {
   const modules = useQuery({ queryKey: ['modules'], queryFn: getModules });
   const flags = modules.data?.data ?? [];
   const flagFor = (key: OptionalModuleKey) => flags.find((item) => item.module_key === key);
-  const statusFor = (key: OptionalModuleKey) => modules.isLoading ? 'loading' : modules.isError ? isApiNotFound(modules.error) ? 'unavailable' : 'error' : flagFor(key)?.status === 'enabled' || flagFor(key)?.status === 'available' ? 'enabled' : flagFor(key)?.status === 'unavailable' ? 'unavailable' : 'disabled';
+  const statusFor = (key: OptionalModuleKey) => { if (modules.isLoading) return 'loading'; if (modules.isError) return isApiNotFound(modules.error) ? 'unavailable' : 'error'; const flag = flagFor(key); if (flag?.status === 'enabled' && flag.readiness === 'setup_required') return 'setup_required'; if (flag?.status === 'enabled' && flag.readiness === 'permission_required') return 'unavailable'; return flag?.status === 'enabled' || flag?.status === 'available' ? 'enabled' : flag?.status === 'unavailable' ? 'unavailable' : 'disabled'; };
   const pos = useQuery({ queryKey: ['optional-overview', 'pos'], queryFn: () => getPosRegisters(), enabled: statusFor('pos') === 'enabled' });
   const projects = useQuery({ queryKey: ['optional-overview', 'projects'], queryFn: () => getProjects(), enabled: statusFor('projects') === 'enabled' });
   const assets = useQuery({ queryKey: ['optional-overview', 'fixed_assets'], queryFn: () => getAssets(), enabled: statusFor('fixed_assets') === 'enabled' });
@@ -31,7 +31,7 @@ export function OptionalModulesPage() {
 
   return <section className="optional-page page-section">
     <header className="optional-header">
-      <div><h1>{t('optional.title')}</h1><span>{t('optional.subtitle')}</span></div>
+      <h1>{t('optional.title')}</h1>
       <button className="icon-button" type="button" onClick={refresh} disabled={loading} aria-label={t('common.refresh')}><RefreshCw size={16} className={loading ? 'is-spinning' : ''} /></button>
     </header>
     {errors.length > 0 && <div className="alert alert-danger optional-alert" role="alert"><CircleAlert size={16} /> <span>{t('optional.error')} {errorText(errors[0])}</span><button className="table-action" type="button" onClick={refresh}>{t('common.retry')}</button></div>}
@@ -40,8 +40,8 @@ export function OptionalModulesPage() {
         const item = config[key]; const Icon = item.icon; const baseStatus = statusFor(key); const queryError = key === 'pos' ? pos.error : key === 'projects' ? projects.error : assets.error; const status = queryError ? isApiNotFound(queryError) ? 'unavailable' : 'error' : baseStatus; const isAvailable = status === 'enabled';
         return <article className="optional-module-card" key={key}>
           <div className="optional-module-icon"><Icon size={21} /></div>
-          <div className="optional-module-content"><div className="optional-module-title"><h2>{t(item.labelKey)}</h2><span className={`optional-status status-${status}`}>{queryError ? t('optional.status.error') : t(`optional.status.${status}`)}</span></div><p>{t(item.descriptionKey)}</p><small>{isAvailable && !queryError ? `${counts[key] ?? 0} ${key === 'pos' ? t('optional.registers') : key === 'projects' ? t('optional.projects') : t('optional.assets')}` : queryError ? t('optional.retryDetail') : status === 'disabled' ? t('optional.enableToOpen') : status === 'unavailable' ? t('optional.unavailableDetail') : t('optional.checking')}</small></div>
-          {isAvailable && !queryError && <Link className="primary optional-open" to={item.path}>{t('optional.open')}</Link>}
+          <div className="optional-module-content"><div className="optional-module-title"><h2>{t(item.labelKey)}</h2><span className={`optional-status status-${status}`}>{queryError ? t('optional.status.error') : t(`optional.status.${status}`)}</span></div><p>{t(item.descriptionKey)}</p><small>{isAvailable && !queryError ? `${counts[key] ?? 0} ${key === 'pos' ? t('optional.registers') : key === 'projects' ? t('optional.projects') : t('optional.assets')}` : queryError ? t('optional.retryDetail') : status === 'disabled' ? t('optional.enableToOpen') : status === 'unavailable' ? flagFor(key)?.reason ?? t('optional.unavailableDetail') : status === 'setup_required' ? flagFor(key)?.reason ?? t('optional.setupDetail') : t('optional.checking')}</small></div>
+          {isAvailable && !queryError && flagFor(key)?.can_open !== false && <Link className="primary optional-open" to={item.path}>{t('optional.open')}</Link>}
           {queryError && !isApiNotFound(queryError) && <button className="secondary optional-open" type="button" onClick={refresh}>{t('common.retry')}</button>}
         </article>;
       })}
@@ -60,7 +60,7 @@ export function OptionalModuleWorkspacePage({ module }: { module: OptionalModule
   const companyId = searchParams.get('company_id') ?? (companyRows.length === 1 ? companyRows[0].id : '');
   const flags = useQuery({ queryKey: ['modules'], queryFn: getModules });
   const moduleFlag = flags.data?.data.find((item) => item.module_key === module);
-  const status = flags.isLoading ? 'loading' : flags.isError ? isApiNotFound(flags.error) ? 'unavailable' : 'error' : moduleFlag?.status ?? (moduleFlag?.enabled ? 'unavailable' : 'disabled');
+  const status = flags.isLoading ? 'loading' : flags.isError ? isApiNotFound(flags.error) ? 'unavailable' : 'error' : moduleFlag?.status === 'enabled' && moduleFlag.readiness === 'setup_required' ? 'setup_required' : moduleFlag?.status === 'enabled' && moduleFlag.readiness === 'permission_required' ? 'unavailable' : moduleFlag?.status ?? (moduleFlag?.enabled ? 'unavailable' : 'disabled');
   const enabled = status === 'enabled' || status === 'available';
   const params = { company_id: companyId || undefined, page: Number(searchParams.get('page') ?? 1), per_page: 25 };
   const records = useQuery({ queryKey: ['optional-workspace', module, params], enabled: enabled, queryFn: async (): Promise<OptionalList<Row>> => {

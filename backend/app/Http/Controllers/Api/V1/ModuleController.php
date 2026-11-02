@@ -21,9 +21,11 @@ final class ModuleController
         $rows = collect($definitions)->map(function (array $definition, string $key) use ($stored, $authorization, $request, $tenant): array {
             $record = $stored->get($key); $enabled = (bool) ($record?->enabled ?? false); $accessible = $authorization->accessibleCompanyIds($request->user(), $tenant, $definition['permission']);
             $companyIds = $accessible ?? Company::where('tenant_id', $tenant)->pluck('id')->all(); $hasCompanyAccess = $companyIds !== [];
-            $status = 'disabled'; $reason = 'The module is disabled for this tenant.';
-            if ($enabled) { $status = 'enabled'; $reason = $hasCompanyAccess ? null : 'The module is enabled, but no authorized company access is available.'; }
-            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $status, 'reason' => $reason, 'can_open' => $status === 'enabled' && $hasCompanyAccess, 'can_configure' => false];
+            $status = 'disabled'; $readiness = 'disabled'; $reason = 'The module is disabled for this tenant.';
+            if ($enabled && ! $hasCompanyAccess) { $status = 'enabled'; $readiness = 'permission_required'; $reason = 'Your account has no authorized company access for this module.'; }
+            elseif ($enabled && ! $definition['setup']($companyIds)) { $status = 'enabled'; $readiness = 'setup_required'; $reason = $key === 'pos' ? 'Create an active POS register with a stock location before opening this module.' : ($key === 'fixed_assets' ? 'Create an asset category before opening this module.' : 'Complete the required module setup before opening this module.'); }
+            elseif ($enabled) { $status = 'enabled'; $readiness = 'ready'; $reason = null; }
+            return ['id' => $record?->id, 'module_key' => $key, 'enabled' => $enabled, 'status' => $status, 'readiness' => $readiness, 'reason' => $reason, 'can_open' => $enabled && $readiness === 'ready', 'can_configure' => false];
         })->values();
         return response()->json(['data' => $rows]);
     }

@@ -27,7 +27,7 @@ it('exposes disabled and enabled states only within the selected tenant', functi
     TenantMembership::create(['tenant_id' => $tenantB->id, 'user_id' => $user->id, 'status' => 'active']);
     TenantModule::create(['tenant_id' => $tenantA->id, 'module_key' => 'pos', 'enabled' => true]);
 
-    $this->actingAs($user)->withHeader('X-Tenant-Id', $tenantA->id)->getJson('/api/v1/modules')->assertOk()->assertJsonPath('data.0.module_key', 'pos')->assertJsonPath('data.0.status', 'enabled');
+    $this->actingAs($user)->withHeader('X-Tenant-Id', $tenantA->id)->getJson('/api/v1/modules')->assertOk()->assertJsonPath('data.0.module_key', 'pos')->assertJsonPath('data.0.status', 'enabled')->assertJsonPath('data.0.readiness', 'permission_required')->assertJsonPath('data.0.can_open', false);
     $this->actingAs($user)->withHeader('X-Tenant-Id', $tenantB->id)->getJson('/api/v1/modules')->assertOk()->assertJsonPath('data.0.module_key', 'pos')->assertJsonPath('data.0.status', 'disabled');
     $this->actingAs($user)->withHeader('X-Tenant-Id', $tenantB->id)->getJson('/api/v1/pos/registers')->assertNotFound();
 });
