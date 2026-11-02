@@ -20,7 +20,18 @@ export function LoginPage({ mode = 'business' }: Props) {
   const submit = async (data: Form) => {
     setError('');
     try { const result = await (mode === 'platform' ? platformLogin(data) : businessLogin(data)); if (result.mfa_required) navigate('/verify-mfa', { state: { mode } }); else { await refresh(); const from = (location.state as { from?: string } | null)?.from; navigate(mode === 'platform' ? '/platform' : from ?? '/', { replace: true }); } }
-    catch (exception) { setError(exception instanceof ApiError && exception.status === 422 ? t('auth.invalidCredentials') : exception instanceof ApiError && exception.status === 403 ? t(mode === 'platform' ? 'auth.platformAccessDenied' : 'auth.businessAccessDenied') : exception instanceof Error ? exception.message : t('auth.unableSignIn')); }
+    catch (exception) {
+      const verificationRequired = exception instanceof ApiError
+        && exception.status === 403
+        && exception.message.toLowerCase().includes('verification');
+      setError(exception instanceof ApiError && exception.status === 422
+        ? t('auth.invalidCredentials')
+        : verificationRequired
+          ? t('auth.platformVerificationRequired')
+          : exception instanceof ApiError && exception.status === 403
+            ? t(mode === 'platform' ? 'auth.platformAccessDenied' : 'auth.businessAccessDenied')
+            : exception instanceof Error ? exception.message : t('auth.unableSignIn'));
+    }
   };
   const title = mode === 'platform' ? t('auth.platformSignInTitle') : t('auth.signInTitle');
   const description = mode === 'platform' ? t('auth.platformSignInDescription') : t('auth.signInDescription');

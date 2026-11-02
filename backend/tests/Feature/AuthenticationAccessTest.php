@@ -8,6 +8,7 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 it('rejects invalid credentials without creating a session', function (): void {
@@ -40,6 +41,46 @@ it('requires a verified active platform administrator for platform login', funct
     $this->postJson('/api/v1/auth/platform/login', ['email' => $admin->email, 'password' => 'secret-password'])
         ->assertOk()
         ->assertJsonPath('data.id', $admin->id);
+});
+
+it('verifies signed email links and redirects browser clients to the frontend result page', function (): void {
+    $user = User::factory()->create(['email_verified_at' => null]);
+    $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
+        'id' => $user->id,
+        'hash' => sha1($user->getEmailForVerification()),
+    ]);
+
+    $this->get($url)->assertRedirectContains('/verify-email?status=verified');
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+
+    $this->getJson($url)->assertOk()->assertJsonPath('status', 'already_verified');
+});
+
+it('rejects invalid and expired email verification links without revealing account state', function (): void {
+    $user = User::factory()->create(['email_verified_at' => null]);
+    $validUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
+        'id' => $user->id,
+        'hash' => sha1($user->getEmailForVerification()),
+    ]);
+
+    $this->getJson($validUrl.'&signature=invalid')->assertForbidden()->assertJsonPath('message', 'Invalid or expired verification link.');
+
+    $expiredUrl = URL::temporarySignedRoute('verification.verify', now()->subMinute(), [
+        'id' => $user->id,
+        'hash' => sha1($user->getEmailForVerification()),
+    ]);
+    $this->getJson($expiredUrl)->assertForbidden()->assertJsonPath('message', 'Invalid or expired verification link.');
+    expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
+});
+
+it('rate limits verification email resend requests', function (): void {
+    $user = User::factory()->create(['email_verified_at' => null]);
+    $this->actingAs($user);
+
+    $this->postJson('/api/v1/auth/email/resend')->assertOk();
+    $this->postJson('/api/v1/auth/email/resend')->assertOk();
+    $this->postJson('/api/v1/auth/email/resend')->assertOk();
+    $this->postJson('/api/v1/auth/email/resend')->assertTooManyRequests();
 });
 
 it('provisions platform access only for an existing verified active user', function (): void {

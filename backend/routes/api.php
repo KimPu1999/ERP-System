@@ -85,12 +85,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/password/email', [PasswordResetController::class, 'requestLink']);
         Route::post('/password/reset', [PasswordResetController::class, 'reset']);
         Route::post('/mfa/verify', [MfaController::class, 'verifyLogin']);
-        Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
+        Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->name('verification.verify');
     });
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
-        Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend']);
+        Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
         Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll']);
         Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm']);
         Route::post('/auth/mfa/disable', [MfaController::class, 'disable']);
