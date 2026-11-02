@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Tenant extends Model
 {
     use HasUuids, HasFactory;
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name', 'slug', 'status'];
     public function users() { return $this->belongsToMany(User::class, 'tenant_memberships')->withPivot('status')->withTimestamps(); }
     public function memberships() { return $this->hasMany(TenantMembership::class); }
     public function companies() { return $this->hasMany(Company::class); }

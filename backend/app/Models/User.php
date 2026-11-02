@@ -14,9 +14,17 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasUuids, HasFactory, MustVerifyEmailTrait, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'status'];
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'status',
+        'email_verified_at',
+        'suspended_at',
+        'is_platform_super_admin',
+    ];
     protected $hidden = ['password', 'remember_token'];
-    protected function casts(): array { return ['email_verified_at' => 'datetime', 'suspended_at' => 'datetime', 'last_login_at' => 'datetime', 'mfa_enabled_at' => 'datetime', 'mfa_recovery_codes' => 'array', 'password' => 'hashed']; }
+    protected function casts(): array { return ['email_verified_at' => 'datetime', 'suspended_at' => 'datetime', 'last_login_at' => 'datetime', 'mfa_enabled_at' => 'datetime', 'mfa_recovery_codes' => 'array', 'is_platform_super_admin' => 'boolean', 'password' => 'hashed']; }
     public function tenantMemberships() { return $this->hasMany(TenantMembership::class); }
     public function roleAssignments() { return $this->hasMany(RoleAssignment::class); }
     public function companyMemberships() { return $this->hasMany(CompanyMembership::class); }
