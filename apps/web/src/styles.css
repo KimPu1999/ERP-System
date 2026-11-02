@@ -1334,6 +1334,80 @@ tr:last-child td { border-bottom: 0; }
 :root.dark .dashboard-toolbar > label select, :root.dark .dashboard-toolbar > label input, .dark .dashboard-toolbar > label select, .dark .dashboard-toolbar > label input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
 @media (max-width: 680px) { .dashboard-toolbar { grid-template-columns: 1fr; } .dashboard-toolbar > .refresh-dashboard { justify-self: start; } }
 
+/* Staff & Membership: compact profile, access and assignment workspace. */
+.member-detail-page { min-width: 0; }
+.member-detail-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  margin-bottom: 12px;
+  padding: 16px;
+}
+.member-detail-header .avatar-large { width: 48px; height: 48px; flex: 0 0 auto; }
+.member-detail-identity { min-width: 0; }
+.member-detail-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.member-detail-title h1 { margin: 0; overflow-wrap: anywhere; color: var(--text); font-size: 18px; letter-spacing: -.02em; }
+.member-detail-identity p { margin: 3px 0 0; overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
+.member-detail-identity > span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.member-detail-actions { position: relative; align-self: center; }
+.member-detail-actions summary { list-style: none; cursor: pointer; }
+.member-detail-actions summary::-webkit-details-marker { display: none; }
+.member-action-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; min-width: 170px; padding: 5px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-soft); }
+.member-action-menu button, .member-action-menu span { display: block; width: 100%; padding: 8px 9px; border: 0; border-radius: 6px; color: var(--text); background: transparent; font: inherit; font-size: 12px; text-align: left; }
+.member-action-menu button:hover { background: var(--surface-muted); }
+.member-action-menu button:disabled { cursor: wait; opacity: .55; }
+.member-detail-feedback { margin: 0 0 12px; padding: 9px 11px; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; background: #f0fdf4; font-size: 12px; }
+.member-detail-feedback.is-error, .member-inline-error { border-color: #fecaca; color: #b91c1c; background: #fef2f2; }
+.member-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.member-detail-card { min-width: 0; padding: 16px; }
+.member-detail-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.member-detail-section-heading h2 { margin: 3px 0 0; color: var(--text); font-size: 15px; }
+.member-detail-count { display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px; color: var(--blue); background: var(--blue-soft); font-size: 11px; font-weight: 700; }
+.member-role-list { display: flex; flex-wrap: wrap; gap: 7px; min-height: 28px; }
+.member-role-badge { display: inline-flex; align-items: center; min-height: 28px; padding: 0 9px; border: 1px solid var(--border); border-radius: 7px; color: var(--text); background: var(--surface-muted); font-size: 12px; font-weight: 650; }
+.member-assignment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin: 0; }
+.member-assignment-grid div { min-width: 0; }
+.member-assignment-grid dt { color: var(--muted); font-size: 11px; }
+.member-assignment-grid dd { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--text); font-size: 13px; font-weight: 650; }
+.member-assignment-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px 16px; }
+.member-role-picker { grid-column: 1 / -1; min-width: 0; }
+.member-field-label, .member-form-field > span { display: block; margin-bottom: 6px; color: var(--text); font-size: 13px; font-weight: 600; line-height: 18px; }
+.member-role-picker-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.member-role-picker-control input, .member-form-field select { width: 100%; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface); font-size: 14px; }
+.member-role-picker-control input { flex: 1; }
+.member-role-picker-control > span { flex: 0 0 auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.member-role-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 8px; max-height: 124px; margin-top: 7px; padding: 7px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); }
+.member-role-options label { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 6px 7px; border-radius: 6px; color: var(--text); font-size: 12px; cursor: pointer; }
+.member-role-options label:hover { background: var(--surface); }
+.member-role-options input { accent-color: var(--blue); }
+.member-role-options .muted { grid-column: 1 / -1; padding: 5px; }
+.member-form-field { display: block; min-width: 0; }
+.member-assignment-footer { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+.member-inline-error { margin: 0 auto 0 0; padding: 7px 9px; border: 1px solid #fecaca; border-radius: 7px; font-size: 11px; }
+.member-activity-list { display: grid; gap: 0; }
+.member-activity-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 9px 0; border-bottom: 1px solid var(--border); color: var(--text); font-size: 12px; }
+.member-activity-row:last-child { border-bottom: 0; }
+.member-activity-row span { overflow-wrap: anywhere; text-transform: capitalize; }
+.member-activity-row time { flex: 0 0 auto; color: var(--muted); font-size: 11px; }
+
+@media (max-width: 760px) {
+  .member-detail-header { grid-template-columns: auto minmax(0, 1fr); }
+  .member-detail-actions { grid-column: 1 / -1; justify-self: end; }
+  .member-detail-grid { grid-template-columns: 1fr; }
+  .member-detail-wide { grid-column: auto; }
+}
+@media (max-width: 520px) {
+  .member-detail-header { padding: 14px; }
+  .member-detail-card { padding: 14px; }
+  .member-assignment-form, .member-assignment-grid, .member-role-options { grid-template-columns: 1fr; }
+  .member-role-picker, .member-assignment-footer { grid-column: auto; }
+  .member-assignment-footer { align-items: stretch; flex-direction: column; }
+  .member-assignment-footer button { width: 100%; justify-content: center; }
+  .member-inline-error { width: 100%; box-sizing: border-box; }
+}
+
 /* Stable application shell: the header is outside the content scroll owner. */
 :root {
   --app-header-height: 64px;
