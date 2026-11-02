@@ -77,7 +77,7 @@ import { SupplierCreditsPage } from './pages/SupplierCreditsPage';
 import { PurchaseReturnsPage } from './pages/PurchaseReturnsPage';
 import { PurchaseReturnDetailsPage } from './pages/PurchaseReturnDetailsPage';
 import { PurchasingSettingsPage } from './pages/PurchasingSettingsPage';
-import { CrmOverviewPage, CustomerDirectoryPage, LeadDirectoryPage, OpportunityDirectoryPage, PipelinePage, ActivitiesPage } from './pages/CrmPhase3Pages';
+import { CrmOverviewPage, LeadDirectoryPage, OpportunityDirectoryPage, PipelinePage, ActivitiesPage } from './pages/CrmPhase3Pages';
 import { SalesOrdersPage } from './pages/SalesOrdersPage';
 import { SalesOrderDetailsPage } from './pages/SalesOrderDetailsPage';
 import { SalesFulfillmentPage } from './pages/SalesFulfillmentPage';
@@ -86,6 +86,7 @@ import { SalesInvoiceDetailsPage, SalesInvoicesPage } from './pages/SalesInvoice
 import { SalesPaymentsPage } from './pages/SalesPaymentsPage';
 import { SalesReturnDetailsPage, SalesReturnsPage } from './pages/SalesReturnsPage';
 import { SupplierIntelligencePage } from './pages/SupplierIntelligencePage';
+import { ModernCustomerDirectoryPage } from './pages/CustomerDirectoryPage';
 import { I18nProvider, useI18n } from './lib/i18n';
 
 const client = new QueryClient();
@@ -141,7 +142,7 @@ export default function App() {
       <Route path="/purchasing/supplier-credits" element={<PurchasingLayout />}><Route index element={<SupplierCreditsPage />} /></Route>
       <Route path="/crm-sales/reports" element={<SalesWorkspaceLayout />}><Route index element={<SalesReportsPage />} /></Route>
       <Route path="/crm-sales/settings" element={<SalesWorkspaceLayout />}><Route index element={<SalesSettingsPage />} /></Route>
-      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="fulfillment" element={<SalesFulfillmentPage />} /><Route path="fulfillment/:fulfillmentId" element={<SalesFulfillmentDetailsPage />} /><Route path="orders" element={<SalesOrdersPage />} /><Route path="orders/:orderId" element={<SalesOrderDetailsPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="quotations/:quotationId" element={<SalesQuotationDetailsPage />} /><Route path="invoices" element={<SalesInvoicesPage />} /><Route path="invoices/:invoiceId" element={<SalesInvoiceDetailsPage />} /><Route path="payments" element={<SalesPaymentsPage />} /><Route path="returns" element={<SalesReturnsPage />} /><Route path="returns/:returnId" element={<SalesReturnDetailsPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
+      <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="fulfillment" element={<SalesFulfillmentPage />} /><Route path="fulfillment/:fulfillmentId" element={<SalesFulfillmentDetailsPage />} /><Route path="orders" element={<SalesOrdersPage />} /><Route path="orders/:orderId" element={<SalesOrderDetailsPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="quotations/:quotationId" element={<SalesQuotationDetailsPage />} /><Route path="invoices" element={<SalesInvoicesPage />} /><Route path="invoices/:invoiceId" element={<SalesInvoiceDetailsPage />} /><Route path="payments" element={<SalesPaymentsPage />} /><Route path="returns" element={<SalesReturnsPage />} /><Route path="returns/:returnId" element={<SalesReturnDetailsPage />} /><Route path="customers" element={<ModernCustomerDirectoryPage />} /><Route path="customers/:customerId" element={<ModernCustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/accounting/journals" element={<JournalEntriesPage />} /><Route path="/accounting/reports" element={<FinancialReportsPage />} /><Route path="/accounting/integration" element={<AccountingIntegrationPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/optional-modules/pos" element={<PosWorkspacePage />} /><Route path="/optional-modules/projects" element={<ProjectWorkspacePage />} /><Route path="/optional-modules/assets" element={<FixedAssetsWorkspacePage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>
     <Route path="*" element={<Navigate to="/" replace />} />

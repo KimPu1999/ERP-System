@@ -374,6 +374,7 @@ const crmQuery = (params: Record<string, string | number | undefined>) => { cons
 export const getCrmCustomers = (params: Record<string, string | number | undefined> = {}) => api<{ data: { data: Customer[]; current_page: number; last_page: number; total: number } }>(`/sales/customers${crmQuery(params)}`);
 export const getCrmCustomer = (id: string) => api<{ data: Customer }>(`/sales/customers/${id}`);
 export const createCrmCustomer = (data: Record<string, unknown>) => api<{ data: Customer }>('/sales/customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const updateCrmCustomer = (id: string, data: Record<string, unknown>) => api<{ data: Customer }>(`/sales/customers/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const getCrmLeads = (params: Record<string, string | number | undefined> = {}) => api<{ data: { data: CrmLead[]; current_page: number; last_page: number; total: number } }>(`/sales/leads${crmQuery(params)}`);
 export const createCrmLead = (data: Record<string, unknown>) => api<{ data: CrmLead }>('/sales/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const convertCrmLead = (id: string, data: Record<string, unknown> = {}) => api<{ data: unknown }>(`/sales/leads/${id}/convert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
