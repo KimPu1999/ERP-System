@@ -45,6 +45,7 @@ import { GoodsReceiptDetailsPage } from './pages/GoodsReceiptDetailsPage';
 import { PurchasingLayout } from './layouts/PurchasingLayout';
 import { CrmSalesPage } from './pages/CrmSalesPage';
 import { SalesReportsPage } from './pages/SalesReportsPage';
+import { SalesSettingsPage } from './pages/SalesSettingsPage';
 import { SalesQuotationsPage } from './pages/SalesQuotationsPage';
 import { SalesQuotationDetailsPage } from './pages/SalesQuotationDetailsPage';
 import { AccountingPage } from './pages/AccountingPage';
@@ -137,6 +138,7 @@ export default function App() {
       <Route path="/purchasing/settings" element={<PurchasingLayout />}><Route index element={<PurchasingSettingsPage />} /></Route>
       <Route path="/purchasing/supplier-credits" element={<PurchasingLayout />}><Route index element={<SupplierCreditsPage />} /></Route>
       <Route path="/crm-sales/reports" element={<SalesWorkspaceLayout />}><Route index element={<SalesReportsPage />} /></Route>
+      <Route path="/crm-sales/settings" element={<SalesWorkspaceLayout />}><Route index element={<SalesSettingsPage />} /></Route>
       <Route path="/crm-sales" element={<SalesWorkspaceLayout />}><Route index element={<CrmSalesPage />} /><Route path="fulfillment" element={<SalesFulfillmentPage />} /><Route path="fulfillment/:fulfillmentId" element={<SalesFulfillmentDetailsPage />} /><Route path="orders" element={<SalesOrdersPage />} /><Route path="orders/:orderId" element={<SalesOrderDetailsPage />} /><Route path="quotations" element={<SalesQuotationsPage />} /><Route path="quotations/:quotationId" element={<SalesQuotationDetailsPage />} /><Route path="invoices" element={<SalesInvoicesPage />} /><Route path="invoices/:invoiceId" element={<SalesInvoiceDetailsPage />} /><Route path="payments" element={<SalesPaymentsPage />} /><Route path="returns" element={<SalesReturnsPage />} /><Route path="returns/:returnId" element={<SalesReturnDetailsPage />} /><Route path="customers" element={<CustomerDirectoryPage />} /><Route path="customers/:customerId" element={<CustomerDirectoryPage />} /><Route path="leads" element={<LeadDirectoryPage />} /><Route path="opportunities" element={<OpportunityDirectoryPage />} /><Route path="pipeline" element={<PipelinePage />} /><Route path="activities" element={<ActivitiesPage />} /><Route path="crm-overview" element={<CrmOverviewPage />} /></Route>
       <Route path="/accounting" element={<AccountingPage />} /><Route path="/accounting/journals" element={<JournalEntriesPage />} /><Route path="/accounting/reports" element={<FinancialReportsPage />} /><Route path="/accounting/integration" element={<AccountingIntegrationPage />} /><Route path="/hr" element={<HrPage />} /><Route path="/optional-modules" element={<OptionalModulesPage />} /><Route path="/optional-modules/pos" element={<PosWorkspacePage />} /><Route path="/optional-modules/projects" element={<ProjectWorkspacePage />} /><Route path="/optional-modules/assets" element={<FixedAssetsWorkspacePage />} /><Route path="/workflow" element={<WorkflowPage />} /><Route path="/roles" element={<Navigate to="/organization/roles" replace />} />
     </Route></Route>

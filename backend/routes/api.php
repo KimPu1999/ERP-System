@@ -53,6 +53,7 @@ use App\Http\Controllers\Api\V1\SalesInvoiceController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SalesReturnController;
 use App\Http\Controllers\Api\V1\SalesAnalyticsController;
+use App\Http\Controllers\Api\V1\SalesSettingsController;
 use App\Http\Controllers\Api\V1\CrmController;
 use App\Http\Controllers\Api\V1\AccountingController;
 use App\Http\Controllers\Api\V1\HrController;
@@ -372,6 +373,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/customers', [CustomerController::class, 'store']);
         Route::post('/customers/{customer}/contacts', [CustomerController::class, 'contact']);
         Route::prefix('sales')->group(function (): void {
+            Route::get('/settings', [SalesSettingsController::class, 'show']);
+            Route::patch('/settings', [SalesSettingsController::class, 'update']);
             Route::get('/customers', [CrmController::class, 'customers']);
             Route::post('/customers', [CrmController::class, 'storeCustomer']);
             Route::get('/customers/{customer}', [CrmController::class, 'customer']);

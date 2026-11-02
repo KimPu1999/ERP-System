@@ -65,6 +65,9 @@ export type SalesDashboard = {
   unavailable_sections: string[];
 };
 export const getSalesDashboard = (params: Record<string, string | undefined>) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const query = new URLSearchParams(entries); return api<{ data: SalesDashboard }>(`/sales/dashboard?${query.toString()}`); };
+export type SalesSetting = { id: string; tenant_id: string; approval_required: boolean; invoice_on_order: boolean; invoice_on_delivery: boolean };
+export const getSalesSettings = () => api<{ data: SalesSetting }>('/sales/settings');
+export const updateSalesSettings = (data: Pick<SalesSetting, 'approval_required' | 'invoice_on_order' | 'invoice_on_delivery'>) => api<{ data: SalesSetting }>('/sales/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export type DashboardAnalyticsParams = { period?: string; company_id?: string; branch_id?: string; date_from?: string; date_to?: string; year?: string; comparison_period?: 'previous_period' | 'previous_year' };
 export type DashboardAnalyticsPoint = { key: string; label: string; current: string; previous: string };
 export type DashboardAnalyticsBase = { available: boolean; reason: string | null; currency: { code: string | null; decimal_places: number | null }; accounting_basis: string | null; filters: { period: string; year: number | null; comparison_period: string; from: string; to: string; company_id: string | null; branch_id: string | null; timezone: string }; points: DashboardAnalyticsPoint[] };

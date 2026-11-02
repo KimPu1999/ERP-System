@@ -10,6 +10,7 @@ type SalesNavItem = { label: TranslationKey; to?: string; icon: LucideIcon; perm
 const salesNavItems: SalesNavItem[] = [
   { label: 'sales.overview', to: '/crm-sales', icon: BarChart3 }, { label: 'sales.customers', to: '/crm-sales/customers', icon: Users }, { label: 'sales.leads', to: '/crm-sales/leads', icon: Target }, { label: 'sales.opportunities', to: '/crm-sales/opportunities', icon: Target }, { label: 'sales.pipeline', to: '/crm-sales/pipeline', icon: BarChart3 }, { label: 'sales.activities', to: '/crm-sales/activities', icon: ClipboardList }, { label: 'sales.quotations', to: '/crm-sales/quotations', icon: FileText, permission: 'sales.manage' }, { label: 'sales.orders', to: '/crm-sales/orders', icon: ShoppingCart, permission: 'sales.manage' }, { label: 'sales.deliveries', to: '/crm-sales/fulfillment', icon: Truck, permission: 'sales.manage' }, { label: 'sales.invoices', to: '/crm-sales/invoices', icon: Receipt, permission: 'sales.manage' }, { label: 'sales.payments', to: '/crm-sales/payments', icon: CreditCard, permission: 'sales.manage' }, { label: 'sales.returns', to: '/crm-sales/returns', icon: RotateCcw, permission: 'sales.manage' }, { label: 'sales.reports', to: '/crm-sales/reports', icon: ClipboardList, permission: 'reports.view' }, { label: 'sales.settings', icon: HandCoins, unavailable: 'Sales settings UI is not implemented.' },
 ];
+const salesSettingsNavItem: SalesNavItem = { label: 'sales.settings', to: '/crm-sales/settings', icon: HandCoins, permission: 'sales.manage' };
 
 export function SalesWorkspaceLayout() {
   const { t } = useI18n();
@@ -38,7 +39,7 @@ export function SalesWorkspaceLayout() {
       {companyId && <span className="sales-context-chip"><Building2 size={14} />{companyList.find((company) => company.id === companyId)?.name ?? t('org.selectedCompany')}</span>}
     </header>
     <nav className="sales-nav" aria-label={t('nav.salesWorkspace')}><div className="sales-nav-inner">
-      {salesNavItems.filter((item) => permitted(item.permission)).map(({ label, to, icon: Icon, unavailable }) => { const text = t(label); return to && !unavailable ? <NavLink key={`${label}-${to}`} to={href(to)} end={to === '/crm-sales'} className={({ isActive }) => `sales-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{text}</span></NavLink> : <span key={`${label}-${to ?? 'disabled'}`} className="sales-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{text}</span><small>Planned</small></span>; })}
+      {[...salesNavItems.filter((item) => item.label !== 'sales.settings'), salesSettingsNavItem].filter((item) => permitted(item.permission)).map(({ label, to, icon: Icon, unavailable }) => { const text = t(label); return to && !unavailable ? <NavLink key={`${label}-${to}`} to={href(to)} end={to === '/crm-sales'} className={({ isActive }) => `sales-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{text}</span></NavLink> : <span key={`${label}-${to ?? 'disabled'}`} className="sales-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{text}</span><small>Planned</small></span>; })}
     </div></nav>
     <Outlet />
   </div>;
