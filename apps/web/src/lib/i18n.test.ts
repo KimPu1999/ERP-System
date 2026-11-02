@@ -3,13 +3,14 @@ import { formatCurrency, formatNumber, translate } from './i18n';
 
 describe('ERP localization', () => {
   it('returns Burmese translations without changing stable identifiers', () => {
-    expect(translate('nav.inventory', 'my-MM')).toBe('ကုန်လက်ကျန်');
-    expect(translate('inventory.sku', 'my-MM')).toBe('SKU');
+    expect(translate('nav.inventory', 'my')).toBe('ကုန်လက်ကျန်');
+    expect(translate('inventory.sku', 'my')).toBe('SKU');
   });
 
   it('falls back to English for missing Burmese keys', () => {
-    expect(translate('common.refresh', 'my-MM')).toBe('ပြန်လည်ရယူရန်');
-    expect(translate('not-a-real-key', 'my-MM', 'Fallback')).toBe('Fallback');
+    expect(translate('common.refresh', 'my')).toBe('ပြန်လည်ရယူရန်');
+    expect(translate('not-a-real-key', 'my', 'Fallback')).toBe('Fallback');
+    expect(translate('nav.inventory', 'my-MM')).toBe('ကုန်လက်ကျန်');
   });
 
   it('formats values by locale without changing numeric meaning', () => {

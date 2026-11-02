@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-export type Locale = 'en' | 'my-MM';
+/** Public application locales. `my-MM` is accepted as a legacy alias at the boundary. */
+export type Locale = 'en' | 'my';
+type LocaleInput = Locale | 'my-MM';
 
 const STORAGE_KEY = 'erp_cloud.locale';
 const localeEvent = 'erp-cloud-locale-change';
@@ -42,6 +44,7 @@ const optionalEnglish = {
   'accounting.createYearDetail': 'Create a year, then generate its periods.',
   'accounting.generatePeriods': 'Generate periods',
   'accounting.generating': 'Generating…',
+  'accounting.periods': 'Periods',
   'accounting.periodsGenerated': 'Periods generated',
   'accounting.close': 'Close',
   'accounting.reopen': 'Reopen',
@@ -102,6 +105,7 @@ const optionalBurmese = {
   'accounting.createYearDetail': 'နှစ်တစ်နှစ်ဖန်တီးပြီးနောက် ကာလများကို ဖန်တီးပါ။',
   'accounting.generatePeriods': 'ကာလများ ဖန်တီးရန်',
   'accounting.generating': 'ဖန်တီးနေသည်…',
+  'accounting.periods': 'ဘဏ္ဍာရေးကာလများ',
   'accounting.periodsGenerated': 'ကာလများ ဖန်တီးပြီး',
   'accounting.close': 'ပိတ်ရန်',
   'accounting.reopen': 'ပြန်ဖွင့်ရန်',
@@ -159,7 +163,7 @@ const messages = {
     'pos.title': 'Point of Sale', 'pos.subtitle': 'Checkout and cashier operations using live inventory records.', 'pos.overview': 'Overview', 'pos.checkout': 'Checkout', 'pos.registers': 'Registers', 'pos.shifts': 'Cashier shifts', 'pos.history': 'Sales history', 'pos.company': 'Company', 'pos.branch': 'Branch', 'pos.allCompanies': 'All authorized companies', 'pos.allBranches': 'All authorized branches', 'pos.refresh': 'Refresh POS', 'pos.todaySales': 'Today sales', 'pos.todayReceipts': 'Today receipts', 'pos.openShifts': 'Open shifts', 'pos.currencyUnavailable': 'Currency display is unavailable until the company base currency is configured.', 'pos.selectRegister': 'Select register', 'pos.selectShift': 'Select open shift', 'pos.searchProducts': 'Search product, SKU or barcode', 'pos.noProducts': 'No eligible products found', 'pos.available': 'Available', 'pos.add': 'Add', 'pos.cart': 'Cart', 'pos.emptyCart': 'Add products to start a sale.', 'pos.subtotal': 'Subtotal', 'pos.tax': 'Tax', 'pos.total': 'Total', 'pos.cashOnly': 'Cash payment', 'pos.cashExact': 'Cash amount must equal the total', 'pos.completeSale': 'Complete sale', 'pos.salePosted': 'Sale posted', 'pos.openShift': 'Open shift', 'pos.openingCash': 'Opening cash', 'pos.closeShift': 'Close shift', 'pos.closingCash': 'Closing cash', 'pos.noRegisters': 'No POS registers are configured for this company scope.', 'pos.noShifts': 'No cashier shifts found.', 'pos.noReceipts': 'No posted receipts found.', 'pos.register': 'Register', 'pos.state': 'State', 'pos.receipt': 'Receipt', 'pos.date': 'Date', 'pos.amount': 'Amount', 'pos.payment': 'Payment', 'pos.stockRequired': 'A register with a stock location and an open shift is required before checkout.', 'pos.setupTitle': 'POS setup required', 'pos.setupDetail': 'Create an active register with a stock location before processing sales.', 'pos.cashier': 'Cashier', 'pos.registerCode': 'Code', 'pos.paymentMethod': 'Payment method', 'pos.noCurrency': 'No base currency',
     'language.label': 'Language', 'language.englishShort': 'EN', 'language.burmeseShort': 'မြန်မာ',
   },
-  'my-MM': {
+  my: {
     ...optionalBurmese,
     'app.workspace': 'လုပ်ငန်းခွင်', 'app.platform': 'ပလက်ဖောင်း လုပ်ငန်းများ', 'app.apps': 'အက်ပ်များ', 'app.search': 'ရှာဖွေရန်…', 'app.account': 'အကောင့်', 'app.signOut': 'အကောင့်မှ ထွက်ရန်', 'app.openNavigation': 'လမ်းညွှန်မီနူး ဖွင့်ရန်', 'app.closeNavigation': 'လမ်းညွှန်မီနူး ပိတ်ရန်', 'app.expandNavigation': 'လမ်းညွှန်မီနူး ချဲ့ရန်', 'app.collapseNavigation': 'လမ်းညွှန်မီနူး ခေါက်ရန်', 'app.selectCompany': 'ကုမ္ပဏီ ရွေးချယ်ရန်', 'app.selectBranch': 'ဌာနခွဲ ရွေးချယ်ရန်', 'app.allCompanies': 'ကုမ္ပဏီအားလုံး', 'app.allBranches': 'ဌာနခွဲအားလုံး', 'app.notifications': 'အသိပေးချက်များ', 'app.changeLanguage': 'ဘာသာစကား ပြောင်းရန်', 'app.toggleTheme': 'အမှောင်ပုံစံ ပြောင်းရန်',
     'nav.workspace': 'လုပ်ငန်းခွင်', 'nav.crmSales': 'ဖောက်သည်နှင့် အရောင်း', 'nav.purchasing': 'ဝယ်ယူရေး', 'nav.products': 'ကုန်ပစ္စည်းများ', 'nav.inventory': 'ကုန်လက်ကျန်', 'nav.accounting': 'စာရင်းကိုင်', 'nav.hrPayroll': 'ဝန်ထမ်းနှင့် လစာ', 'nav.optional': 'POS · စီမံကိန်း · ပိုင်ဆိုင်မှု', 'nav.approvalsReports': 'အတည်ပြုချက်နှင့် အစီရင်ခံစာ', 'nav.settings': 'ဆက်တင်များ', 'nav.dashboard': 'ပင်မစာမျက်နှာ', 'nav.organization': 'အဖွဲ့အစည်း', 'nav.companyBranches': 'ကုမ္ပဏီနှင့် ဌာနခွဲများ', 'nav.salesWorkspace': 'အရောင်းလုပ်ငန်းခွင်', 'nav.purchaseOrders': 'ဝယ်ယူမှုအော်ဒါများ', 'nav.suppliers': 'ကုန်ပစ္စည်းပေးသွင်းသူများ', 'nav.productCatalog': 'ကုန်ပစ္စည်းစာရင်း', 'nav.productCategories': 'ကုန်ပစ္စည်းအမျိုးအစားများ', 'nav.catalogReferences': 'Catalog references', 'nav.inventoryControl': 'ကုန်လက်ကျန် ထိန်းချုပ်မှု', 'nav.warehouses': 'ဂိုဒေါင်များ', 'nav.hr': 'ဝန်ထမ်းနှင့် လစာ', 'nav.optionalModules': 'ရွေးချယ်နိုင်သော မော်ဂျူးများ', 'nav.approvals': 'အတည်ပြုချက်များ', 'nav.reports': 'အစီရင်ခံစာများ', 'nav.accessSettings': 'အသုံးပြုခွင့်နှင့် ဆက်တင်များ', 'nav.platform': 'ပလက်ဖောင်း', 'nav.overview': 'အနှစ်ချုပ်', 'nav.tenantManagement': 'လုပ်ငန်းခွင် စီမံခန့်ခွဲမှု', 'nav.monitoring': 'စောင့်ကြည့်မှု · စနစ်အခြေအနေ', 'nav.subscriptions': 'စာရင်းသွင်းမှုနှင့် ငွေပေးချေမှု',
@@ -177,23 +181,28 @@ const messages = {
 
 export type TranslationKey = keyof typeof messages.en;
 
+const normalizeLocale = (value: string | null | undefined): Locale => {
+  const normalized = value?.toLowerCase();
+  return normalized === 'my' || normalized === 'my-mm' ? 'my' : 'en';
+};
+
 const readStoredLocale = (): Locale => {
   if (typeof window === 'undefined') return 'en';
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === 'my-MM' ? 'my-MM' : 'en';
+  return normalizeLocale(window.localStorage.getItem(STORAGE_KEY));
 };
 
 export const getLocale = (): Locale => readStoredLocale();
 
 export const setLocale = (locale: Locale): void => {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, locale);
-  document.documentElement.lang = locale;
-  window.dispatchEvent(new CustomEvent(localeEvent, { detail: locale }));
+  const normalized = normalizeLocale(locale);
+  window.localStorage.setItem(STORAGE_KEY, normalized);
+  document.documentElement.lang = normalized;
+  window.dispatchEvent(new CustomEvent(localeEvent, { detail: normalized }));
 };
 
-export function translate(key: TranslationKey | string, locale: Locale = getLocale(), fallback?: string): string {
-  const value = messages[locale][key as TranslationKey] ?? messages.en[key as TranslationKey];
+export function translate(key: TranslationKey | string, locale: LocaleInput = getLocale(), fallback?: string): string {
+  const value = messages[normalizeLocale(locale)][key as TranslationKey] ?? messages.en[key as TranslationKey];
   if (!value) {
     if (import.meta.env.DEV) console.warn(`[i18n] Missing translation: ${key}`);
     return fallback ?? key;
@@ -201,20 +210,20 @@ export function translate(key: TranslationKey | string, locale: Locale = getLoca
   return value;
 }
 
-export const formatNumber = (value: number | string | null | undefined, locale: Locale = getLocale(), options?: Intl.NumberFormatOptions): string => {
+export const formatNumber = (value: number | string | null | undefined, locale: LocaleInput = getLocale(), options?: Intl.NumberFormatOptions): string => {
   if (value === null || value === undefined || value === '') return '—';
-  return new Intl.NumberFormat(locale === 'my-MM' ? 'my-MM' : 'en-US', options).format(Number(value));
+  return new Intl.NumberFormat(locale === 'my' ? 'my-MM' : 'en-US', options).format(Number(value));
 };
 
-export const formatCurrency = (value: number | string | null | undefined, currency: string | null | undefined, locale: Locale = getLocale(), fractionDigits = 2): string => {
+export const formatCurrency = (value: number | string | null | undefined, currency: string | null | undefined, locale: LocaleInput = getLocale(), fractionDigits = 2): string => {
   if (value === null || value === undefined || value === '') return '—';
   if (!currency) return formatNumber(value, locale, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits });
-  return new Intl.NumberFormat(locale === 'my-MM' ? 'my-MM' : 'en-US', { style: 'currency', currency, minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(Number(value));
+  return new Intl.NumberFormat(locale === 'my' ? 'my-MM' : 'en-US', { style: 'currency', currency, minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(Number(value));
 };
 
-export const formatDate = (value: string | Date | null | undefined, locale: Locale = getLocale(), options?: Intl.DateTimeFormatOptions): string => {
+export const formatDate = (value: string | Date | null | undefined, locale: LocaleInput = getLocale(), options?: Intl.DateTimeFormatOptions): string => {
   if (!value) return '—';
-  return new Intl.DateTimeFormat(locale === 'my-MM' ? 'my-MM' : 'en-US', options).format(new Date(value));
+  return new Intl.DateTimeFormat(locale === 'my' ? 'my-MM' : 'en-US', options).format(new Date(value));
 };
 
 type I18nContextValue = { locale: Locale; setLocale: (locale: Locale) => void; t: (key: TranslationKey | string, fallback?: string) => string; formatNumber: (value: number | string | null | undefined, options?: Intl.NumberFormatOptions) => string; formatCurrency: (value: number | string | null | undefined, currency: string | null | undefined, fractionDigits?: number) => string; formatDate: (value: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions) => string };

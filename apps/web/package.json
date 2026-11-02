@@ -7,6 +7,7 @@
     "build": "tsc -b && vite build",
     "check": "tsc --noEmit",
     "lint": "eslint .",
+    "i18n:check": "node scripts/check-i18n.mjs",
     "test": "vitest"
   },
   "dependencies": {
