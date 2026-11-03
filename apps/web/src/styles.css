@@ -88,6 +88,7 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .auth-switch { padding-top: 20px; margin: 20px 0 0; border-top: 1px solid var(--border); color: var(--muted); text-align: center; font-size: 13px; }
 .auth-verification-help { display: grid; gap: 10px; margin: -12px 0 18px; padding: 12px; border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border)); border-radius: 9px; background: var(--danger-bg); }
 .auth-verification-help p { margin: 0; color: var(--danger-text); font-size: 12px; line-height: 1.5; }
+.auth-verification-help .verification-sent { color: var(--success, #15803d); }
 
 /* Application shell */
 .app-shell { min-height: 100vh; display: flex; background: var(--background); }

@@ -132,14 +132,39 @@ it('rate limits verification email resend requests', function (): void {
     $this->postJson('/api/v1/auth/email/resend')->assertTooManyRequests();
 });
 
-it('reports log transport verification resends without claiming external delivery', function (): void {
+it('writes a real signed verification notification to the log transport without claiming external delivery', function (): void {
     Config::set('mail.default', 'log');
+    Notification::fake();
     $user = User::factory()->create(['email_verified_at' => null]);
 
     $this->actingAs($user)->postJson('/api/v1/auth/email/resend')
         ->assertOk()
-        ->assertJsonPath('status', 'not_delivered')
-        ->assertJsonPath('message', 'Email delivery is not configured for external delivery. Configure SMTP or a managed mail provider first.');
+        ->assertJsonPath('status', 'logged_only')
+        ->assertJsonPath('message', 'The verification message was written to the backend log only. It was not sent to an external inbox.');
+
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+it('allows an unverified platform user to request a verification link without a session', function (): void {
+    Config::set('mail.default', 'log');
+    Notification::fake();
+    $user = User::factory()->create(['is_platform_super_admin' => true, 'email_verified_at' => null]);
+
+    $this->postJson('/api/v1/auth/platform/verification/resend', ['email' => $user->email])
+        ->assertOk()
+        ->assertJsonPath('message', 'If the account is eligible, a verification email has been sent.');
+
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+it('rate limits unauthenticated platform verification requests', function (): void {
+    $user = User::factory()->create(['is_platform_super_admin' => true, 'email_verified_at' => null]);
+
+    foreach (range(1, 3) as $attempt) {
+        $this->postJson('/api/v1/auth/platform/verification/resend', ['email' => $user->email])->assertOk();
+    }
+
+    $this->postJson('/api/v1/auth/platform/verification/resend', ['email' => $user->email])->assertTooManyRequests();
 });
 
 it('records verification notification acceptance only after the configured mailer accepts it', function (): void {

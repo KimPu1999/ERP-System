@@ -30,6 +30,25 @@ test('platform sign-in is keyboard reachable and has no mobile overflow', async 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
 
+test('platform sign-in keeps the password masked and offers a single resend error', async ({ page }) => {
+  await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
+  await page.route('**/api/v1/auth/platform/login', (route) => route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ message: 'Email verification is required before sign-in.' }) }));
+  await page.route('**/api/v1/auth/platform/verification/resend', (route) => route.fulfill({ status: 429, contentType: 'application/json', body: JSON.stringify({ message: 'Too many attempts.' }) }));
+  await page.goto('/platform/login');
+
+  const password = page.getByRole('textbox', { name: 'Password' });
+  await expect(password).toHaveAttribute('type', 'password');
+  await page.getByRole('button', { name: 'Show password' }).click();
+  await expect(password).toHaveAttribute('type', 'text');
+  await page.getByLabel('Email address').fill('unverified-platform@example.test');
+  await password.fill('secret-password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Resend verification email' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(1);
+  await expect(page.getByRole('status')).toHaveCount(0);
+});
+
 test('verified platform email result returns to platform sign-in without action overlap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/verify-email?status=verified&mode=platform');

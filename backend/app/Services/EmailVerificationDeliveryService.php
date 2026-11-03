@@ -18,8 +18,22 @@ final class EmailVerificationDeliveryService
             'mailer' => $mailer,
         ];
 
-        if (in_array($mailer, ['log', 'array'], true)) {
-            Log::notice('Email verification was not externally delivered.', $context + ['status' => 'not_delivered', 'reason' => 'non_delivery_transport']);
+        if ($mailer === 'log') {
+            // The log transport is intentionally useful for local verification:
+            // Laravel renders the real signed notification into laravel.log, but
+            // nothing is sent to Gmail or another external inbox.
+            try {
+                $user->sendEmailVerificationNotification();
+                Log::notice('Email verification was written to the local log transport.', $context + ['status' => 'logged_only']);
+                return ['status' => 'logged_only', 'message' => 'The verification message was written to the backend log only. It was not sent to an external inbox.'];
+            } catch (Throwable $exception) {
+                Log::warning('Email verification log delivery failed.', $context + ['status' => 'failed', 'exception' => $exception::class]);
+                return ['status' => 'failed', 'message' => 'The local verification message could not be written. Check the backend log and try again.'];
+            }
+        }
+
+        if ($mailer === 'array') {
+            Log::notice('Email verification was not externally delivered.', $context + ['status' => 'not_delivered', 'reason' => 'array_transport']);
             return ['status' => 'not_delivered', 'message' => 'Email delivery is not configured for external delivery. Configure SMTP or a managed mail provider first.'];
         }
 

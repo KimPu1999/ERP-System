@@ -88,17 +88,17 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class);
     Route::post('/billing/webhooks/{provider}', [PlatformBillingController::class, 'webhook'])->middleware('throttle:120,1');
     Route::get('/invitations/{token}/preview', [InvitationController::class, 'preview'])->where('token', '[A-Za-z0-9]+')->middleware('throttle:30,1');
-    Route::middleware(['web', 'throttle:10,1'])->prefix('auth')->group(function (): void {
-        Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/business/login', [AuthController::class, 'businessLogin']);
-        Route::post('/platform/login', [AuthController::class, 'platformLogin']);
+    Route::middleware(['web'])->prefix('auth')->group(function (): void {
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+        Route::post('/business/login', [AuthController::class, 'businessLogin'])->middleware('throttle:10,1');
+        Route::post('/platform/login', [AuthController::class, 'platformLogin'])->middleware('throttle:10,1');
         Route::post('/platform/verification/resend', [EmailVerificationController::class, 'resendPlatform'])->middleware('throttle:5,10');
-        Route::post('/platform/invitations/accept', [PlatformAdminInvitationController::class, 'accept']);
-        Route::post('/password/email', [PasswordResetController::class, 'requestLink']);
-        Route::post('/password/reset', [PasswordResetController::class, 'reset']);
-        Route::post('/mfa/verify', [MfaController::class, 'verifyLogin']);
-        Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->name('verification.verify');
+        Route::post('/platform/invitations/accept', [PlatformAdminInvitationController::class, 'accept'])->middleware('throttle:10,1');
+        Route::post('/password/email', [PasswordResetController::class, 'requestLink'])->middleware('throttle:10,1');
+        Route::post('/password/reset', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
+        Route::post('/mfa/verify', [MfaController::class, 'verifyLogin'])->middleware('throttle:10,1');
+        Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('throttle:30,10')->name('verification.verify');
     });
     // Stateful Sanctum requests must start the Laravel session before the
     // guard resolves the authenticated browser user. This is especially
