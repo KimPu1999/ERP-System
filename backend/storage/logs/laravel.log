@@ -84082,3 +84082,23 @@ LINE 1: select * from \"platform_settings\" where \"scope\" = $1 and \"se...
 [2026-11-03 10:12:07] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e5-0911-7062-b3f0-1bfcbe03ec27","email_hash":"c38e3f91ae9d0b570cf23ba5527b7594d54c1d4b7e0011e760109bcfba040f66","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
 [2026-11-03 10:12:07] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a0e5-0b0a-7038-adee-b0d31c41ac25","email_hash":"b0d81e2fe00f0a98af06d32777be5bbb6128fe521b09a2a97787d90f603acfd1","mailer":"smtp","status":"accepted_by_configured_mailer"} 
 [2026-11-03 10:12:08] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a0e5-0cff-7303-93a6-a37a611049fe","email_hash":"bbf03715a4da4eaebca1870329fbed4307650656a9fb317aecc381d9ce18ce1b","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 10:13:01] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 10:13:01 +0000
+Message-ID: <6528185ca9d78436f0bfc71f58da96d6@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 10:13:12] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 10:13:12 +0000
+Message-ID: <ed57b164b9459019c5abc73acb888a70@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
