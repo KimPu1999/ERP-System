@@ -80,6 +80,7 @@ final class PlatformOverviewService
                 'past_due_subscriptions' => $pastDueSubscriptions,
                 'failed_logins_last_24h' => $failedLogins,
             ],
+            'monitoring' => app(MonitoringService::class)->overview(),
             'business_growth' => $growth,
             'business_status_snapshot' => $statusCounts,
             'recent_registrations' => $registrations->map(function (Tenant $tenant): array {

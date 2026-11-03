@@ -26,7 +26,7 @@ final class PlatformAnalyticsService
         $businessTrend = $this->registrationTrend($window);
         $businessStatus = $status;
         $subscriptionStates = $subscriptions;
-        $legacyUsers = User::select('status')->selectRaw('COUNT(*) AS count')->groupBy('status')->orderBy('status')->get()->map(fn ($row): array => ['status' => $row->status, 'count' => (int) $row->count])->values()->all();
+        $legacyUsers = User::where('is_platform_super_admin', true)->select('status')->selectRaw('COUNT(*) AS count')->groupBy('status')->orderBy('status')->get()->map(fn ($row): array => ['status' => $row->status, 'count' => (int) $row->count])->values()->all();
         return [
             'period' => ['name' => $window['period'], 'granularity' => $window['granularity'], 'from' => $window['from']->toDateString(), 'to' => $window['to']->subDay()->toDateString()],
             'reporting_timezone' => self::REPORTING_TIMEZONE,

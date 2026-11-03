@@ -8,6 +8,7 @@ use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\ValidateProductionConfiguration;
 use App\Support\TenantContext;
+use App\Services\MonitoringService;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,7 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias(['active.user' => EnsureActiveUser::class, 'tenant' => ResolveTenant::class, 'supplier.portal' => ResolveSupplierPortalTenant::class, 'platform.admin' => RequirePlatformSuperAdmin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Keep Laravel's default exception handler binding and rendering pipeline.
+        $exceptions->report(function (\Throwable $exception): void {
+            if (app()->bound(MonitoringService::class)) {
+                app(MonitoringService::class)->recordException($exception, app()->runningInConsole() ? null : request());
+            }
+        });
     })
-    ->withSingletons([TenantContext::class => fn (): TenantContext => new TenantContext()])
+    ->withSingletons([
+        TenantContext::class => fn (): TenantContext => new TenantContext(),
+        MonitoringService::class => fn (\Illuminate\Container\Container $container): MonitoringService => new MonitoringService($container->make(\App\Services\AuditLogger::class)),
+    ])
     ->create();

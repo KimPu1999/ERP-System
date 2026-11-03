@@ -61,11 +61,24 @@ test('platform dashboard renders live authorized data without mobile overflow', 
 test('platform analytics renders live aggregates on a narrow viewport', async ({ page }) => {
   await page.unroute('**/api/v1/auth/me');
   await page.route('**/api/v1/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: platformUser }) }));
-  await page.route('**/api/v1/platform/analytics', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { period: { from: '2026-06-01T00:00:00Z', to: '2026-11-03T00:00:00Z' }, business_growth: [{ month: '2026-06', count: 2 }], businesses_by_status: [{ status: 'active', count: 2 }], subscriptions_by_state: [{ state: 'active', count: 2 }], platform_users_by_status: [{ status: 'active', count: 1 }] } }) }));
+  await page.route('**/api/v1/platform/analytics/overview**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { filters: { timezone: 'Asia/Yangon' }, kpis: {}, businesses: { trend: [{ bucket: '2026-06', count: 2 }], by_status: [{ status: 'active', count: 2 }] }, subscriptions: { by_state: [{ state: 'active', count: 2 }] }, platform_users_by_status: [{ status: 'active', count: 1 }] } }) }));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/platform/analytics');
 
   await expect(page.getByRole('heading', { name: 'Platform analytics' })).toBeVisible();
   await expect(page.getByText('Business status', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+});
+
+test('platform monitoring center shows truthful stored service states on mobile', async ({ page }) => {
+  await page.unroute('**/api/v1/auth/me');
+  await page.route('**/api/v1/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: platformUser }) }));
+  await page.route('**/api/v1/platform/monitoring/overview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { overall: 'unknown', last_successful_check: null, latest_verified_check: null, services: [{ service: 'database', status: 'healthy', last_observed_at: '2026-11-03T00:00:00Z', checks: [{ check_key: 'connectivity', status: 'healthy', observed_at: '2026-11-03T00:00:00Z', response_time_ms: 4, detail: 'PostgreSQL connectivity check completed.', metadata: {}, stale: false }] }], open_alerts: { total: 0, critical: 0, warning: 0, info: 0 }, recent_incidents: [], collector: { enabled: true, refresh_seconds: 30, last_run_at: '2026-11-03T00:00:00Z', schedule: 'every minute' }, metric_definitions: {}, limitations: { api: 'Request instrumentation is unavailable.' } } }) }));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/platform/monitoring');
+
+  await expect(page.getByRole('heading', { name: 'Monitoring Center' })).toBeVisible();
+  await expect(page.getByText('database', { exact: true })).toBeVisible();
+  await expect(page.getByText('Unknown', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

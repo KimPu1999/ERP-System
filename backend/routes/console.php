@@ -2,6 +2,7 @@
 
 use App\Jobs\{EvaluateSupplierAutomationRule, RunAutomationRule};
 use App\Models\{AutomationRule, PlatformAuditLog, User};
+use App\Services\MonitoringService;
 use Illuminate\Support\Facades\{Artisan, Cache, Schedule};
 
 Artisan::command('erp:status', function (): void {
@@ -98,3 +99,11 @@ Artisan::command('erp:purchasing-automation', function (): int {
 })->purpose('Dispatch safe non-financial Purchasing automation rules');
 
 Schedule::command('erp:purchasing-automation')->hourly()->withoutOverlapping(30);
+
+Artisan::command('platform:monitor', function (MonitoringService $monitoring): int {
+    $result = $monitoring->collect();
+    $this->info('Platform monitoring collector completed: '.($result['status'] ?? 'unknown'));
+    return 0;
+})->purpose('Collect bounded platform operational health observations');
+
+Schedule::command('platform:monitor')->everyMinute()->withoutOverlapping(1);
