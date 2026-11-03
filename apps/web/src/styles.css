@@ -1555,6 +1555,15 @@ tr:last-child td { border-bottom: 0; }
 :root.dark .dashboard-toolbar > label select, :root.dark .dashboard-toolbar > label input, .dark .dashboard-toolbar > label select, .dark .dashboard-toolbar > label input { border-color: #64748b; background: #1e293b; color: #f8fafc; }
 @media (max-width: 680px) { .dashboard-toolbar { grid-template-columns: 1fr; } .dashboard-toolbar > .refresh-dashboard { justify-self: start; } }
 
+.audit-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.audit-filter-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 650; }
+.pagination-bar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.audit-detail { display: grid; gap: 8px; padding: 12px; color: var(--muted); font-size: 12px; }
+.audit-detail pre { max-height: 180px; overflow: auto; margin: 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); font-size: 11px; white-space: pre-wrap; }
+.recovery-code-list { margin: 10px 0 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mfa-enrollment-panel { display: grid; justify-items: center; gap: 14px; margin: 16px 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted); text-align: center; }.mfa-qr-code { width: 220px; height: 220px; image-rendering: pixelated; border: 8px solid #fff; border-radius: 4px; }.mfa-qr-placeholder { display: grid; place-items: center; width: 220px; height: 220px; color: var(--muted); font-size: 12px; }
+@media (max-width: 900px) { .audit-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 /* Supplier portal and access-review monitoring: compact, scope-safe table views. */
 .supplier-monitoring-view { min-width: 0; }
 .supplier-monitoring-view-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; margin-bottom: 12px; }
@@ -3158,6 +3167,13 @@ table { min-width: 0; }
 @media (max-width: 720px) { .supplier-context-card, .supplier-filter-toolbar { align-items: stretch; flex-direction: column; } .supplier-context-card label, .supplier-filter-toolbar label, .supplier-filter-toolbar label:first-child { width: 100%; min-width: 0; } .supplier-filter-toolbar > button { width: 100%; } }
 @media (max-width: 680px) { .supplier-modal-backdrop { place-items: start center; padding: 10px; } .supplier-modal { width: 100%; max-height: calc(100vh - 20px); } .supplier-modal-header, .supplier-modal-body { padding-left: 16px; padding-right: 16px; } .supplier-form-grid { grid-template-columns: 1fr; gap: 13px; } .supplier-modal-footer { padding-left: 16px; padding-right: 16px; } .supplier-modal-footer button { flex: 1; } }
 @media (max-width: 680px) { .catalog-modal-backdrop { place-items: start center; padding: 10px; } .catalog-modal { width: 100%; max-height: calc(100vh - 20px); } .catalog-modal-header, .catalog-modal-body { padding-left: 16px; padding-right: 16px; } .catalog-modal-footer { padding-left: 16px; padding-right: 16px; } .catalog-modal-footer button { flex: 1; } .catalog-form-grid { grid-template-columns: 1fr; gap: 13px; } .catalog-form-wide { grid-column: auto; } .catalog-inline-create { align-items: stretch; flex-direction: column; } .catalog-inline-create button { width: 100%; } }
+
+.modal-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(15, 23, 42, .42); }
+.modal { width: min(480px, 100%); padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 20px 60px rgba(15, 23, 42, .22); }
+.modal-header, .modal-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.modal-header { margin-bottom: 10px; }.modal-header h2 { margin: 0; font-size: 18px; color: var(--text); }.modal-actions { justify-content: flex-end; margin-top: 16px; }
+.security-settings-form { display: grid; gap: 18px; }.security-setting-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }.security-setting-row label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 650; }.security-setting-row input[type='checkbox'] { width: 18px; height: 18px; }.security-empty { padding: 24px; color: var(--muted); text-align: center; }
+@media (max-width: 700px) { .security-setting-row { grid-template-columns: 1fr; }.modal { padding: 16px; } }
 @keyframes supplier-catalog-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 
 /* Purchase return creation form */

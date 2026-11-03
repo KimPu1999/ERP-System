@@ -24,5 +24,7 @@
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
+        <!-- Test fixtures intentionally exercise pre-enrollment legacy accounts. Production/local defaults remain enforced. -->
+        <env name="PLATFORM_MFA_REQUIRED" value="false" force="true"/>
     </php>
 </phpunit>

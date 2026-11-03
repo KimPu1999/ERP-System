@@ -19,7 +19,7 @@ export function LoginPage({ mode = 'business' }: Props) {
   const { t } = useI18n();
   const submit = async (data: Form) => {
     setError('');
-    try { const result = await (mode === 'platform' ? platformLogin(data) : businessLogin(data)); if (result.mfa_required) navigate('/verify-mfa', { state: { mode } }); else { await refresh(); const from = (location.state as { from?: string } | null)?.from; navigate(mode === 'platform' ? '/platform' : from ?? '/', { replace: true }); } }
+    try { const result = await (mode === 'platform' ? platformLogin(data) : businessLogin(data)); if (result.mfa_enrollment_required) { await refresh(); navigate(mode === 'platform' ? '/platform/mfa-enroll' : '/mfa-enroll', { replace: true }); } else if (result.mfa_required) navigate('/verify-mfa', { state: { mode } }); else { await refresh(); const from = (location.state as { from?: string } | null)?.from; navigate(mode === 'platform' ? '/platform' : from ?? '/', { replace: true }); } }
     catch (exception) {
       const verificationRequired = exception instanceof ApiError
         && exception.status === 403

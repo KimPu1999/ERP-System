@@ -82,3 +82,16 @@ test('platform monitoring center shows truthful stored service states on mobile'
   await expect(page.getByText('Unknown', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
+
+test('security center renders persisted posture metrics without mobile overflow', async ({ page }) => {
+  await page.unroute('**/api/v1/auth/me');
+  await page.route('**/api/v1/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: platformUser }) }));
+  await page.route('**/api/v1/platform/security/overview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { metrics: { failed_login_attempts_24h: 2, active_sessions: 1, mfa_enrollment: { enrolled: 1, total: 1, coverage: 100 }, permission_changes_24h: 0, open_security_alerts: 0 }, posture: 'protected', posture_basis: { mfa_coverage: 'MFA coverage is complete.' }, recent_events: [], monitoring_available: true } }) }));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/platform/security');
+
+  await expect(page.getByRole('heading', { name: 'Security Center' })).toBeVisible();
+  await expect(page.getByText('Failed logins (24h)', { exact: true })).toBeVisible();
+  await expect(page.getByText('Protected', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+});

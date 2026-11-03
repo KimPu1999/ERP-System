@@ -23,6 +23,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at',
         'suspended_at',
         'is_platform_super_admin',
+        'mfa_secret_encrypted',
+        'mfa_enabled_at',
+        'mfa_recovery_codes',
     ];
     protected $hidden = ['password', 'remember_token'];
     protected function casts(): array { return ['email_verified_at' => 'datetime', 'suspended_at' => 'datetime', 'last_login_at' => 'datetime', 'mfa_enabled_at' => 'datetime', 'mfa_recovery_codes' => 'array', 'is_platform_super_admin' => 'boolean', 'password' => 'hashed']; }

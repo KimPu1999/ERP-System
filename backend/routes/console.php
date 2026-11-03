@@ -1,9 +1,9 @@
 <?php
 
 use App\Jobs\{EvaluateSupplierAutomationRule, RunAutomationRule};
-use App\Models\{AutomationRule, PlatformAuditLog, User};
+use App\Models\{AuditLogArchive, AutomationRule, PlatformAuditLog, SecuritySetting, User};
 use App\Services\MonitoringService;
-use Illuminate\Support\Facades\{Artisan, Cache, Schedule};
+use Illuminate\Support\Facades\{Artisan, Cache, DB, Schedule};
 
 Artisan::command('erp:status', function (): void {
     $this->info('Enterprise ERP Cloud API foundation is configured.');
@@ -107,3 +107,25 @@ Artisan::command('platform:monitor', function (MonitoringService $monitoring): i
 })->purpose('Collect bounded platform operational health observations');
 
 Schedule::command('platform:monitor')->everyMinute()->withoutOverlapping(1);
+
+Artisan::command('platform:security-prune', function (): int {
+    $configured = SecuritySetting::where('key', 'audit_retention_days')->value('value');
+    $days = max(30, min(3650, (int) (is_array($configured) ? ($configured['value'] ?? 365) : 365)));
+    $cutoff = now()->subDays($days);
+    DB::statement("SELECT set_config('app.allow_audit_prune', 'on', false)");
+    PlatformAuditLog::where('created_at', '<', $cutoff)->orderBy('id')->chunkById(500, function ($logs): void {
+        foreach ($logs as $log) {
+            $payload = $log->toArray();
+            $serialized = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            AuditLogArchive::firstOrCreate(['audit_log_id' => $log->id], ['archive_hash' => hash('sha256', $serialized), 'payload' => $payload, 'archived_at' => now()]);
+            DB::table('platform_audit_logs')->where('id', $log->id)->delete();
+        }
+    });
+    DB::statement("SELECT set_config('app.allow_audit_prune', 'off', false)");
+    DB::table('security_events')->where('created_at', '<', $cutoff)->delete();
+    $this->info("Security retention cleanup completed through {$cutoff->toISOString()}.");
+    return 0;
+})->purpose('Archive immutable audit events and prune expired security telemetry');
+
+Schedule::command('platform:security-prune')->dailyAt('02:30')->withoutOverlapping(30);
+Schedule::command('sanctum:prune-expired --hours=24')->dailyAt('03:00')->withoutOverlapping(30);

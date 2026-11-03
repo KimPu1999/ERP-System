@@ -69,6 +69,7 @@ use App\Http\Controllers\Api\V1\PlatformBillingController;
 use App\Http\Controllers\Api\V1\PlatformAuditController;
 use App\Http\Controllers\Api\V1\PlatformUserController;
 use App\Http\Controllers\Api\V1\PlatformSettingsController;
+use App\Http\Controllers\Api\V1\SecurityController;
 use App\Http\Controllers\Api\V1\PlatformAnalyticsController;
 use App\Http\Controllers\Api\V1\PlatformHealthController;
 use App\Http\Controllers\Api\V1\PlatformMonitoringController;
@@ -100,11 +101,16 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware('active.user')->group(function (): void {
             Route::get('/auth/me', [AuthController::class, 'me']);
             Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
-            Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll']);
-            Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm']);
-            Route::post('/auth/mfa/disable', [MfaController::class, 'disable']);
-            Route::get('/auth/sessions', [SessionController::class, 'index']);
-            Route::delete('/auth/sessions/{session}', [SessionController::class, 'destroy']);
+            Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll'])->middleware(['web', 'throttle:5,10']);
+            Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm'])->middleware(['web', 'throttle:5,10']);
+            Route::post('/auth/mfa/recovery-codes', [MfaController::class, 'regenerateRecoveryCodes'])->middleware(['web', 'recent.stepup', 'throttle:3,10']);
+            Route::post('/auth/mfa/disable', [MfaController::class, 'disable'])->middleware(['web', 'recent.stepup', 'throttle:5,10']);
+            Route::post('/auth/step-up', [SecurityController::class, 'stepUp'])->middleware(['web', 'throttle:5,10']);
+            Route::get('/auth/tokens', [SecurityController::class, 'tokens']);
+            Route::delete('/auth/tokens/{token}', [SecurityController::class, 'revokeToken'])->middleware(['web', 'recent.stepup']);
+            Route::get('/auth/sessions', [SessionController::class, 'index'])->middleware('web');
+            Route::delete('/auth/sessions/{session}', [SessionController::class, 'destroy'])->middleware('web');
+            Route::post('/auth/sessions/revoke-others', [SessionController::class, 'destroyOthers'])->middleware(['web', 'recent.stepup']);
             Route::post('/invitations/accept', [InvitationController::class, 'accept'])->middleware('verified');
             Route::post('/invitations/{token}/accept', [InvitationController::class, 'acceptToken'])->middleware('verified')->where('token', '[A-Za-z0-9]+');
             Route::get('/workspace-access', WorkspaceAccessController::class);
@@ -131,6 +137,18 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/summary', [PlatformTenantController::class, 'summary']);
             Route::get('/audit-logs', [PlatformAuditController::class, 'index']);
             Route::get('/security/events', [PlatformAuditController::class, 'security']);
+            Route::prefix('security')->group(function (): void {
+                Route::get('/overview', [PlatformAuditController::class, 'overview']);
+                Route::get('/audit-logs', [PlatformAuditController::class, 'index']);
+                Route::get('/login-activity', [PlatformAuditController::class, 'loginActivity']);
+                Route::get('/sessions', [PlatformAuditController::class, 'sessions'])->middleware('web');
+                Route::get('/mfa', [PlatformAuditController::class, 'mfa']);
+                Route::get('/permissions', [PlatformAuditController::class, 'permissions']);
+                Route::get('/alerts', [PlatformAuditController::class, 'alerts']);
+                Route::get('/access-history', [PlatformAuditController::class, 'security']);
+                Route::get('/settings', [PlatformAuditController::class, 'settings']);
+                Route::patch('/settings', [PlatformAuditController::class, 'updateSettings'])->middleware('web');
+            });
             Route::get('/settings', PlatformSettingsController::class);
             Route::get('/analytics', [PlatformAnalyticsController::class, 'overview']);
             Route::get('/analytics/overview', [PlatformAnalyticsController::class, 'overview']);
@@ -143,6 +161,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/reports/exports', [PlatformAnalyticsController::class, 'exports']);
             Route::post('/reports/exports', [PlatformAnalyticsController::class, 'requestExport']);
             Route::get('/reports/exports/{export}/download', [PlatformAnalyticsController::class, 'downloadExport']);
+            Route::get('/security/reports', [PlatformAnalyticsController::class, 'exports'])->defaults('security', true);
+            Route::post('/security/reports', [PlatformAnalyticsController::class, 'requestExport'])->middleware('web');
             Route::get('/health', PlatformHealthController::class);
             Route::prefix('monitoring')->group(function (): void {
                 Route::get('/', [PlatformMonitoringController::class, 'overview']);

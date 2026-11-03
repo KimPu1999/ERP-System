@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\User;
 use App\Services\SecurityEventLogger;
+use App\Services\SecurityPolicy;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,27 +20,27 @@ final class AuthController
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'password' => ['required', 'string', 'min:8', 'confirmed']]);
         $user = DB::transaction(fn () => User::create($data));
         event(new Registered($user));
-        Auth::login($user); $request->session()->regenerate();
+        Auth::guard('web')->login($user); $request->session()->regenerate();
         $events->record($request, 'auth.registered', $user->id);
         return response()->json(['data' => $user->only(['id', 'name', 'email', 'status']), 'email_verification_required' => true], 201);
     }
 
-    public function login(Request $request, SecurityEventLogger $events): JsonResponse
+    public function login(Request $request, SecurityEventLogger $events, SecurityPolicy $policy): JsonResponse
     {
-        return $this->authenticate($request, $events, 'business');
+        return $this->authenticate($request, $events, 'business', $policy);
     }
 
-    public function businessLogin(Request $request, SecurityEventLogger $events): JsonResponse
+    public function businessLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy): JsonResponse
     {
-        return $this->authenticate($request, $events, 'business');
+        return $this->authenticate($request, $events, 'business', $policy);
     }
 
-    public function platformLogin(Request $request, SecurityEventLogger $events): JsonResponse
+    public function platformLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy): JsonResponse
     {
-        return $this->authenticate($request, $events, 'platform');
+        return $this->authenticate($request, $events, 'platform', $policy);
     }
 
-    private function authenticate(Request $request, SecurityEventLogger $events, string $mode): JsonResponse
+    private function authenticate(Request $request, SecurityEventLogger $events, string $mode, SecurityPolicy $policy): JsonResponse
     {
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string'], 'remember' => ['sometimes', 'boolean']]);
         $user = User::where('email', $data['email'])->first();
@@ -68,14 +69,31 @@ final class AuthController
                 'auth.mfa_user_id' => $user->id,
                 'auth.mfa_remember' => (bool) ($data['remember'] ?? false),
                 'auth.mfa_mode' => $mode,
+                'auth.login_pending' => true,
+                'auth.new_device' => $this->isNewDevice($user, $request),
             ]);
             return response()->json(['mfa_required' => true], 202);
         }
 
-        Auth::login($user, (bool) ($data['remember'] ?? false));
+        $mfaRequired = $mode === 'platform'
+            ? $policy->platformMfaRequired()
+            : $policy->businessAdminMfaRequired() && $policy->isBusinessAdministrator($user);
+
+        if ($mfaRequired) {
+            $newDevice = $this->isNewDevice($user, $request);
+            Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
+            $request->session()->regenerate();
+            $request->session()->put(['auth.login_pending' => true, 'auth.new_device' => $newDevice, 'auth.mfa_mode' => $mode]);
+            $events->record($request, 'auth.mfa_enrollment_required', $user->id, null, ['mode' => $mode]);
+            return response()->json(['mfa_enrollment_required' => true, 'mfa_mode' => $mode], 202);
+        }
+
+        $newDevice = $this->isNewDevice($user, $request);
+        Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
         $request->session()->regenerate();
         $user->forceFill(['last_login_at' => now()])->saveQuietly();
         $events->record($request, $mode === 'platform' ? 'auth.platform_login_succeeded' : 'auth.business_login_succeeded', $user->id);
+        if ($newDevice) $events->record($request, 'auth.new_device', $user->id, null, ['device_hash' => hash('sha256', (string) $request->userAgent())]);
 
         return response()->json([
             'data' => $user->only(['id', 'name', 'email', 'status']),
@@ -89,4 +107,10 @@ final class AuthController
     }
 
     public function me(Request $request): JsonResponse { return response()->json(['data' => $request->user()->only(['id', 'name', 'email', 'status', 'email_verified_at', 'mfa_enabled_at', 'is_platform_super_admin'])]); }
+
+    private function isNewDevice(User $user, Request $request): bool
+    {
+        $userAgent = trim((string) $request->userAgent());
+        return $userAgent !== '' && ! DB::table('sessions')->where('user_id', $user->id)->where('user_agent', $userAgent)->exists();
+    }
 }
