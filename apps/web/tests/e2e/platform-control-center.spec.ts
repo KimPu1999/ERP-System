@@ -58,6 +58,19 @@ test('platform dashboard renders live authorized data without mobile overflow', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
 
+test('platform settings renders the authorized general settings form on mobile', async ({ page }) => {
+  await page.unroute('**/api/v1/auth/me');
+  await page.route('**/api/v1/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: platformUser }) }));
+  await page.route('**/api/v1/platform/settings/general', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { value: { display_name: 'ERP Cloud', description: '', support_email: '', support_phone: '', organization_contact: '', default_locale: 'en', default_timezone: 'Asia/Yangon', date_format: 'Y-m-d', time_format: 'H:i', application_url_display: 'http://localhost:5173' }, version: 0 } }) }));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/platform/settings');
+
+  await expect(page.getByRole('heading', { name: 'Platform Settings' })).toBeVisible();
+  await expect(page.getByLabel('Platform display name')).toHaveValue('ERP Cloud');
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+});
+
 test('platform analytics renders live aggregates on a narrow viewport', async ({ page }) => {
   await page.unroute('**/api/v1/auth/me');
   await page.route('**/api/v1/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: platformUser }) }));

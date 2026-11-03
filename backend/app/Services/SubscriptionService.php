@@ -13,15 +13,19 @@ final class SubscriptionService
         return DB::transaction(function () use ($tenant): TenantSubscription {
             $existing = TenantSubscription::where('tenant_id', $tenant->id)->lockForUpdate()->first();
             if ($existing) return $existing->load('plan.features');
-            $plan = SubscriptionPlan::where('is_active', true)->whereNull('archived_at')->orderBy('monthly_price')->first();
+            $subscriptionSettings = app(SettingsService::class)->getForPolicy('subscriptions');
+            $plan = filled($subscriptionSettings['default_plan_id'] ?? null)
+                ? SubscriptionPlan::where('is_active', true)->whereNull('archived_at')->find($subscriptionSettings['default_plan_id'])
+                : null;
+            $plan ??= SubscriptionPlan::where('is_active', true)->whereNull('archived_at')->orderBy('monthly_price')->first();
             if (! $plan) {
                 $plan = SubscriptionPlan::create([
                     'code' => 'starter', 'name' => 'Starter Trial', 'description' => 'Default trial plan; configure before commercial use.',
                     'currency_code' => 'USD', 'monthly_price' => '0', 'annual_price' => '0',
-                    'trial_days' => (int) config('services.billing.trial_days', 14), 'is_active' => true,
+                    'trial_days' => (int) ((bool) ($subscriptionSettings['trial_eligible'] ?? true) ? ($subscriptionSettings['trial_duration_days'] ?? config('services.billing.trial_days', 14)) : 0), 'is_active' => true,
                 ]);
             }
-            $now = now(); $trialDays = (int) $plan->trial_days;
+            $now = now(); $trialDays = (bool) ($subscriptionSettings['trial_eligible'] ?? true) ? (int) ($subscriptionSettings['trial_duration_days'] ?? $plan->trial_days) : 0;
             return TenantSubscription::create([
                 'tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'billing_cycle' => 'monthly',
                 'state' => $trialDays > 0 ? 'trialing' : 'active', 'trial_ends_at' => $trialDays > 0 ? $now->copy()->addDays($trialDays) : null,

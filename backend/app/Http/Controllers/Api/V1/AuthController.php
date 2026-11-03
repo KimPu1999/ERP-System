@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\User;
-use App\Services\SecurityEventLogger;
+use App\Services\{SecurityEventLogger, SettingsService};
 use App\Services\SecurityPolicy;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
@@ -15,8 +15,9 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthController
 {
-    public function register(Request $request, SecurityEventLogger $events): JsonResponse
+    public function register(Request $request, SecurityEventLogger $events, SettingsService $settings): JsonResponse
     {
+        abort_unless((bool) $settings->getForPolicy('business')['public_registration_enabled'], 403, 'Public business registration is currently disabled.');
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'password' => ['required', 'string', 'min:8', 'confirmed']]);
         $user = DB::transaction(fn () => User::create($data));
         event(new Registered($user));
@@ -25,28 +26,29 @@ final class AuthController
         return response()->json(['data' => $user->only(['id', 'name', 'email', 'status']), 'email_verification_required' => true], 201);
     }
 
-    public function login(Request $request, SecurityEventLogger $events, SecurityPolicy $policy): JsonResponse
+    public function login(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse
     {
-        return $this->authenticate($request, $events, 'business', $policy);
+        return $this->authenticate($request, $events, 'business', $policy, $settings);
     }
 
-    public function businessLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy): JsonResponse
+    public function businessLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse
     {
-        return $this->authenticate($request, $events, 'business', $policy);
+        return $this->authenticate($request, $events, 'business', $policy, $settings);
     }
 
-    public function platformLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy): JsonResponse
+    public function platformLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse
     {
-        return $this->authenticate($request, $events, 'platform', $policy);
+        return $this->authenticate($request, $events, 'platform', $policy, $settings);
     }
 
-    private function authenticate(Request $request, SecurityEventLogger $events, string $mode, SecurityPolicy $policy): JsonResponse
+    private function authenticate(Request $request, SecurityEventLogger $events, string $mode, SecurityPolicy $policy, SettingsService $settings): JsonResponse
     {
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string'], 'remember' => ['sometimes', 'boolean']]);
         $user = User::where('email', $data['email'])->first();
         if (! $user || ! Hash::check($data['password'], $user->password)) { $events->record($request, 'auth.login_failed', $user?->id, null, ['reason' => 'invalid_credentials']); throw ValidationException::withMessages(['email' => [__('auth.failed')]]); }
         if ($user->status !== 'active' || $user->suspended_at) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'account_suspended']); abort(423, __('auth.suspended')); }
-        if (! $user->hasVerifiedEmail()) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'email_unverified', 'mode' => $mode]); abort(403, 'Email verification is required before sign-in.'); }
+        $verificationRequired = $mode === 'platform' || (bool) $settings->getForPolicy('business')['require_email_verification'];
+        if ($verificationRequired && ! $user->hasVerifiedEmail()) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'email_unverified', 'mode' => $mode]); abort(403, 'Email verification is required before sign-in.'); }
 
         $hasActiveMembership = false;
         if ($mode === 'platform') {

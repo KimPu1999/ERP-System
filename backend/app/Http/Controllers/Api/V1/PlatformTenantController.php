@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Mail\CompanyInvitationMail;
 use App\Models\{Company, Invitation, Permission, PlatformAuditLog, Role, Tenant, TenantMembership, TenantSubscription};
-use App\Services\{AuditLogger, PlatformOverviewService, SubscriptionService};
+use App\Services\{AuditLogger, PlatformOverviewService, SettingsService, SubscriptionService};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -60,13 +60,14 @@ final class PlatformTenantController
         }, 'erp-cloud-businesses.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function store(Request $request, AuditLogger $audit, SubscriptionService $subscriptions): JsonResponse
+    public function store(Request $request, AuditLogger $audit, SubscriptionService $subscriptions, SettingsService $settings): JsonResponse
     {
         $data = $request->validate($this->tenantRules());
+        $businessSettings = $settings->get('business')['value'];
         $ownerEmail = isset($data['owner_email']) ? strtolower(trim($data['owner_email'])) : null;
         $token = $ownerEmail ? Str::random(64) : null;
-        [$tenant, $invitation] = DB::transaction(function () use ($data, $ownerEmail, $token, $subscriptions, $request): array {
-            $tenant = Tenant::create(['name' => $data['name'], 'slug' => $data['slug'], 'status' => $data['status'] ?? 'pending']);
+        [$tenant, $invitation] = DB::transaction(function () use ($data, $ownerEmail, $token, $subscriptions, $request, $businessSettings): array {
+            $tenant = Tenant::create(['name' => $data['name'], 'slug' => $data['slug'], 'status' => $data['status'] ?? $businessSettings['default_initial_status']]);
             $companyCode = strtoupper(substr((string) preg_replace('/[^A-Za-z0-9]/', '', $tenant->slug), 0, 12)) ?: 'BUSINESS';
             $company = Company::create($this->companyAttributes($tenant, $data, $companyCode));
             $permissions = collect(['roles.manage', 'members.invite', 'company.manage', 'organization.manage', 'products.manage', 'inventory.manage', 'procurement.manage', 'sales.manage', 'sales.approve', 'accounting.manage', 'accounting.post', 'hr.manage', 'pos.manage', 'pos.sell', 'projects.manage', 'assets.manage', 'approvals.manage', 'approvals.request', 'reports.view', 'reports.export'])->map(fn (string $name) => Permission::firstOrCreate(['name' => $name]));
@@ -75,7 +76,7 @@ final class PlatformTenantController
             $subscriptions->provisionTrial($tenant);
             $invitation = null;
             if ($ownerEmail && $token) {
-                $invitation = Invitation::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'inviter_user_id' => $request->user()->id, 'role_id' => $role->id, 'email' => $ownerEmail, 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDays(7), 'status' => 'pending']);
+                $invitation = Invitation::create(['tenant_id' => $tenant->id, 'company_id' => $company->id, 'inviter_user_id' => $request->user()->id, 'role_id' => $role->id, 'email' => $ownerEmail, 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDays((int) $businessSettings['invitation_expiration_days']), 'status' => 'pending']);
             }
             return [$tenant, $invitation];
         }, 3);
