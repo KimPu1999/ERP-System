@@ -131,7 +131,17 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/audit-logs', [PlatformAuditController::class, 'index']);
             Route::get('/security/events', [PlatformAuditController::class, 'security']);
             Route::get('/settings', PlatformSettingsController::class);
-            Route::get('/analytics', PlatformAnalyticsController::class);
+            Route::get('/analytics', [PlatformAnalyticsController::class, 'overview']);
+            Route::get('/analytics/overview', [PlatformAnalyticsController::class, 'overview']);
+            Route::get('/analytics/businesses', [PlatformAnalyticsController::class, 'businesses']);
+            Route::get('/analytics/users', [PlatformAnalyticsController::class, 'users']);
+            Route::get('/analytics/subscriptions', [PlatformAnalyticsController::class, 'subscriptions']);
+            Route::get('/analytics/revenue', [PlatformAnalyticsController::class, 'revenue']);
+            Route::get('/analytics/usage', [PlatformAnalyticsController::class, 'usage']);
+            Route::get('/reports/financial', [PlatformAnalyticsController::class, 'financial']);
+            Route::get('/reports/exports', [PlatformAnalyticsController::class, 'exports']);
+            Route::post('/reports/exports', [PlatformAnalyticsController::class, 'requestExport']);
+            Route::get('/reports/exports/{export}/download', [PlatformAnalyticsController::class, 'downloadExport']);
             Route::get('/health', PlatformHealthController::class);
             Route::get('/users', [PlatformUserController::class, 'index']);
             Route::patch('/users/{user}/status', [PlatformUserController::class, 'changeStatus']);
