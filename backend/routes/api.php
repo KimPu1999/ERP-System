@@ -81,7 +81,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class);
-    Route::post('/billing/webhooks/{provider}', [PlatformBillingController::class, 'webhook']);
+    Route::post('/billing/webhooks/{provider}', [PlatformBillingController::class, 'webhook'])->middleware('throttle:120,1');
     Route::get('/invitations/{token}/preview', [InvitationController::class, 'preview'])->where('token', '[A-Za-z0-9]+')->middleware('throttle:30,1');
     Route::middleware(['web', 'throttle:10,1'])->prefix('auth')->group(function (): void {
         Route::post('/register', [AuthController::class, 'register']);
@@ -159,8 +159,20 @@ Route::prefix('v1')->group(function (): void {
             Route::put('/tenants/{tenant}/modules', [ModuleController::class, 'platformUpdate']);
             Route::get('/billing/plans', [PlatformBillingController::class, 'plans']);
             Route::post('/billing/plans', [PlatformBillingController::class, 'storePlan']);
+            Route::get('/billing/plans/{plan}', [PlatformBillingController::class, 'showPlan']);
+            Route::put('/billing/plans/{plan}', [PlatformBillingController::class, 'updatePlan']);
+            Route::post('/billing/plans/{plan}/archive', [PlatformBillingController::class, 'archivePlan']);
             Route::get('/billing/subscriptions', [PlatformBillingController::class, 'subscriptions']);
+            Route::get('/billing/subscriptions/{subscription}', [PlatformBillingController::class, 'showSubscription']);
             Route::patch('/tenants/{tenant}/subscription', [PlatformBillingController::class, 'changeTenantSubscription']);
+            Route::post('/tenants/{tenant}/subscription/cancel', [PlatformBillingController::class, 'cancelTenantSubscription']);
+            Route::post('/tenants/{tenant}/subscription/renew', [PlatformBillingController::class, 'renewTenantSubscription']);
+            Route::get('/billing/invoices', [PlatformBillingController::class, 'invoices']);
+            Route::post('/billing/invoices', [PlatformBillingController::class, 'issueInvoice']);
+            Route::get('/billing/invoices/{invoice}', [PlatformBillingController::class, 'showInvoice']);
+            Route::get('/billing/payments', [PlatformBillingController::class, 'payments']);
+            Route::post('/billing/payments', [PlatformBillingController::class, 'recordPayment']);
+            Route::post('/billing/payments/{payment}/verify', [PlatformBillingController::class, 'verifyPayment']);
             Route::get('/billing/revenue', [PlatformBillingController::class, 'revenue']);
             Route::post('/support/access-grants', [SupportController::class, 'grant']);
             Route::post('/support/access-grants/{grant}/approve', [SupportController::class, 'approve']);
