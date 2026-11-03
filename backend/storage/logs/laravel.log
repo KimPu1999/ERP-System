@@ -84102,3 +84102,171 @@ Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
 This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 10:16:43] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-4077-73bc-b48b-95e43508edbb","email_hash":"cfcb3db3cc64e56cae071908db7281f31d4c91e70b2d18f857636675c4fac584","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:43] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-4077-73bc-b48b-95e43508edbb","email_hash":"cfcb3db3cc64e56cae071908db7281f31d4c91e70b2d18f857636675c4fac584","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:43] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-4077-73bc-b48b-95e43508edbb","email_hash":"cfcb3db3cc64e56cae071908db7281f31d4c91e70b2d18f857636675c4fac584","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:43] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-427d-722f-a099-dca28ab457c5","email_hash":"ccdf58c266d42ba7649505ecc5a11747310741e16f5351b56578a75a94f50fe0","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:44] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a0e9-44b1-728e-b137-f1cf312eb6f4","email_hash":"b10d6302b386b89fc8ab00290a4ce8638d743d060aa45263076c1f30d8f733fd","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 10:16:45] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a0e9-4727-7389-9e42-03089f2af0ca","email_hash":"ecc5c721e49327e8f5ac76a005659411894b55cb02155c19ce755da873c272c1","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 10:16:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-6743-7340-ba9e-ac8ef14e5fff","email_hash":"d7e9db7d1db5d244f1926b6dd890db3830553fd0a0d9a0360867dcb6dd3a0a30","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-6743-7340-ba9e-ac8ef14e5fff","email_hash":"d7e9db7d1db5d244f1926b6dd890db3830553fd0a0d9a0360867dcb6dd3a0a30","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-6743-7340-ba9e-ac8ef14e5fff","email_hash":"d7e9db7d1db5d244f1926b6dd890db3830553fd0a0d9a0360867dcb6dd3a0a30","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0e9-68f6-7240-b6ba-d3950200ddb6","email_hash":"afc280301a2e036518d98e93eaea4443113ce4836d4b9eeed0b0720c034bf168","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:16:54] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a0e9-6b39-72c6-990c-f3b3d7b69c15","email_hash":"f9a69d5c25e7590aa9586a8b80dab512bf9b76aecef247bf7ec280c504f6f997","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 10:16:54] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a0e9-6cd0-73c1-aabf-6790e82b0007","email_hash":"35bba73dd9dddc835b5b833a8efaffece72db8c5d0683a0c90c30c4e1dc8a713","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 10:17:52] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 10:17:52 +0000
+Message-ID: <9f21be481633b4c9d31a14d222ac676b@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 10:18:01] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 10:18:01 +0000
+Message-ID: <4aa8bd9edd1d5f01e4c669d2893e4f23@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 10:20:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ec-c230-73f3-a238-af115a496762","email_hash":"e808f4dde0bbff3646013451cf872a2ca3c2feb7a0e050172e3130ec2f2510b5","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:20:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ec-c230-73f3-a238-af115a496762","email_hash":"e808f4dde0bbff3646013451cf872a2ca3c2feb7a0e050172e3130ec2f2510b5","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:20:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ec-c230-73f3-a238-af115a496762","email_hash":"e808f4dde0bbff3646013451cf872a2ca3c2feb7a0e050172e3130ec2f2510b5","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:20:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ec-c3b3-72a3-a79e-fbcd587f3360","email_hash":"dcd24058f688d610b91677c54b3617f07a521faf15d5dac289176b49f3329270","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:20:34] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a0ec-c5b6-7127-944b-c6653c2c505b","email_hash":"91e38eda855f53a1e01aa82c65d5fa20f268b3cc70c4e81b653ee43f5261cca2","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 10:20:34] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a0ec-c7cc-7023-8aff-e689930f14b2","email_hash":"35f6fa7c31c527be6da6b89ffc0fb49ed326356cd8d4c6c2b521590ee25173b6","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 10:21:12] local.ERROR: SQLSTATE[42501]: Insufficient privilege: 7 ERROR:  permission denied for schema public at character 14 (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: erp_mfa_repro, SQL: create table "migrations" ("id" serial not null primary key, "migration" varchar(255) not null, "batch" integer not null)) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 42501): SQLSTATE[42501]: Insufficient privilege: 7 ERROR:  permission denied for schema public at character 14 (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: erp_mfa_repro, SQL: create table \"migrations\" (\"id\" serial not null primary key, \"migration\" varchar(255) not null, \"batch\" integer not null)) at /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:864)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(820): Illuminate\\Database\\Connection->runQueryCallback('create table \"m...', Array, Object(Closure))
+#1 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(597): Illuminate\\Database\\Connection->run('create table \"m...', Array, Object(Closure))
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Blueprint.php(122): Illuminate\\Database\\Connection->statement('create table \"m...')
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Builder.php(722): Illuminate\\Database\\Schema\\Blueprint->build()
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Builder.php(540): Illuminate\\Database\\Schema\\Builder->build(Object(Illuminate\\Database\\Schema\\Blueprint))
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(166): Illuminate\\Database\\Schema\\Builder->create('migrations', Object(Closure))
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/InstallCommand.php(55): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->createRepository()
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\InstallCommand->handle()
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#10 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#11 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#12 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call(Array)
+#13 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(285): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArrayInput), Object(Illuminate\\Console\\OutputStyle))
+#14 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArrayInput), Object(Illuminate\\Console\\OutputStyle))
+#15 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArrayInput), Object(Symfony\\Component\\Console\\Output\\NullOutput))
+#16 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(41): Illuminate\\Console\\Command->runCommand('migrate:install', Array, Object(Symfony\\Component\\Console\\Output\\NullOutput))
+#17 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(146): Illuminate\\Console\\Command->callSilent('migrate:install', Array)
+#18 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/View/Components/Task.php(43): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->{closure:Illuminate\\Database\\Console\\Migrations\\MigrateCommand::prepareDatabase():145}()
+#19 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/View/Components/Factory.php(61): Illuminate\\Console\\View\\Components\\Task->render('Creating migrat...', Object(Closure))
+#20 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(145): Illuminate\\Console\\View\\Components\\Factory->__call('task', Array)
+#21 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(112): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#22 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(686): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->{closure:Illuminate\\Database\\Console\\Migrations\\MigrateCommand::runMigrations():111}()
+#23 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#24 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(90): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#25 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#26 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()
+#27 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#28 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#29 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#30 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call(Array)
+#31 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(285): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#32 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#33 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(1154): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#34 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(380): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#35 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(219): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#36 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(205): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#37 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#38 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#39 {main}
+
+[previous exception] [object] (PDOException(code: 42501): SQLSTATE[42501]: Insufficient privilege: 7 ERROR:  permission denied for schema public at character 14 at /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:608)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(608): PDOStatement->execute()
+#1 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(853): Illuminate\\Database\\Connection->{closure:Illuminate\\Database\\Connection::statement():597}('create table \"m...', Array)
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(820): Illuminate\\Database\\Connection->runQueryCallback('create table \"m...', Array, Object(Closure))
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(597): Illuminate\\Database\\Connection->run('create table \"m...', Array, Object(Closure))
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Blueprint.php(122): Illuminate\\Database\\Connection->statement('create table \"m...')
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Builder.php(722): Illuminate\\Database\\Schema\\Blueprint->build()
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Builder.php(540): Illuminate\\Database\\Schema\\Builder->build(Object(Illuminate\\Database\\Schema\\Blueprint))
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(166): Illuminate\\Database\\Schema\\Builder->create('migrations', Object(Closure))
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/InstallCommand.php(55): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->createRepository()
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\InstallCommand->handle()
+#10 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()
+#11 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#12 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#13 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#14 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call(Array)
+#15 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(285): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArrayInput), Object(Illuminate\\Console\\OutputStyle))
+#16 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArrayInput), Object(Illuminate\\Console\\OutputStyle))
+#17 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArrayInput), Object(Symfony\\Component\\Console\\Output\\NullOutput))
+#18 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(41): Illuminate\\Console\\Command->runCommand('migrate:install', Array, Object(Symfony\\Component\\Console\\Output\\NullOutput))
+#19 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(146): Illuminate\\Console\\Command->callSilent('migrate:install', Array)
+#20 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/View/Components/Task.php(43): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->{closure:Illuminate\\Database\\Console\\Migrations\\MigrateCommand::prepareDatabase():145}()
+#21 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/View/Components/Factory.php(61): Illuminate\\Console\\View\\Components\\Task->render('Creating migrat...', Object(Closure))
+#22 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(145): Illuminate\\Console\\View\\Components\\Factory->__call('task', Array)
+#23 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(112): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#24 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(686): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->{closure:Illuminate\\Database\\Console\\Migrations\\MigrateCommand::runMigrations():111}()
+#25 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#26 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(90): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#27 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#28 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()
+#29 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#30 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#31 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#32 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call(Array)
+#33 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(285): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#34 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#35 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(1154): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#36 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(380): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#37 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(219): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#38 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(205): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#39 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#40 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#41 {main}
+"} 
+[2026-11-03 10:21:35] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 10:21:35 +0000
+Message-ID: <82450816db317dc829d64cc9220b1770@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 10:22:13] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ee-4871-709e-94b7-2914ccb3d1c5","email_hash":"be26ae42c14bddc1ab29e37218bb8f6a5c18b06fb40c98e326b01c3fd496f933","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:22:13] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ee-4871-709e-94b7-2914ccb3d1c5","email_hash":"be26ae42c14bddc1ab29e37218bb8f6a5c18b06fb40c98e326b01c3fd496f933","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:22:13] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ee-4871-709e-94b7-2914ccb3d1c5","email_hash":"be26ae42c14bddc1ab29e37218bb8f6a5c18b06fb40c98e326b01c3fd496f933","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:22:13] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a0ee-4a04-70c5-b902-c8fbd0df5d44","email_hash":"1ac756dd26291d5068f57beac103794ce996e060e82eeb8bafcabc65b68659f3","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 10:22:14] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a0ee-4c7d-7257-8580-77d524809f9b","email_hash":"f7f382a5869cdd5514da8b5f650daffca1dacfa2fbd259b88555995e12a5d8f4","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 10:22:14] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a0ee-4e52-727b-a9f1-3e7dac879bf8","email_hash":"e5b664a6e625dad608562184cd92e52e95ed7f7558c9df5dda7949f37b2ece58","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 11:31:50] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 11:31:50 +0000
+Message-ID: <0c31ea95f8053947167eb11114432c6f@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 11:35:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a131-ba06-72a7-bb49-841bfcd0c61f","email_hash":"693a3a5778d34990ab1c06ea871f2f9493aece0b90506757d7fd99743956f2c4","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 11:35:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a131-ba06-72a7-bb49-841bfcd0c61f","email_hash":"693a3a5778d34990ab1c06ea871f2f9493aece0b90506757d7fd99743956f2c4","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 11:35:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a131-ba06-72a7-bb49-841bfcd0c61f","email_hash":"693a3a5778d34990ab1c06ea871f2f9493aece0b90506757d7fd99743956f2c4","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 11:35:53] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a131-bbd6-70e5-8467-21f6a3c66f87","email_hash":"303ef6f9702547b7172aa08b4606cd4e99e3e1b1b23b8f1da1cb554a936f3115","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 11:35:54] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a131-bda0-72fb-b659-be1de3b2db99","email_hash":"ddc8e50ce28a75840a0bef6fb7452c79ecab54091951cb3aae0efd47489a2ac3","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 11:35:54] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a131-bff5-70f4-b6ac-6999110311ee","email_hash":"96e10d9bceeaa831e95de0171d6113f47489937562464f9ef5936468106f19d2","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 11:36:57] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 11:36:57 +0000
+Message-ID: <c2143cf7fb3ce6138260daedfe1b4dd4@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  

@@ -26,17 +26,17 @@ Date: 2026-11-03. Author role: deployment/SRE preparation. **No live deployment,
 
 None applied by Phase 11 to any production or dev database. Executed for test parity only: recreated disposable `erp_test` via CI-equivalent procedure and ran `DB_DATABASE=erp_test php artisan migrate --force` + full suite. The dev `erp` database was only queried read-only (`migrate:status`; no data changes).
 
-## 3. Test results (executed 2026-11-03, full detail: `STAGING_TEST_RESULTS.md`)
+## 3. Test results (executed 2026-11-03, re-verified same day ~18:10 local, full detail: `STAGING_TEST_RESULTS.md`)
 
 | Gate | Command | Result |
 |---|---|---|
-| Backend (CI parity) | fresh `erp_test` → migrate → `php artisan test` | **176 passed, 842 assertions, 0 failures** (94.34 s) |
+| Backend (CI parity) | fresh `erp_test` → migrate → `php artisan test` | **176 passed, 842 assertions, 0 failures** (94.34 s; re-run 99.17 s, identical counts) |
 | Backend first run (stale disposable DB) | — | 11 failures, root-caused environmental (migration-repository mid-wipe state), non-permanent; rerun per file passed; fresh-DB run fully green |
 | Frontend typecheck | `npm run check` | pass |
 | Frontend lint | `npm run lint` | pass |
 | Frontend unit | `npm run test -- --run` | 4 passed |
-| Frontend build | `npm run build` | success (bundle sizes recorded) |
-| Release-check gate | `php artisan erp:release-check` (local) | correctly FAILS locally (non-production env, insecure cookie, prefer-TLS) — gate functioning as designed |
+| Frontend build | `npm run build` | success (bundle sizes recorded; echarts + index chunks >500 kB warning noted) |
+| Release-check gate | `php artisan erp:release-check` (local) | correctly FAILS locally (non-production env, insecure cookie, prefer-TLS) — gate functioning as designed; `migrate:status` on dev `erp`: all 36 migrations Ran (read-only) |
 | Script syntax | `bash -n` on deploy/backup scripts | OK |
 
 ## 4. Deployment instructions (order of execution, after approval)
