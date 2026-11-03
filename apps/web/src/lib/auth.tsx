@@ -1,11 +1,12 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api, type User } from './api';
 
-type AuthValue = { user: User | null; isLoading: boolean; error: unknown; refresh: () => Promise<void> };
+type AuthValue = { user: User | null; isLoading: boolean; error: unknown; refresh: () => Promise<void>; reset: () => void };
 const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const client = useQueryClient();
   const query = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
@@ -15,7 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: false,
     staleTime: 60_000,
   });
-  return <AuthContext.Provider value={{ user: query.data ?? null, isLoading: query.isPending, error: query.error, refresh: async () => { await query.refetch(); } }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user: query.data ?? null, isLoading: query.isPending, error: query.error, refresh: async () => { await query.refetch(); }, reset: () => { client.setQueryData(['auth', 'me'], null); client.removeQueries({ queryKey: ['auth', 'me'], exact: true }); } }}>{children}</AuthContext.Provider>;
 }
 
 // The hook is intentionally colocated with its provider so route guards share one session source.

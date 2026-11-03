@@ -29,13 +29,23 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const tenantId = getActiveTenantId();
   const method = (init?.method ?? 'GET').toUpperCase();
   const csrfProtected = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+  const send = async (): Promise<Response> => fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}), ...(typeof window !== 'undefined' && window.localStorage.getItem(LOCALE_STORAGE_KEY) ? { 'X-Locale': window.localStorage.getItem(LOCALE_STORAGE_KEY)! } : {}), ...init?.headers } });
   try {
     if (csrfProtected) await csrf();
-    response = await fetch(`${API_URL}${path}`, { credentials: 'include', ...init, headers: { Accept: 'application/json', ...(xsrfToken() ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken()!) } : {}), ...(tenantId ? { 'X-Tenant-Id': tenantId } : {}), ...(typeof window !== 'undefined' && window.localStorage.getItem(LOCALE_STORAGE_KEY) ? { 'X-Locale': window.localStorage.getItem(LOCALE_STORAGE_KEY)! } : {}), ...init?.headers } });
-  }
-  catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend and check the API URL.`); }
+    response = await send();
+    // A session can be rotated by a previous failed login/MFA request. Refresh
+    // the CSRF cookie once so stale browser cookies do not strand the user.
+    if (response.status === 419 && csrfProtected) {
+      await csrf();
+      response = await send();
+    }
+  } catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend and check the API URL.`); }
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(response.status, body.message ?? `Request failed (${response.status}).`, body.errors ?? {});
+  if (!response.ok) {
+    if (response.status === 419) throw new ApiError(419, 'Your security session expired. Refresh the page and try the action again.');
+    if (response.status === 401) throw new ApiError(401, 'Your sign-in session has expired. Please sign in again.');
+    throw new ApiError(response.status, body.message ?? `Request failed (${response.status}).`, body.errors ?? {});
+  }
   return body as T;
 }
 
@@ -339,12 +349,13 @@ export const resendCompanyInvitation = (companyId: string, invitationId: string)
 export const revokeCompanyInvitation = (companyId: string, invitationId: string) => api<{ data: CompanyInvitation }>(`/companies/${companyId}/invitations/${invitationId}/revoke`, { method: 'POST' });
 export const previewInvitation = (token: string) => api<{ data: { status: string; company: { id: string; name: string; code: string } | null; role: { id: string; name: string; slug: string } | null; expires_at: string } }>(`/invitations/${encodeURIComponent(token)}/preview`);
 export const getMe = () => api<{ data: { id: string; name: string; email: string; permissions: string[] } }>('/me');
-export async function csrf(): Promise<void> { try { const response = await fetch(`${API_ORIGIN}/sanctum/csrf-cookie`, { credentials: 'include' }); if (!response.ok) throw new Error(`HTTP ${response.status}`); } catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend before signing in.`); } }
+export async function csrf(): Promise<void> { try { const response = await fetch(`${API_ORIGIN}/sanctum/csrf-cookie`, { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } }); if (!response.ok) throw new Error(`HTTP ${response.status}`); } catch { throw new ApiError(0, `Cannot reach the ERP API at ${API_ORIGIN}. Start the Laravel backend and check the API URL.`); } }
 type LoginMode = 'business' | 'platform';
-const authenticate = async (data: { email: string; password: string; remember?: boolean }, mode: LoginMode) => { await csrf(); const endpoint = mode === 'platform' ? '/auth/platform/login' : '/auth/business/login'; return api<{ data?: User; mfa_required?: boolean; mfa_enrollment_required?: boolean; workspace_access_required?: boolean }>(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); };
+const authenticate = async (data: { email: string; password: string; remember?: boolean }, mode: LoginMode) => { await csrf(); const endpoint = mode === 'platform' ? '/auth/platform/login' : '/auth/business/login'; const result = await api<{ data?: User; mfa_required?: boolean; mfa_enrollment_required?: boolean; workspace_access_required?: boolean }>(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); await csrf(); return result; };
 export const login = async (data: { email: string; password: string; remember?: boolean }) => { await csrf(); return api<{ data?: User; mfa_required?: boolean; workspace_access_required?: boolean }>('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); };
 export const businessLogin = (data: { email: string; password: string; remember?: boolean }) => authenticate(data, 'business');
 export const platformLogin = (data: { email: string; password: string; remember?: boolean }) => authenticate(data, 'platform');
+export const resendPlatformVerification = (email: string) => api<{ message: string }>('/auth/platform/verification/resend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
 export const logout = async () => { await api('/auth/logout', { method: 'POST' }); };
 export const register = async (data: { name: string; email: string; password: string; password_confirmation: string }) => { await csrf(); return api<{ data: User }>('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); };
 export const requestPasswordReset = async (email: string) => { await csrf(); return api<{ status: string }>('/auth/password/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }); };

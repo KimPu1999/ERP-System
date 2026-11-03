@@ -91,15 +91,19 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/business/login', [AuthController::class, 'businessLogin']);
         Route::post('/platform/login', [AuthController::class, 'platformLogin']);
+        Route::post('/platform/verification/resend', [EmailVerificationController::class, 'resendPlatform'])->middleware('throttle:5,10');
         Route::post('/platform/invitations/accept', [PlatformAdminInvitationController::class, 'accept']);
         Route::post('/password/email', [PasswordResetController::class, 'requestLink']);
         Route::post('/password/reset', [PasswordResetController::class, 'reset']);
         Route::post('/mfa/verify', [MfaController::class, 'verifyLogin']);
         Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->name('verification.verify');
     });
-    Route::middleware('auth:sanctum')->group(function (): void {
+    // Stateful Sanctum requests must start the Laravel session before the
+    // guard resolves the authenticated browser user. This is especially
+    // important after login regenerates the session for MFA enrollment.
+    Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
-        Route::middleware('active.user')->group(function (): void {
+        Route::middleware(['active.user', 'mfa.completed'])->group(function (): void {
             Route::get('/auth/me', [AuthController::class, 'me']);
             Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
             Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll'])->middleware(['web', 'throttle:5,10']);

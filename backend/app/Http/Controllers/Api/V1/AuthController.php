@@ -84,6 +84,7 @@ final class AuthController
             $newDevice = $this->isNewDevice($user, $request);
             Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
             $request->session()->regenerate();
+            $request->session()->regenerateToken();
             $request->session()->put(['auth.login_pending' => true, 'auth.new_device' => $newDevice, 'auth.mfa_mode' => $mode]);
             $events->record($request, 'auth.mfa_enrollment_required', $user->id, null, ['mode' => $mode]);
             return response()->json(['mfa_enrollment_required' => true, 'mfa_mode' => $mode], 202);
@@ -92,6 +93,7 @@ final class AuthController
         $newDevice = $this->isNewDevice($user, $request);
         Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
         $request->session()->regenerate();
+        $request->session()->regenerateToken();
         $user->forceFill(['last_login_at' => now()])->saveQuietly();
         $events->record($request, $mode === 'platform' ? 'auth.platform_login_succeeded' : 'auth.business_login_succeeded', $user->id);
         if ($newDevice) $events->record($request, 'auth.new_device', $user->id, null, ['device_hash' => hash('sha256', (string) $request->userAgent())]);

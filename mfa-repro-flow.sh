@@ -2,7 +2,7 @@
 # Reproduction of the Platform Super Admin MFA enrollment flow exactly as the SPA performs it:
 # csrf cookie (decoded like api.ts) -> platform login (202) -> /auth/me -> enroll -> confirm
 set -Eeuo pipefail
-API=http://localhost:8001
+API=${API_URL:-http://localhost:8000}
 JAR=/tmp/erp-mfa-repro.jar
 rm -f "$JAR"
 step() { printf '\n===== %s =====\n' "$1"; }

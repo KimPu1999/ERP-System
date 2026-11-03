@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\RateLimiter;
 
 final class EmailVerificationController
 {
@@ -44,6 +45,22 @@ final class EmailVerificationController
         $events->record($request, 'auth.verification_resent', null, null, ['delivery_status' => $result['status']]);
 
         return response()->json($result);
+    }
+
+    public function resendPlatform(Request $request, EmailVerificationDeliveryService $delivery): JsonResponse
+    {
+        $data = $request->validate(['email' => ['required', 'email', 'max:255']]);
+        $email = strtolower(trim($data['email']));
+        $key = 'platform-verification:'.sha1($email.'|'.$request->ip());
+
+        abort_if(! RateLimiter::attempt($key, 3, fn (): bool => true, 600), 429, 'Please wait before requesting another verification email.');
+
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($user && $user->is_platform_super_admin && ! $user->hasVerifiedEmail()) {
+            $delivery->send($user);
+        }
+
+        return response()->json(['message' => 'If the account is eligible, a verification email has been sent.']);
     }
 
     private function verificationResponse(Request $request, array $payload, string $frontendStatus, int $status = 200, ?string $mode = null): JsonResponse|RedirectResponse
