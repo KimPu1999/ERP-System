@@ -70,6 +70,7 @@ use App\Http\Controllers\Api\V1\PlatformAuditController;
 use App\Http\Controllers\Api\V1\PlatformUserController;
 use App\Http\Controllers\Api\V1\PlatformSettingsController;
 use App\Http\Controllers\Api\V1\PlatformAnalyticsController;
+use App\Http\Controllers\Api\V1\PlatformHealthController;
 use App\Http\Controllers\Api\V1\TenantSubscriptionController;
 use App\Http\Controllers\Api\V1\SupportController;
 use App\Http\Controllers\Api\V1\TenantExportController;
@@ -131,6 +132,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/security/events', [PlatformAuditController::class, 'security']);
             Route::get('/settings', PlatformSettingsController::class);
             Route::get('/analytics', PlatformAnalyticsController::class);
+            Route::get('/health', PlatformHealthController::class);
             Route::get('/users', [PlatformUserController::class, 'index']);
             Route::patch('/users/{user}/status', [PlatformUserController::class, 'changeStatus']);
             Route::get('/invitations', [PlatformAdminInvitationController::class, 'index']);

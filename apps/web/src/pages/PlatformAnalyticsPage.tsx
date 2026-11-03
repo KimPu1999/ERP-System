@@ -9,7 +9,7 @@ function countOf(rows: Array<{ status?: string; state?: string; count: number }>
 
 export function PlatformAnalyticsPage() {
   const { t } = useI18n();
-  const analytics = useQuery({ queryKey: ['platform-analytics'], queryFn: getPlatformAnalytics });
+  const analytics = useQuery({ queryKey: ['platform-analytics'], queryFn: () => getPlatformAnalytics() });
   const data = analytics.data?.data;
   const maxGrowth = Math.max(...(data?.business_growth.map((row) => row.count) ?? []), 1);
 

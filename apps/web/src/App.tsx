@@ -6,7 +6,7 @@ import { AuthenticatedRoute, BusinessRoute, PlatformRoute } from './components/P
 import { AuthLayout } from './layouts/AuthLayout';
 import { CompanyLayout } from './layouts/CompanyLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
-import { getHealth } from './lib/api';
+import { getPlatformHealth } from './lib/api';
 import { PlatformDashboard } from './pages/PlatformDashboard';
 import { TenantManagement } from './pages/TenantManagement';
 import { PlatformAdministratorsPage } from './pages/PlatformAdministratorsPage';
@@ -99,14 +99,17 @@ import { SupplierIntelligencePage } from './pages/SupplierIntelligencePage';
 import { ModernCustomerDirectoryPage } from './pages/CustomerDirectoryPage';
 import { ModernLeadDirectoryPage, ModernOpportunityPage } from './pages/CrmLeadsOpportunitiesPage';
 import { ModernActivitiesPage, ModernPipelinePage, ModernQuotationsPage } from './pages/CrmOperationsPages';
-import { I18nProvider, useI18n } from './lib/i18n';
+import { I18nProvider, useI18n, type TranslationKey } from './lib/i18n';
 
 const client = new QueryClient();
 
 function HealthPage() {
   const { t } = useI18n();
-  const health = useQuery({ queryKey: ['health'], queryFn: getHealth });
-  return <section className="platform-page page-section"><div className="platform-toolbar"><div><p className="eyebrow">{t('nav.monitoring')}</p><h1>{t('platform.systemHealth')}</h1><p className="muted">{t('platform.healthDescription')}</p></div><div className="platform-actions"><span className="date-chip">{t('dashboard.live')}</span><button className="button button-secondary" type="button" onClick={() => void health.refetch()} disabled={health.isFetching}><RefreshCw size={15} /> {t('common.refresh')}</button></div></div>{health.isError && <div className="alert alert-danger" role="alert">{health.error.message}<button className="table-action" type="button" onClick={() => void health.refetch()}>{t('common.retry')}</button></div>}{health.isLoading && <div className="panel" role="status">{t('platform.checking')}</div>}<div className="metric-grid"><div className="metric"><span>{t('platform.apiService')}</span><strong className={health.data?.status === 'ok' ? 'text-success' : ''}>{health.data?.status ?? (health.isError ? t('platform.unavailable') : t('platform.checking'))}</strong></div><div className="metric"><span>{t('platform.database')}</span><strong>{health.data ? (health.data.checks.database ? t('platform.connected') : t('platform.unavailable')) : '—'}</strong></div><div className="metric"><span>{t('platform.cache')}</span><strong>{health.data ? (health.data.checks.cache ? t('platform.connected') : t('platform.unavailable')) : '—'}</strong></div></div></section>;
+  const health = useQuery({ queryKey: ['platform-health'], queryFn: getPlatformHealth, staleTime: 30_000 });
+  const data = health.data?.data;
+  const healthLabels: Record<string, TranslationKey> = { database: 'platform.health.database', cache: 'platform.health.cache', queue: 'platform.health.queue', mail: 'platform.health.mail', scheduler: 'platform.health.scheduler' };
+  const statusLabel = (status: string) => status === 'healthy' ? t('platform.healthy') : status === 'degraded' ? t('platform.degraded') : status === 'configured' ? t('platform.configured') : status === 'not_configured' ? t('platform.notConfigured') : t('platform.unknown');
+  return <section className="platform-page page-section"><div className="platform-toolbar"><div><p className="eyebrow">{t('nav.monitoring')}</p><h1>{t('platform.systemHealth')}</h1><p className="muted">{t('platform.healthDescription')}</p></div><div className="platform-actions"><span className="date-chip">{data ? statusLabel(data.status) : t('platform.checking')}</span><button className="button button-secondary" type="button" onClick={() => void health.refetch()} disabled={health.isFetching}><RefreshCw size={15} /> {t('common.refresh')}</button></div></div>{health.isError && <div className="alert alert-danger" role="alert">{health.error.message}<button className="table-action" type="button" onClick={() => void health.refetch()}>{t('common.retry')}</button></div>}{health.isLoading && <div className="panel" role="status">{t('platform.checking')}</div>}{data && <div className="metric-grid">{Object.entries(data.checks).map(([name, check]) => <div className="metric" key={name}><span>{t(healthLabels[name])}</span><strong>{statusLabel(check.status)}</strong>{check.detail && <small className="muted">{check.detail}</small>}</div>)}</div>}</section>;
 }
 
 export default function App() {

@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\CarbonImmutable;
 use App\Models\{Company, Invitation, Permission, Role, RoleAssignment, Tenant, TenantMembership, User};
 use Illuminate\Support\Facades\Mail;
 
@@ -64,6 +65,48 @@ it('returns live platform analytics only to platform administrators', function (
         ->and(collect($response->json('data.platform_users_by_status'))->sum('count'))->toBe(1);
 
     $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/analytics')->assertForbidden();
+});
+
+it('applies reporting timezone and custom date boundaries to growth metrics', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    $reportingDay = CarbonImmutable::now('Asia/Yangon')->subDays(2)->startOfDay();
+
+    Tenant::factory()->create([
+        'created_at' => $reportingDay->addHours(2)->setTimezone('UTC'),
+        'updated_at' => $reportingDay->addHours(2)->setTimezone('UTC'),
+    ]);
+    Tenant::factory()->create([
+        'created_at' => $reportingDay->subDay()->addHours(2)->setTimezone('UTC'),
+        'updated_at' => $reportingDay->subDay()->addHours(2)->setTimezone('UTC'),
+    ]);
+
+    $response = $this->actingAs($platform)->getJson('/api/v1/platform/summary?period=custom&granularity=daily&from='.$reportingDay->format('Y-m-d').'&to='.$reportingDay->format('Y-m-d'))->assertOk();
+
+    expect($response->json('summary.reporting_timezone'))->toBe('Asia/Yangon')
+        ->and($response->json('summary.filters.period'))->toBe('custom')
+        ->and($response->json('summary.filters.granularity'))->toBe('daily')
+        ->and($response->json('summary.business_growth'))->toHaveCount(1)
+        ->and($response->json('summary.business_growth.0.bucket'))->toBe($reportingDay->format('Y-m-d'))
+        ->and($response->json('summary.business_growth.0.count'))->toBe(1);
+});
+
+it('exposes protected platform health checks without leaking configuration secrets', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+
+    $this->getJson('/api/v1/platform/health')->assertUnauthorized();
+
+    $response = $this->actingAs($platform)->getJson('/api/v1/platform/health')->assertOk();
+    $response->assertJsonStructure(['data' => ['status', 'checked_at', 'checks' => ['database', 'cache', 'queue', 'mail', 'scheduler']]])
+        ->assertJsonMissing(['APP_KEY', 'password', 'token']);
+
+    $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/health')->assertForbidden();
+});
+
+it('rejects incomplete custom reporting ranges', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+
+    $this->actingAs($platform)->getJson('/api/v1/platform/summary?period=custom&from=2026-01-01')->assertUnprocessable();
+    $this->actingAs($platform)->getJson('/api/v1/platform/analytics?period=custom&from=2026-01-03&to=2026-01-01')->assertUnprocessable();
 });
 
 it('protects platform audit and security event views from business users', function (): void {

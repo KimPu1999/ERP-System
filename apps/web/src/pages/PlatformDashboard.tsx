@@ -1,48 +1,81 @@
+import ReactECharts from 'echarts-for-react';
+import type { EChartsOption } from 'echarts';
+import { AlertTriangle, BarChart3, Building2, CheckCircle2, Clock3, FileBarChart2, RefreshCw, ShieldCheck, Users, WalletCards } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Building2, RefreshCw, ShieldCheck, Users, WalletCards } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getPlatformSummary } from '../lib/api';
-import { useI18n } from '../lib/i18n';
+import { getPlatformSummary, type PlatformOverviewParams, type PlatformSummary } from '../lib/api';
+import { useI18n, type TranslationKey } from '../lib/i18n';
 
-const cards = [
-  ['total_businesses', 'platform.businesses', Building2],
-  ['active_businesses', 'platform.activeBusinesses', ShieldCheck],
-  ['pending_approvals', 'platform.pendingApprovals', Building2],
-  ['total_platform_users', 'platform.platformUsers', Users],
-  ['active_subscriptions', 'platform.activeSubscriptions', WalletCards],
-  ['system_alerts', 'platform.systemAlerts', AlertTriangle],
-] as const;
+type Period = NonNullable<PlatformOverviewParams['period']>;
+type CardKey = 'total_businesses' | 'active_businesses' | 'pending_approvals' | 'total_users' | 'active_subscriptions' | 'system_alerts';
 
-function date(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : '—';
-}
+const cards: Array<{ key: CardKey; label: TranslationKey; icon: typeof Building2; to?: string }> = [
+  { key: 'total_businesses', label: 'platform.totalBusinesses', icon: Building2, to: '/platform/tenants' },
+  { key: 'active_businesses', label: 'platform.activeBusinesses', icon: ShieldCheck, to: '/platform/tenants?status=active' },
+  { key: 'pending_approvals', label: 'platform.pendingApprovals', icon: Clock3, to: '/platform/tenants?status=pending' },
+  { key: 'total_users', label: 'platform.totalUsers', icon: Users, to: '/platform/users' },
+  { key: 'active_subscriptions', label: 'platform.activeSubscriptions', icon: WalletCards, to: '/platform/control' },
+  { key: 'system_alerts', label: 'platform.systemAlerts', icon: AlertTriangle, to: '/platform/monitoring' },
+];
 
 export function PlatformDashboard() {
-  const { t } = useI18n();
-  const summary = useQuery({ queryKey: ['platform-summary'], queryFn: getPlatformSummary });
+  const { t, formatDate, formatNumber } = useI18n();
+  const [period, setPeriod] = useState<Period>('monthly');
+  const [granularity, setGranularity] = useState<NonNullable<PlatformOverviewParams['granularity']>>('monthly');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const params: PlatformOverviewParams = period === 'custom' ? { period, granularity, from: from || undefined, to: to || undefined } : { period };
+  const summary = useQuery({
+    queryKey: ['platform-summary', params],
+    queryFn: () => getPlatformSummary(params),
+    enabled: period !== 'custom' || Boolean(from && to),
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
+  });
   const values = summary.data?.summary;
+  const alerts = values?.system_alerts;
   const growth = values?.business_growth ?? [];
-  const maxGrowth = Math.max(...growth.map((item) => item.count), 1);
+  const statusSnapshot = values?.business_status_snapshot ?? [];
+  const subscriptionStates = values?.subscription_states ?? [];
+  const subscriptionAnalytics = values?.subscription_analytics ?? { available: false, reason: t('platform.subscriptionUnavailable') };
+  const reportingTimezone = values?.reporting_timezone ?? 'UTC';
+  const chartOption = useGrowthChart(growth, t('platform.newBusinesses'));
+  const errorMessage = summary.error instanceof Error ? summary.error.message : t('platform.unableLoadOverview');
+  const resetFilters = () => { setPeriod('monthly'); setGranularity('monthly'); setFrom(''); setTo(''); };
 
   return <section className="platform-page page-section">
-    <div className="platform-toolbar">
-      <div><p className="eyebrow">{t('app.platform')}</p><h1>{t('nav.overview')}</h1><p className="muted">{t('platform.dashboardSubtitle')}</p></div>
-      <div className="platform-actions"><button className="button button-secondary" type="button" onClick={() => void summary.refetch()} disabled={summary.isFetching}><RefreshCw size={15} /> {t('common.refresh')}</button><Link className="button button-primary" to="/platform/tenants">{t('platform.manageBusinesses')}</Link></div>
-    </div>
-    {summary.isError && <div className="alert alert-danger" role="alert">{summary.error.message}<button className="table-action" type="button" onClick={() => void summary.refetch()}>{t('common.retry')}</button></div>}
-    {summary.isLoading && <div className="panel" role="status">{t('common.loading')}</div>}
-    {!summary.isLoading && !summary.isError && !values && <div className="panel" role="status">{t('common.noData')}</div>}
-    {!summary.isLoading && !summary.isError && values && <>
-      <div className="platform-kpi-grid">{cards.map(([key, label, Icon]) => { const value = key === 'system_alerts' ? values.system_alerts.total : values[key]; return <div className="platform-kpi" key={key}><span className="platform-kpi-icon"><Icon size={16} /></span><span>{t(label)}</span><strong>{value}</strong></div>; })}</div>
-      <div className="platform-dashboard-grid">
-        <div className="panel"><div className="table-card-heading"><div><h2>{t('platform.businessGrowth')}</h2><p className="muted">{t('platform.growthDescription')}</p></div></div><div className="platform-growth-list">{growth.length ? growth.map((item) => <div className="platform-growth-row" key={item.month}><span>{item.month}</span><div className="platform-growth-track"><span style={{ width: `${(item.count / maxGrowth) * 100}%` }} /></div><strong>{item.count}</strong></div>) : <p className="muted">{t('platform.noRegistrationsWindow')}</p>}</div></div>
-        <div className="panel"><div className="table-card-heading"><div><h2>{t('platform.systemAlerts')}</h2><p className="muted">{t('platform.alertsDescription')}</p></div><Link className="text-link" to="/platform/monitoring">{t('platform.openMonitoring')}</Link></div><div className="platform-alert-list"><div><span>{t('platform.pendingBusinesses')}</span><strong>{values.system_alerts.pending_businesses}</strong></div><div><span>{t('platform.pastDueSubscriptions')}</span><strong>{values.system_alerts.past_due_subscriptions}</strong></div><div><span>{t('platform.failedLogins24h')}</span><strong>{values.system_alerts.failed_logins_last_24h}</strong></div></div></div>
-      </div>
-      <div className="platform-dashboard-grid">
-        <div className="platform-table-card"><div className="table-card-heading"><h2>{t('platform.recentRegistrations')}</h2><Link className="text-link" to="/platform/tenants">{t('platform.viewAll')}</Link></div><div className="table-scroll"><table><thead><tr><th>{t('platform.businesses')}</th><th>{t('platform.account')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{values.recent_registrations.length ? values.recent_registrations.map((tenant) => <tr key={tenant.id}><td><strong>{tenant.name}</strong><small className="muted">{tenant.slug}</small></td><td><span className={`platform-status ${tenant.status}`}>{tenant.status}</span></td><td>{date(tenant.created_at)}</td></tr>) : <tr><td colSpan={3} className="muted">{t('platform.noRegistrations')}</td></tr>}</tbody></table></div></div>
-        <div className="platform-table-card"><div className="table-card-heading"><h2>{t('platform.recentActivity')}</h2><Link className="text-link" to="/platform/monitoring">{t('platform.viewMonitoring')}</Link></div><div className="table-scroll"><table><thead><tr><th>{t('platform.actions')}</th><th>{t('platform.actor')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{values.recent_activities.length ? values.recent_activities.map((activity) => <tr key={activity.id}><td>{activity.action}</td><td>{activity.actor?.email ?? 'System'}</td><td>{date(activity.created_at)}</td></tr>) : <tr><td colSpan={3} className="muted">{t('platform.noActivity')}</td></tr>}</tbody></table></div></div>
-      </div>
-      <div className="panel platform-quick-actions"><div className="table-card-heading"><div><h2>{t('platform.quickActions')}</h2><p className="muted">{t('platform.quickActionsDescription')}</p></div></div><div className="platform-actions"><Link className="button button-secondary" to="/platform/tenants">{t('platform.reviewBusinesses')}</Link><Link className="button button-secondary" to="/platform/invitations">{t('platform.inviteAdministrator')}</Link><Link className="button button-secondary" to="/platform/control">{t('platform.manageBilling')}</Link><Link className="button button-secondary" to="/platform/monitoring">{t('platform.checkSystemHealth')}</Link></div></div>
+    <div className="platform-toolbar platform-overview-toolbar"><div><p className="eyebrow">{t('app.platform')}</p><h1>{t('nav.overview')}</h1></div><div className="platform-actions"><span className="platform-scope-note">{t('platform.globalKpisNote')}</span><button className="button button-secondary" type="button" onClick={() => void summary.refetch()} disabled={summary.isFetching || !summary.data}><RefreshCw size={15} /> {t('common.refresh')}</button></div></div>
+    <div className="platform-overview-filter-bar"><label><span>{t('platform.reportingPeriod')}</span><select value={period} onChange={(event) => setPeriod(event.target.value as Period)}><option value="daily">{t('platform.periodDaily')}</option><option value="weekly">{t('platform.periodWeekly')}</option><option value="monthly">{t('platform.periodMonthly')}</option><option value="yearly">{t('platform.periodYearly')}</option><option value="custom">{t('platform.periodCustom')}</option></select></label>{period === 'custom' && <><label><span>{t('platform.from')}</span><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label><label><span>{t('platform.to')}</span><input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label><label><span>{t('platform.chartGranularity')}</span><select value={granularity} onChange={(event) => setGranularity(event.target.value as NonNullable<PlatformOverviewParams['granularity']>)}><option value="daily">{t('platform.periodDaily')}</option><option value="weekly">{t('platform.periodWeekly')}</option><option value="monthly">{t('platform.periodMonthly')}</option><option value="yearly">{t('platform.periodYearly')}</option></select></label></>}<button className="button button-secondary" type="button" onClick={resetFilters}>{t('platform.resetFilters')}</button>{values && <span className="platform-filter-updated">{t('platform.lastUpdated')}: {formatDate(values.last_updated_at, { dateStyle: 'short', timeStyle: 'short' })}</span>}</div>
+    {summary.isError && <div className="alert alert-danger" role="alert">{errorMessage}<button className="table-action" type="button" onClick={() => void summary.refetch()}>{t('common.retry')}</button></div>}
+    {period === 'custom' && (!from || !to) && <div className="panel" role="status">{t('platform.chooseDateRange')}</div>}
+    {summary.isLoading && <div className="platform-kpi-grid" aria-label={t('common.loading')}>{cards.map((card) => <div className="platform-kpi platform-kpi-skeleton" key={card.key} role="status" />)}</div>}
+    {!summary.isLoading && !summary.isError && !values && period !== 'custom' && <div className="panel" role="status">{t('common.noData')}</div>}
+    {values && <>
+      <div className="platform-kpi-grid">{cards.map(({ key, label, icon: Icon, to }) => { const value = key === 'system_alerts' ? alerts?.total ?? 0 : values[key]; return <article className="platform-kpi" key={key}><span className="platform-kpi-icon"><Icon size={16} aria-hidden="true" /></span><span>{t(label)}</span><strong aria-label={`${t(label)}: ${formatNumber(value)}`}>{formatNumber(value)}</strong>{to && <Link className="platform-kpi-link" to={to}>{t('platform.view')} →</Link>}</article>; })}</div>
+      <div className="platform-dashboard-grid platform-overview-main-grid"><article className="panel platform-chart-panel"><div className="table-card-heading"><div><h2>{t('platform.businessGrowth')}</h2><p className="muted">{t('platform.growthDescription')}</p></div><span className="platform-data-note">{reportingTimezone}</span></div>{summary.isFetching && <div className="platform-chart-refresh" role="status">{t('common.loading')}</div>}{growth.length && growth.some((row) => row.count > 0) ? <ReactECharts option={chartOption} notMerge lazyUpdate style={{ width: '100%', height: 245 }} opts={{ renderer: 'svg' }} /> : <div className="platform-empty-state"><BarChart3 size={18} /><span>{t('platform.noRegistrationsWindow')}</span></div>}</article><article className="panel"><div className="table-card-heading"><div><h2>{t('platform.systemAlerts')}</h2><p className="muted">{t('platform.alertsDescription')}</p></div><Link className="text-link" to="/platform/monitoring">{t('platform.openMonitoring')}</Link></div><div className="platform-alert-list"><AlertRow label={t('platform.pendingBusinesses')} value={alerts?.pending_businesses ?? 0} formatNumber={formatNumber} /><AlertRow label={t('platform.pastDueSubscriptions')} value={alerts?.past_due_subscriptions ?? 0} formatNumber={formatNumber} /><AlertRow label={t('platform.failedLogins24h')} value={alerts?.failed_logins_last_24h ?? 0} formatNumber={formatNumber} /></div></article></div>
+      <div className="platform-dashboard-grid"><article className="panel"><div className="table-card-heading"><h2>{t('platform.businessStatusSnapshot')}</h2></div><div className="platform-alert-list">{statusSnapshot.length ? statusSnapshot.map((row) => <AlertRow label={row.status} value={row.count} formatNumber={formatNumber} key={row.status} />) : <p className="muted">{t('platform.noAnalyticsData')}</p>}</div></article><article className="panel"><div className="table-card-heading"><div><h2>{t('platform.subscriptionStates')}</h2><p className="muted">{subscriptionAnalytics.available ? '' : subscriptionAnalytics.reason ?? t('platform.subscriptionUnavailable')}</p></div></div><div className="platform-alert-list">{subscriptionStates.length ? subscriptionStates.map((row) => <AlertRow label={row.state} value={row.count} formatNumber={formatNumber} key={row.state} />) : <p className="muted">{t('platform.noSubscriptions')}</p>}</div></article></div>
+      <div className="platform-dashboard-grid"><article className="platform-table-card"><div className="table-card-heading"><h2>{t('platform.recentRegistrations')}</h2><Link className="text-link" to="/platform/tenants">{t('platform.viewAll')}</Link></div><div className="table-scroll"><table><thead><tr><th>{t('platform.businesses')}</th><th>{t('platform.ownerAdmin')}</th><th>{t('platform.created')}</th><th>{t('accounting.status')}</th><th>{t('platform.actions')}</th></tr></thead><tbody>{values.recent_registrations.length ? values.recent_registrations.map((tenant) => <tr key={tenant.id}><td><Link className="platform-entity-link" to={`/platform/tenants/${tenant.id}`}><strong>{tenant.name}</strong></Link><small className="muted">{tenant.slug}</small></td><td>{tenant.owner ? <><strong>{tenant.owner.name}</strong><small className="muted">{tenant.owner.email}</small></> : '—'}</td><td>{formatDate(tenant.created_at)}</td><td><span className={`platform-status ${tenant.status}`}>{tenant.status}</span></td><td><Link className="button button-secondary button-small" to={`/platform/tenants/${tenant.id}`}>{t('platform.view')}</Link></td></tr>) : <tr><td colSpan={5} className="muted">{t('platform.noRegistrations')}</td></tr>}</tbody></table></div></article><article className="platform-table-card"><div className="table-card-heading"><h2>{t('platform.recentActivity')}</h2><Link className="text-link" to="/platform/audit-logs">{t('platform.viewMonitoring')}</Link></div><div className="table-scroll"><table><thead><tr><th>{t('platform.actions')}</th><th>{t('platform.actor')}</th><th>{t('platform.record')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{values.recent_activities.length ? values.recent_activities.map((activity) => <tr key={activity.id}><td>{activity.action}</td><td>{activity.actor?.name ?? t('platform.system')}</td><td>{activity.resource?.type ? `${activity.resource.type} · ${activity.resource.id ?? '—'}` : '—'}</td><td>{formatDate(activity.created_at)}</td></tr>) : <tr><td colSpan={4} className="muted">{t('platform.noActivity')}</td></tr>}</tbody></table></div></article></div>
+      <div className="panel platform-quick-actions"><div className="table-card-heading"><div><h2>{t('platform.quickActions')}</h2><p className="muted">{t('platform.quickActionsDescription')}</p></div></div><div className="platform-actions"><Link className="button button-secondary" to="/platform/tenants?create=1"><Building2 size={15} />{t('platform.addBusiness')}</Link><Link className="button button-secondary" to="/platform/tenants?status=pending"><Clock3 size={15} />{t('platform.reviewBusinesses')}</Link><Link className="button button-secondary" to="/platform/administrators"><Users size={15} />{t('platform.manageAdministrators')}</Link><Link className="button button-secondary" to="/platform/analytics"><FileBarChart2 size={15} />{t('platform.viewReports')}</Link><Link className="button button-secondary" to="/platform/monitoring"><CheckCircle2 size={15} />{t('platform.checkSystemHealth')}</Link></div></div>
     </>}
   </section>;
+}
+
+function AlertRow({ label, value, formatNumber }: { label: string; value: number; formatNumber: (value: number) => string }) {
+  return <div><span>{label}</span><strong>{formatNumber(value)}</strong></div>;
+}
+
+function useGrowthChart(growth: PlatformSummary['business_growth'], seriesName: string): EChartsOption {
+  const labels = growth.map((row) => row.label ?? row.month ?? row.bucket);
+  const values = growth.map((row) => row.count);
+  return useMemo(() => ({
+    animationDuration: 350,
+    aria: { enabled: true },
+    tooltip: { trigger: 'axis' },
+    legend: { bottom: 0, data: [seriesName], textStyle: { color: '#64748B', fontSize: 11 } },
+    grid: { top: 18, right: 14, bottom: 38, left: 46 },
+    xAxis: { type: 'category', boundaryGap: false, data: labels, axisLabel: { color: '#64748B', fontSize: 10, hideOverlap: true } },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: { color: '#64748B', fontSize: 10 }, splitLine: { lineStyle: { color: '#E2E8F0' } } },
+    series: [{ name: seriesName, type: 'line', smooth: true, showSymbol: false, data: values, lineStyle: { width: 2, color: '#2563EB' }, itemStyle: { color: '#2563EB' }, areaStyle: { color: 'rgba(37,99,235,.12)' } }],
+  }), [labels, seriesName, values]);
 }

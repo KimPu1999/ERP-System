@@ -13,7 +13,7 @@ export function TenantManagement() {
   const [filters, setFilters] = useState({ search: '', owner_email: '', status: '', plan_id: '', created_from: '', created_to: '' });
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(() => new URLSearchParams(window.location.search).get('create') === '1');
   const [form, setForm] = useState<PlatformTenantInput>(emptyForm);
   const query = { ...filters, page, per_page: perPage };
   const tenants = useQuery({ queryKey: ['platform-tenants', query], queryFn: () => getPlatformTenants(query) });
