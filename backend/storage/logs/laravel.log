@@ -99699,3 +99699,73 @@ This is a platform email configuration test. It contains no authentication or re
 #33 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
 #34 {main}
 "} 
+[2026-11-03 14:02:52] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1b8-4cbd-73c5-b6b5-6c228a2fa40e","email_hash":"490265cab7eafd0b872786514801824163eb1ff5d15e7fb8ba19bafb882e2f79","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:02:52] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1b8-4cbd-73c5-b6b5-6c228a2fa40e","email_hash":"490265cab7eafd0b872786514801824163eb1ff5d15e7fb8ba19bafb882e2f79","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:02:52] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1b8-4cbd-73c5-b6b5-6c228a2fa40e","email_hash":"490265cab7eafd0b872786514801824163eb1ff5d15e7fb8ba19bafb882e2f79","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:02:52] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1b8-4e2c-7226-815d-3d6117db8b69","email_hash":"2f282056a6fc290f4642bfdf35914be6d42d0915e0b1f149dfdec4e79286632f","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:02:53] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a1b8-4f7e-7132-a773-0eb44ff696b2","email_hash":"3254b332e6d794fe69e4df1d6d5e40ebf5fa3c661002a04d255e3ecfebf30078","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 14:02:53] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a1b8-50d4-7131-8fd9-6982dd031478","email_hash":"a23f8294efa408d05fef58b27b6a5061cc6f4257f0633abb93dfb25e4ada10cc","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 14:03:57] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 14:03:57 +0000
+Message-ID: <cbc3c7769be067c8a2e1e6703b389fcd@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 14:07:50] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bc-da7a-73f7-800b-77808eebcc3d","email_hash":"ba2891cb1e80946bd7ef849989f248dfd04cfa6603f1df7f81e7ee1a749f61f0","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:07:50] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bc-da7a-73f7-800b-77808eebcc3d","email_hash":"ba2891cb1e80946bd7ef849989f248dfd04cfa6603f1df7f81e7ee1a749f61f0","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:07:50] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bc-da7a-73f7-800b-77808eebcc3d","email_hash":"ba2891cb1e80946bd7ef849989f248dfd04cfa6603f1df7f81e7ee1a749f61f0","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:07:51] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bc-dc46-7049-8137-6c4c7e5dd13f","email_hash":"3e8803d42862dd1a92bc0d4652b62c291d07cb680b4b2feb90e5752ff834ac84","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:07:51] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a1bc-dde5-739b-b8f5-93d2d9cc6bde","email_hash":"3835f70d30380c0835a7ab4e8bac12b61c8bac4e69b8e1188b9db127a1a7f6e6","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 14:07:52] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a1bc-df46-73b4-b808-14f89fc9328a","email_hash":"32e5387445fbb002c8e624b3217f2d6d4a8fcbde69b592b6fcf3c504722b40aa","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 14:08:20] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bd-4d8a-7021-be61-08822d7e0d10","email_hash":"0be5bed3f4ccf58a2c70043e9d0ddce6cd6e1a5018ad465d9dec76fa32b1ec2d","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:08:20] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bd-4d8a-7021-be61-08822d7e0d10","email_hash":"0be5bed3f4ccf58a2c70043e9d0ddce6cd6e1a5018ad465d9dec76fa32b1ec2d","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:08:20] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bd-4d8a-7021-be61-08822d7e0d10","email_hash":"0be5bed3f4ccf58a2c70043e9d0ddce6cd6e1a5018ad465d9dec76fa32b1ec2d","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:08:20] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1bd-4ee8-7020-88af-8bb6d6bded46","email_hash":"74c51eb3d1d36753d7af3cb185499edb50d6733cc6d3c6fdbb1068f543e5143a","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:08:21] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a1bd-5037-72da-856f-89bcac3f0269","email_hash":"1c3cf3535074c7c1e9ccd09f162edee7c53abc4c0c8db6a42d34f55efbe90943","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 14:08:21] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a1bd-51e4-72ac-bed6-e332619aae21","email_hash":"606192e4bd0dd589466fa7fb6a37a47baaeb17d4a811f5c661090bd4d5832a48","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 14:09:25] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 14:09:25 +0000
+Message-ID: <bae2b89ab754e41e0a145a0a0e5a8b6d@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 14:18:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1c6-a968-7339-840e-e9df9334cf62","email_hash":"60f92274e99945dbbabcfc63ebeadbad549a66e119d568bc209b1b166b676f09","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:18:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1c6-a968-7339-840e-e9df9334cf62","email_hash":"60f92274e99945dbbabcfc63ebeadbad549a66e119d568bc209b1b166b676f09","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:18:33] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1c6-a968-7339-840e-e9df9334cf62","email_hash":"60f92274e99945dbbabcfc63ebeadbad549a66e119d568bc209b1b166b676f09","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:18:34] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1c6-aade-7294-a389-16d58af3f634","email_hash":"5c57dc0af59b56bf139392d8e4c371d11ca319beb37db4bed61cce095ea74912","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:18:34] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a1c6-ac53-7150-87c1-f01b221d484c","email_hash":"f0711056b830d4c9950453fc42b4dd55ad2d558feed971f6948261aeae21d108","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 14:18:34] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a1c6-adc7-72fd-bbd9-4f2e4b7a612f","email_hash":"a70854b08bdcf7bc5694c5827a04208fb61caf227af32658c74160200a786f63","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 14:19:50] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 14:19:50 +0000
+Message-ID: <4c7c860256211e4a3a7a82ebb6e2be5a@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-03 14:22:56] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1ca-a9f7-7114-b58d-9e0c609dfeef","email_hash":"a5b10241e428be0195a950ba9e0e0b5b23104be88a97c5a56b55d9144cbc8199","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:22:56] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1ca-a9f7-7114-b58d-9e0c609dfeef","email_hash":"a5b10241e428be0195a950ba9e0e0b5b23104be88a97c5a56b55d9144cbc8199","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:22:56] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1ca-a9f7-7114-b58d-9e0c609dfeef","email_hash":"a5b10241e428be0195a950ba9e0e0b5b23104be88a97c5a56b55d9144cbc8199","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:22:56] testing.NOTICE: Email verification was not externally delivered. {"user_id":"01a1a1ca-abbe-720e-847e-4194aaab6632","email_hash":"f9ade01e30da5e64c8ceeab4ed9530145836b933d78efebd8563fe7ce67861e0","mailer":"log","status":"not_delivered","reason":"non_delivery_transport"} 
+[2026-11-03 14:22:56] testing.INFO: Email verification was accepted by the configured mail transport. {"user_id":"01a1a1ca-ad0d-71e7-b60f-10888feade42","email_hash":"102b5df652fdca8fe41a23b36061356671a33824cc2e429b1a161bbb8a5c35a3","mailer":"smtp","status":"accepted_by_configured_mailer"} 
+[2026-11-03 14:22:57] testing.WARNING: Email verification delivery failed. {"user_id":"01a1a1ca-ae83-7201-b06c-68b8ed1538e1","email_hash":"6c538a998357954a57e71b2f2ec346b1feacfdbe4c0d071cfed17ee4804b0d52","mailer":"smtp","status":"failed","exception":"RuntimeException"} 
+[2026-11-03 14:24:10] testing.DEBUG: From: Enterprise ERP Cloud <no-reply@example.test>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Tue, 03 Nov 2026 14:24:10 +0000
+Message-ID: <a88b34ee35af67707ccf473d8ea4de41@example.test>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  

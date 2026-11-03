@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { ApiError, api } from '../lib/api';
@@ -15,10 +15,13 @@ export function PlatformMfaEnrollmentPage({ mode = 'platform' }: { mode?: 'platf
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const enrollmentRequestStarted = useRef(false);
   useEffect(() => {
     if (authLoading) return;
     if (!user || (mode === 'platform' ? !user.is_platform_super_admin : user.is_platform_super_admin)) { navigate(mode === 'platform' ? '/platform/login' : '/login', { replace: true }); return; }
     if (user.mfa_enabled_at) { navigate(mode === 'platform' ? '/platform' : '/', { replace: true }); return; }
+    if (enrollmentRequestStarted.current) return;
+    enrollmentRequestStarted.current = true;
     void api<{ secret: string; otpauth_uri: string }>('/auth/mfa/enroll', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).then(setEnrollment).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : t('security.mfaStartError'))).finally(() => setLoading(false));
   }, [authLoading, mode, navigate, t, user]);
   useEffect(() => {
@@ -26,6 +29,7 @@ export function PlatformMfaEnrollmentPage({ mode = 'platform' }: { mode?: 'platf
     void QRCode.toDataURL(enrollment.otpauth_uri, { width: 220, margin: 1, errorCorrectionLevel: 'M' }).then(setQrCode).catch(() => setError(t('security.mfaQrError')));
   }, [enrollment, t]);
   const startEnrollment = () => {
+    enrollmentRequestStarted.current = true;
     setLoading(true); setError(''); setEnrollment(null); setQrCode(null); setCode('');
     void api<{ secret: string; otpauth_uri: string }>('/auth/mfa/enroll', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       .then(setEnrollment).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : t('security.mfaStartError'))).finally(() => setLoading(false));

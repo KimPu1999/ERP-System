@@ -88,9 +88,7 @@ final class BranchController
         $data = $request->validate($this->rules($company));
         $this->validateManager($data['manager_user_id'] ?? null, $company, null, $authorization);
         $employeeIds = $this->validateAssignedStaff($data['assigned_staff'] ?? [], $company, $tenantId);
-        $subscriptions->limit($tenantId, 'branches', Branch::where('tenant_id', $tenantId)->count());
-
-        $branch = DB::transaction(function () use ($data, $employeeIds, $tenantId, $company, $request, $audit): Branch {
+        $branch = $subscriptions->withinLimit($tenantId, 'branches', fn (): int => Branch::where('tenant_id', $tenantId)->count(), function () use ($data, $employeeIds, $tenantId, $company, $request, $audit): Branch {
             $branch = Branch::create($this->branchAttributes($data, $tenantId, $company->id));
             if ($employeeIds !== []) Employee::where('tenant_id', $tenantId)->whereIn('id', $employeeIds)->update(['branch_id' => $branch->id]);
             $audit->record($request, 'branch.created', $tenantId, $branch, ['company_id' => $company->id]);

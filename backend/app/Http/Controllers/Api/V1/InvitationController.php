@@ -16,10 +16,10 @@ use App\Models\TenantMembership;
 use App\Services\AuditLogger;
 use App\Services\AuthorizationService;
 use App\Services\SecurityEventLogger;
+use App\Services\SubscriptionService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -82,7 +82,7 @@ final class InvitationController
         return response()->json(['data' => ['status' => $this->currentStatus($invitation), 'company' => $invitation->company?->only(['id', 'name', 'code']), 'role' => $invitation->role?->only(['id', 'name', 'slug']), 'expires_at' => $invitation->expires_at?->toISOString()]]);
     }
 
-    public function accept(Request $request, SecurityEventLogger $events, AuditLogger $audit): JsonResponse
+    public function accept(Request $request, SecurityEventLogger $events, AuditLogger $audit, SubscriptionService $subscriptions): JsonResponse
     {
         $data = $request->validate(['invitation_id' => ['required', 'uuid'], 'token' => ['required', 'string']]);
         $context = app(TenantContext::class);
@@ -90,26 +90,26 @@ final class InvitationController
         try {
             $invitation = Invitation::whereKey($data['invitation_id'])->whereRaw('LOWER(email) = LOWER(?)', [$request->user()->email])->firstOrFail();
             $context->set($invitation->tenant_id);
-            return $this->acceptInvitation($request, $invitation, $data['token'], $events, $audit);
+            return $this->acceptInvitation($request, $invitation, $data['token'], $events, $audit, $subscriptions);
         } finally {
             $context->clear();
         }
     }
 
-    public function acceptToken(Request $request, string $token, SecurityEventLogger $events, AuditLogger $audit): JsonResponse
+    public function acceptToken(Request $request, string $token, SecurityEventLogger $events, AuditLogger $audit, SubscriptionService $subscriptions): JsonResponse
     {
         $context = app(TenantContext::class);
         $context->setUserEmail((string) $request->user()->email);
         try {
             $invitation = Invitation::where('token_hash', hash('sha256', $token))->whereRaw('LOWER(email) = LOWER(?)', [$request->user()->email])->firstOrFail();
             $context->set($invitation->tenant_id);
-            return $this->acceptInvitation($request, $invitation, $token, $events, $audit);
+            return $this->acceptInvitation($request, $invitation, $token, $events, $audit, $subscriptions);
         } finally {
             $context->clear();
         }
     }
 
-    private function acceptInvitation(Request $request, Invitation $invitation, string $token, SecurityEventLogger $events, AuditLogger $audit): JsonResponse
+    private function acceptInvitation(Request $request, Invitation $invitation, string $token, SecurityEventLogger $events, AuditLogger $audit, SubscriptionService $subscriptions): JsonResponse
     {
         $user = $request->user();
         abort_if($this->currentStatus($invitation) !== 'pending', 410, 'Invitation is no longer valid.');
@@ -117,7 +117,7 @@ final class InvitationController
         abort_unless(strtolower($user->email) === strtolower($invitation->email), 403, 'Invitation email does not match the authenticated account.');
         abort_unless(\App\Models\Tenant::whereKey($invitation->tenant_id)->where('status', 'active')->exists(), 403, 'The invited workspace is inactive.');
         abort_unless(Company::whereKey($invitation->company_id)->where('tenant_id', $invitation->tenant_id)->where('is_active', true)->exists(), 403, 'The invited company is inactive.');
-        DB::transaction(function () use ($request, $invitation, $audit): void {
+        $subscriptions->withinLimit($invitation->tenant_id, 'active_users', fn (): int => TenantMembership::where('tenant_id', $invitation->tenant_id)->where('status', 'active')->where('user_id', '!=', $request->user()->id)->count(), function () use ($request, $invitation, $audit): void {
             $locked = Invitation::whereKey($invitation->id)->lockForUpdate()->firstOrFail();
             abort_if($locked->status !== 'pending' || $locked->accepted_at || $locked->revoked_at || $locked->expires_at->isPast(), 410, 'Invitation is no longer valid.');
             TenantMembership::firstOrCreate(['tenant_id' => $locked->tenant_id, 'user_id' => $request->user()->id], ['status' => 'active']);

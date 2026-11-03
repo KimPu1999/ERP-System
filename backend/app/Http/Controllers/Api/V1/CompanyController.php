@@ -78,8 +78,7 @@ final class CompanyController
         abort_unless($tenantId && $authorization->allows($request->user(), $tenantId, 'company.manage'), 403);
         $this->ensureCurrencyCatalog((string) $tenantId);
         $data = $request->validate($this->createRules($tenantId));
-        $subscriptions->limit($tenantId, 'companies', Company::where('tenant_id', $tenantId)->count());
-        $company = DB::transaction(function () use ($data, $tenantId, $request): Company {
+        $company = $subscriptions->withinLimit($tenantId, 'companies', fn (): int => Company::where('tenant_id', $tenantId)->count(), function () use ($data, $tenantId, $request): Company {
             $company = Company::create([
                 ...collect($data)->except(['tenant_id', 'is_active'])->all(),
                 'tenant_id' => $tenantId,

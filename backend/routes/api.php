@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\V1\PlatformBusinessAdminController;
 use App\Http\Controllers\Api\V1\PlatformAdminInvitationController;
 use App\Http\Controllers\Api\V1\TenantContextController;
 use App\Http\Controllers\Api\V1\TenantOnboardingController;
+use App\Http\Controllers\Api\V1\BusinessOnboardingController;
+use App\Http\Controllers\Api\V1\BusinessSelfServiceController;
 use App\Http\Controllers\Api\V1\TenantMemberController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\MfaController;
@@ -273,6 +275,17 @@ Route::prefix('v1')->group(function (): void {
     });
     Route::middleware(['auth:sanctum', 'active.user', 'verified', 'tenant'])->group(function (): void {
         Route::get('/me', MeController::class);
+        Route::get('/business/onboarding', [BusinessOnboardingController::class, 'show']);
+        Route::post('/business/onboarding/{step}/complete', [BusinessOnboardingController::class, 'complete'])->where('step', '[a-z_]+')->middleware('throttle:30,1');
+        Route::get('/business/self-service', [BusinessSelfServiceController::class, 'overview']);
+        Route::get('/business/account', [BusinessSelfServiceController::class, 'overview']);
+        Route::patch('/business/account', [BusinessSelfServiceController::class, 'updateAccount'])->middleware('throttle:20,1');
+        Route::get('/business/subscription', [BusinessSelfServiceController::class, 'overview']);
+        Route::get('/business/billing', [BusinessSelfServiceController::class, 'billing']);
+        Route::get('/business/billing/invoices/{invoice}', [BusinessSelfServiceController::class, 'invoice']);
+        Route::get('/business/usage', [BusinessSelfServiceController::class, 'overview']);
+        Route::get('/business/entitlements', [BusinessSelfServiceController::class, 'overview']);
+        Route::get('/business/team', [BusinessSelfServiceController::class, 'team']);
         Route::get('/members', [TenantMemberController::class, 'index']);
         Route::get('/roles', [RoleController::class, 'index']);
         Route::get('/permissions', [RoleController::class, 'permissions']);

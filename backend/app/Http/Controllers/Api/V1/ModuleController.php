@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\{AssetCategory, Company, PosRegister, Tenant, TenantModule};
-use App\Services\{AuthorizationService, OptionalModuleService};
+use App\Services\{AuthorizationService, OptionalModuleService, SubscriptionService};
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 
@@ -41,10 +41,10 @@ final class ModuleController
         return response()->json(['data' => $rows]);
     }
 
-    public function platformUpdate(Request $request, Tenant $tenant, OptionalModuleService $modules)
+    public function platformUpdate(Request $request, Tenant $tenant, OptionalModuleService $modules, SubscriptionService $subscriptions)
     {
         $data = $request->validate(['module_key' => 'required|in:pos,projects,fixed_assets', 'enabled' => 'required|boolean']);
-        return response()->json(['data' => $modules->set($tenant->id, $data['module_key'], $data['enabled'])]);
+        return response()->json(['data' => $modules->set($tenant->id, $data['module_key'], $data['enabled'], $subscriptions)]);
     }
 
 }

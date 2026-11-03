@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\{BillingWebhookEvent, PlatformInvoice, PlatformPayment, SubscriptionPlan, Tenant, TenantSubscription};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Closure;
 
 final class SubscriptionService
 {
@@ -49,12 +50,7 @@ final class SubscriptionService
     public function syncState(string $tenantId): TenantSubscription
     {
         return DB::transaction(function () use ($tenantId): TenantSubscription {
-            $subscription = TenantSubscription::where('tenant_id', $tenantId)->lockForUpdate()->firstOrFail(); $now = now(); $changes = [];
-            if ($subscription->state === 'trialing' && $subscription->trial_ends_at?->isPast()) $changes = ['state' => 'past_due', 'grace_ends_at' => $now->copy()->addDays((int) config('services.billing.grace_days', 7))];
-            elseif ($subscription->state === 'active' && $subscription->current_period_ends_at?->isPast()) $changes = ['state' => 'past_due', 'grace_ends_at' => $now->copy()->addDays((int) config('services.billing.grace_days', 7))];
-            elseif ($subscription->state === 'past_due' && $subscription->grace_ends_at?->isPast()) $changes = ['state' => 'suspended'];
-            if ($changes) $subscription->update($changes);
-            return $subscription->fresh('plan.features');
+            return $this->synchronizeLocked(TenantSubscription::where('tenant_id', $tenantId)->lockForUpdate()->firstOrFail());
         });
     }
 
@@ -66,6 +62,39 @@ final class SubscriptionService
         if (! $entitlement) return;
         if ($entitlement->value_type === 'integer' && $current >= (int) $entitlement->value) throw ValidationException::withMessages(['entitlement' => ["The plan limit for {$feature} has been reached."]]);
         if ($entitlement->value_type === 'boolean' && ! filter_var($entitlement->value, FILTER_VALIDATE_BOOLEAN)) throw ValidationException::withMessages(['entitlement' => ["The {$feature} entitlement is not included in this plan."]]);
+    }
+
+    /**
+     * Lock the subscription for the complete create operation so concurrent
+     * requests cannot both pass a tenant limit before inserting their rows.
+     */
+    public function withinLimit(string $tenantId, string $feature, int|Closure $current, Closure $operation): mixed
+    {
+        return DB::transaction(function () use ($tenantId, $feature, $current, $operation): mixed {
+            $subscription = TenantSubscription::where('tenant_id', $tenantId)->lockForUpdate()->first();
+            // Some legacy workspaces predate subscription provisioning. Keep
+            // their existing business operations available; limits only apply
+            // once a subscription has been explicitly provisioned.
+            if (! $subscription) return $operation();
+            $subscription = $this->synchronizeLocked($subscription);
+            $currentCount = $current instanceof Closure ? (int) $current() : $current;
+            $entitlement = $subscription->plan->features->firstWhere('feature_key', $feature);
+            if (! $entitlement) return $operation();
+            if ($entitlement->value_type === 'integer' && $currentCount >= (int) $entitlement->value) throw ValidationException::withMessages(['entitlement' => ["The plan limit for {$feature} has been reached."]]);
+            if ($entitlement->value_type === 'boolean' && ! filter_var($entitlement->value, FILTER_VALIDATE_BOOLEAN)) throw ValidationException::withMessages(['entitlement' => ["The {$feature} entitlement is not included in this plan."]]);
+            return $operation();
+        }, 3);
+    }
+
+    private function synchronizeLocked(TenantSubscription $subscription): TenantSubscription
+    {
+        $now = now();
+        $changes = [];
+        if ($subscription->state === 'trialing' && $subscription->trial_ends_at?->isPast()) $changes = ['state' => 'past_due', 'grace_ends_at' => $now->copy()->addDays((int) config('services.billing.grace_days', 7))];
+        elseif ($subscription->state === 'active' && $subscription->current_period_ends_at?->isPast()) $changes = ['state' => 'past_due', 'grace_ends_at' => $now->copy()->addDays((int) config('services.billing.grace_days', 7))];
+        elseif ($subscription->state === 'past_due' && $subscription->grace_ends_at?->isPast()) $changes = ['state' => 'suspended'];
+        if ($changes) $subscription->update($changes);
+        return $subscription->fresh('plan.features');
     }
 
     public function changePlan(string $tenantId, string $planId, string $cycle): TenantSubscription
