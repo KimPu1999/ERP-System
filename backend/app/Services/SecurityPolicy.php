@@ -4,12 +4,24 @@ namespace App\Services;
 
 use App\Models\SecuritySetting;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 
 final class SecurityPolicy
 {
     public function enabled(string $key, bool $default): bool
     {
-        $stored = SecuritySetting::query()->whereKey($key)->value('value');
+        try {
+            $stored = SecuritySetting::query()->whereKey($key)->value('value');
+        } catch (QueryException $exception) {
+            // During deploys, an older application process can briefly run
+            // before the settings migration has been applied. Fall back to
+            // the environment policy instead of turning login into a 500.
+            if (! str_contains($exception->getMessage(), 'security_settings')) {
+                throw $exception;
+            }
+
+            $stored = null;
+        }
         if (is_array($stored) && array_key_exists('value', $stored)) return (bool) $stored['value'];
         if (is_bool($stored)) return $stored;
         return $default;
