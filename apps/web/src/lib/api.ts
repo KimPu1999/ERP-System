@@ -1,6 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+const browserHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+const API_URL = import.meta.env.VITE_API_URL ?? `http://${browserHost}:8000/api/v1`;
 export const API_BASE_URL = API_URL;
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? 'http://localhost:8000';
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? `http://${browserHost}:8000`;
 const CONFIGURED_TENANT_ID = import.meta.env.VITE_TENANT_ID;
 const TENANT_STORAGE_KEY = 'erp_cloud.tenant_id';
 const LOCALE_STORAGE_KEY = 'erp_cloud.locale';
