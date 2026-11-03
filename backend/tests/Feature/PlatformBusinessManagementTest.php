@@ -25,6 +25,78 @@ it('keeps platform business management behind verified platform authorization', 
     $this->actingAs($f['platform'])->getJson('/api/v1/platform/summary')->assertOk()->assertJsonPath('summary.pending_approvals', 1);
 });
 
+it('returns live platform overview metrics and activity only to platform administrators', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    User::factory()->create(['is_platform_super_admin' => false]);
+    Tenant::factory()->create(['status' => 'pending', 'name' => 'Overview business']);
+
+    $response = $this->actingAs($platform)->getJson('/api/v1/platform/summary')->assertOk();
+
+    $response->assertJsonStructure([
+        'summary' => [
+            'total_businesses', 'active_businesses', 'pending_approvals',
+            'total_platform_users', 'active_subscriptions',
+            'system_alerts' => ['total', 'pending_businesses', 'past_due_subscriptions', 'failed_logins_last_24h'],
+            'business_growth', 'recent_registrations', 'recent_activities',
+        ],
+    ]);
+    expect($response->json('summary.total_businesses'))->toBe(1)
+        ->and($response->json('summary.pending_approvals'))->toBe(1)
+        ->and($response->json('summary.total_platform_users'))->toBe(1)
+        ->and($response->json('summary.system_alerts.pending_businesses'))->toBe(1);
+
+    $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/summary')->assertForbidden();
+});
+
+it('returns live platform analytics only to platform administrators', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    User::factory()->create(['is_platform_super_admin' => false]);
+    Tenant::factory()->create(['status' => 'pending']);
+    Tenant::factory()->create(['status' => 'active']);
+
+    $response = $this->actingAs($platform)->getJson('/api/v1/platform/analytics')->assertOk();
+    $response->assertJsonStructure(['data' => ['period', 'business_growth', 'businesses_by_status', 'subscriptions_by_state', 'platform_users_by_status']]);
+
+    $statuses = collect($response->json('data.businesses_by_status'))->keyBy('status');
+    expect($response->json('data.business_growth'))->toHaveCount(6)
+        ->and($statuses->get('pending')['count'] ?? 0)->toBe(1)
+        ->and($statuses->get('active')['count'] ?? 0)->toBe(1)
+        ->and(collect($response->json('data.platform_users_by_status'))->sum('count'))->toBe(1);
+
+    $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/analytics')->assertForbidden();
+});
+
+it('protects platform audit and security event views from business users', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    \App\Models\PlatformAuditLog::create(['actor_user_id' => $platform->id, 'action' => 'platform.test', 'metadata' => ['safe' => true]]);
+    \App\Models\SecurityEvent::create(['user_id' => $platform->id, 'event' => 'auth.test', 'metadata' => ['safe' => true]]);
+
+    $this->actingAs($platform)->getJson('/api/v1/platform/audit-logs')->assertOk()->assertJsonPath('data.data.0.action', 'platform.test');
+    $this->actingAs($platform)->getJson('/api/v1/platform/security/events')->assertOk()->assertJsonPath('data.data.0.event', 'auth.test');
+
+    $business = User::factory()->create();
+    $this->actingAs($business)->getJson('/api/v1/platform/audit-logs')->assertForbidden();
+    $this->actingAs($business)->getJson('/api/v1/platform/security/events')->assertForbidden();
+});
+
+it('lists platform users and protects the last active administrator', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    $second = User::factory()->create(['is_platform_super_admin' => true]);
+
+    $this->actingAs($platform)->getJson('/api/v1/platform/users')->assertOk()->assertJsonPath('summary.total', 2);
+    $this->actingAs($platform)->patchJson('/api/v1/platform/users/'.$second->id.'/status', ['status' => 'suspended'])->assertOk()->assertJsonPath('data.status', 'suspended');
+    $this->actingAs($platform)->patchJson('/api/v1/platform/users/'.$platform->id.'/status', ['status' => 'suspended'])->assertUnprocessable();
+    $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/users')->assertForbidden();
+});
+
+it('exposes only safe platform settings to authorized administrators', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    $response = $this->actingAs($platform)->getJson('/api/v1/platform/settings')->assertOk();
+    $response->assertJsonStructure(['data' => ['authentication' => ['email_verification_required', 'mfa_capable', 'session_encrypted', 'session_secure_cookie'], 'security' => ['debug_mode', 'platform_authorization', 'tenant_isolation']]]);
+    expect($response->json('data.authentication.email_verification_required'))->toBeTrue();
+    $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/settings')->assertForbidden();
+});
+
 it('creates, approves, suspends and restores a business without deleting its records', function (): void {
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $created = $this->actingAs($platform)->postJson('/api/v1/platform/tenants', ['name' => 'New Business', 'slug' => 'new-business'])->assertCreated()->assertJsonPath('data.status', 'pending');

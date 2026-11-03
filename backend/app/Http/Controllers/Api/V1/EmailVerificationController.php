@@ -26,14 +26,14 @@ final class EmailVerificationController
         }
 
         if ($user->hasVerifiedEmail()) {
-            return $this->verificationResponse($request, ['status' => 'already_verified'], 'already_verified');
+            return $this->verificationResponse($request, ['status' => 'already_verified'], 'already_verified', 200, $user->is_platform_super_admin ? 'platform' : 'business');
         }
 
         $user->markEmailAsVerified();
         event(new Verified($user));
         $events->record($request, 'auth.email_verified', $user->id);
 
-        return $this->verificationResponse($request, ['status' => 'verified'], 'verified');
+        return $this->verificationResponse($request, ['status' => 'verified'], 'verified', 200, $user->is_platform_super_admin ? 'platform' : 'business');
     }
 
     public function resend(Request $request, SecurityEventLogger $events): JsonResponse
@@ -45,14 +45,14 @@ final class EmailVerificationController
         return response()->json(['status' => 'sent']);
     }
 
-    private function verificationResponse(Request $request, array $payload, string $frontendStatus, int $status = 200): JsonResponse|RedirectResponse
+    private function verificationResponse(Request $request, array $payload, string $frontendStatus, int $status = 200, ?string $mode = null): JsonResponse|RedirectResponse
     {
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json($payload, $status);
         }
 
         $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
-        $query = http_build_query(['status' => $frontendStatus]);
+        $query = http_build_query(array_filter(['status' => $frontendStatus, 'mode' => $mode]));
 
         return redirect()->away($frontendUrl.'/verify-email?'.$query);
     }

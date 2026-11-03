@@ -66,6 +66,10 @@ use App\Http\Controllers\Api\V1\FixedAssetController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\PlatformBillingController;
+use App\Http\Controllers\Api\V1\PlatformAuditController;
+use App\Http\Controllers\Api\V1\PlatformUserController;
+use App\Http\Controllers\Api\V1\PlatformSettingsController;
+use App\Http\Controllers\Api\V1\PlatformAnalyticsController;
 use App\Http\Controllers\Api\V1\TenantSubscriptionController;
 use App\Http\Controllers\Api\V1\SupportController;
 use App\Http\Controllers\Api\V1\TenantExportController;
@@ -122,6 +126,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/supplier-portal/corrective-actions/{action}/responses', [SupplierPortalController::class, 'respondAction'])->middleware('supplier.portal');
         Route::middleware(['verified', 'platform.admin'])->prefix('platform')->group(function (): void {
             Route::get('/summary', [PlatformTenantController::class, 'summary']);
+            Route::get('/audit-logs', [PlatformAuditController::class, 'index']);
+            Route::get('/security/events', [PlatformAuditController::class, 'security']);
+            Route::get('/settings', PlatformSettingsController::class);
+            Route::get('/analytics', PlatformAnalyticsController::class);
+            Route::get('/users', [PlatformUserController::class, 'index']);
+            Route::patch('/users/{user}/status', [PlatformUserController::class, 'changeStatus']);
             Route::get('/invitations', [PlatformAdminInvitationController::class, 'index']);
             Route::post('/invitations', [PlatformAdminInvitationController::class, 'store']);
             Route::post('/invitations/{invitation}/resend', [PlatformAdminInvitationController::class, 'resend']);

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './lib/auth';
 import { AuthenticatedRoute, BusinessRoute, PlatformRoute } from './components/ProtectedRoute';
@@ -61,6 +62,11 @@ import { ProjectWorkspacePage } from './pages/ProjectWorkspacePage';
 import { FixedAssetsWorkspacePage } from './pages/FixedAssetsWorkspacePage';
 import { WorkflowPage } from './pages/WorkflowPage';
 import { PlatformControlPage } from './pages/PlatformControlPage';
+import { PlatformAuditLogsPage } from './pages/PlatformAuditLogsPage';
+import { PlatformSecurityPage } from './pages/PlatformSecurityPage';
+import { PlatformUsersPage } from './pages/PlatformUsersPage';
+import { PlatformSettingsPage } from './pages/PlatformSettingsPage';
+import { PlatformAnalyticsPage } from './pages/PlatformAnalyticsPage';
 import { CompanyDashboard } from './pages/CompanyDashboard';
 import { CompanyProfilePage } from './pages/CompanyProfilePage';
 import { DepartmentManagementPage } from './pages/DepartmentManagementPage';
@@ -99,7 +105,7 @@ const client = new QueryClient();
 function HealthPage() {
   const { t } = useI18n();
   const health = useQuery({ queryKey: ['health'], queryFn: getHealth });
-  return <section className="page-section"><div className="page-heading"><div><p className="eyebrow">{t('nav.monitoring')}</p><h1>System health</h1></div><span className="date-chip">{t('dashboard.live')}</span></div><div className="metric-grid"><div className="metric"><span>API service</span><strong className={health.data?.status === 'ok' ? 'text-success' : ''}>{health.data?.status ?? (health.isError ? 'Unavailable' : 'Checking')}</strong></div><div className="metric"><span>Database</span><strong>{health.data ? (health.data.checks.database ? 'Connected' : 'Unavailable') : '—'}</strong></div><div className="metric"><span>Cache</span><strong>{health.data ? (health.data.checks.cache ? 'Connected' : 'Unavailable') : '—'}</strong></div></div>{health.isError && <div className="alert alert-danger">{health.error.message}</div>}</section>;
+  return <section className="platform-page page-section"><div className="platform-toolbar"><div><p className="eyebrow">{t('nav.monitoring')}</p><h1>{t('platform.systemHealth')}</h1><p className="muted">{t('platform.healthDescription')}</p></div><div className="platform-actions"><span className="date-chip">{t('dashboard.live')}</span><button className="button button-secondary" type="button" onClick={() => void health.refetch()} disabled={health.isFetching}><RefreshCw size={15} /> {t('common.refresh')}</button></div></div>{health.isError && <div className="alert alert-danger" role="alert">{health.error.message}<button className="table-action" type="button" onClick={() => void health.refetch()}>{t('common.retry')}</button></div>}{health.isLoading && <div className="panel" role="status">{t('platform.checking')}</div>}<div className="metric-grid"><div className="metric"><span>{t('platform.apiService')}</span><strong className={health.data?.status === 'ok' ? 'text-success' : ''}>{health.data?.status ?? (health.isError ? t('platform.unavailable') : t('platform.checking'))}</strong></div><div className="metric"><span>{t('platform.database')}</span><strong>{health.data ? (health.data.checks.database ? t('platform.connected') : t('platform.unavailable')) : '—'}</strong></div><div className="metric"><span>{t('platform.cache')}</span><strong>{health.data ? (health.data.checks.cache ? t('platform.connected') : t('platform.unavailable')) : '—'}</strong></div></div></section>;
 }
 
 export default function App() {
@@ -112,7 +118,7 @@ export default function App() {
       <Route path="/business/login" element={<BusinessLoginPage />} />
       <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} />
     </Route>
-    <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/dashboard" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/tenants/:tenantId" element={<PlatformBusinessDetailPage />} /><Route path="/platform/administrators" element={<PlatformAdministratorsPage />} /><Route path="/platform/invitations" element={<PlatformAdminInvitationsPage />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
+    <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/dashboard" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/tenants/:tenantId" element={<PlatformBusinessDetailPage />} /><Route path="/platform/administrators" element={<PlatformAdministratorsPage />} /><Route path="/platform/users" element={<PlatformUsersPage />} /><Route path="/platform/invitations" element={<PlatformAdminInvitationsPage />} /><Route path="/platform/analytics" element={<PlatformAnalyticsPage />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/audit-logs" element={<PlatformAuditLogsPage />} /><Route path="/platform/security" element={<PlatformSecurityPage />} /><Route path="/platform/settings" element={<PlatformSettingsPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
     <Route element={<BusinessRoute />}><Route element={<CompanyLayout />}><Route path="/business/dashboard" element={<CompanyDashboard />} /><Route path="/app/dashboard" element={<CompanyDashboard />} /></Route></Route>
     <Route element={<AuthenticatedRoute />}><Route element={<CompanyLayout />}>
       <Route path="/" element={<CompanyDashboard />} />

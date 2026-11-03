@@ -6,8 +6,10 @@ use App\Models\PlatformAuditLog;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
@@ -71,6 +73,22 @@ it('verifies signed email links and redirects browser clients to the frontend re
     $this->getJson($url)->assertOk()->assertJsonPath('status', 'already_verified');
 });
 
+it('preserves platform versus business sign-in routing after verification', function (): void {
+    $platform = User::factory()->create(['is_platform_super_admin' => true, 'email_verified_at' => null]);
+    $platformUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
+        'id' => $platform->id,
+        'hash' => sha1($platform->getEmailForVerification()),
+    ]);
+    $this->get($platformUrl)->assertRedirectContains('/verify-email?status=verified&mode=platform');
+
+    $business = User::factory()->create(['is_platform_super_admin' => false, 'email_verified_at' => null]);
+    $businessUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
+        'id' => $business->id,
+        'hash' => sha1($business->getEmailForVerification()),
+    ]);
+    $this->get($businessUrl)->assertRedirectContains('/verify-email?status=verified&mode=business');
+});
+
 it('rejects invalid and expired email verification links without revealing account state', function (): void {
     $user = User::factory()->create(['email_verified_at' => null]);
     $validUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [
@@ -121,6 +139,32 @@ it('requires an active business membership while preserving pending invitation o
     $this->postJson('/api/v1/auth/business/login', ['email' => $unassigned->email, 'password' => 'secret-password'])
         ->assertOk()
         ->assertJsonMissing(['workspace_access_required' => true]);
+});
+
+it('requires verified email before business workspace login', function (): void {
+    $user = User::factory()->create(['email_verified_at' => null, 'password' => 'secret-password']);
+    $tenant = Tenant::factory()->create();
+    TenantMembership::create(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'status' => 'active']);
+
+    $this->postJson('/api/v1/auth/business/login', ['email' => $user->email, 'password' => 'secret-password'])
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Email verification is required before sign-in.');
+    expect(auth()->check())->toBeFalse();
+});
+
+it('sends password reset links to the correct frontend sign-in context', function (): void {
+    Notification::fake();
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+
+    $this->postJson('/api/v1/auth/password/email', ['email' => $platform->email])->assertOk();
+
+    Notification::assertSentTo($platform, ResetPasswordNotification::class, function (ResetPasswordNotification $notification) use ($platform): bool {
+        $url = $notification->toMail($platform)->actionUrl;
+
+        return str_starts_with($url, rtrim((string) config('app.frontend_url'), '/') . '/platform/reset-password?')
+            && str_contains($url, 'email=' . rawurlencode($platform->email))
+            && str_contains($url, 'token=');
+    });
 });
 
 it('requires authentication for session management', function (): void {

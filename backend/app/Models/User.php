@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -31,4 +32,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function staffAssignments() { return $this->hasMany(StaffAssignment::class); }
     public function invitations() { return $this->hasMany(Invitation::class, 'email', 'email'); }
     public function tenants() { return $this->belongsToMany(Tenant::class, 'tenant_memberships')->withPivot('status')->withTimestamps(); }
+    public function sendPasswordResetNotification($token): void { $this->notify(new ResetPasswordNotification($token)); }
 }

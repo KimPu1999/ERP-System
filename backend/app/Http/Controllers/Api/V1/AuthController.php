@@ -45,11 +45,11 @@ final class AuthController
         $user = User::where('email', $data['email'])->first();
         if (! $user || ! Hash::check($data['password'], $user->password)) { $events->record($request, 'auth.login_failed', $user?->id, null, ['reason' => 'invalid_credentials']); throw ValidationException::withMessages(['email' => [__('auth.failed')]]); }
         if ($user->status !== 'active' || $user->suspended_at) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'account_suspended']); abort(423, __('auth.suspended')); }
+        if (! $user->hasVerifiedEmail()) { $events->record($request, 'auth.login_blocked', $user->id, null, ['reason' => 'email_unverified', 'mode' => $mode]); abort(403, 'Email verification is required before sign-in.'); }
 
         $hasActiveMembership = false;
         if ($mode === 'platform') {
             abort_unless($user->is_platform_super_admin === true, 403, 'Platform administrator access required.');
-            abort_unless($user->hasVerifiedEmail(), 403, 'Platform administrator email verification is required.');
         } else {
             abort_if($user->is_platform_super_admin === true, 403, 'Use the platform administrator sign-in.');
 

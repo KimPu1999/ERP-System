@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Mail\CompanyInvitationMail;
-use App\Models\{Company, Invitation, Permission, PlatformAuditLog, Role, RoleAssignment, Tenant, TenantMembership, TenantModule, TenantSubscription};
+use App\Models\{Company, Invitation, Permission, PlatformAuditLog, Role, RoleAssignment, SecurityEvent, Tenant, TenantMembership, TenantModule, TenantSubscription, User};
 use App\Services\{AuditLogger, SubscriptionService};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -105,7 +105,10 @@ final class PlatformTenantController
         return response()->json(['data' => $this->tenantPayload($tenant->fresh(['modules', 'companies'])), 'status' => $tenant->status]);
     }
 
-    public function summary(): JsonResponse { return response()->json(['summary' => $this->summaryData()]); }
+    public function summary(): JsonResponse
+    {
+        return response()->json(['summary' => $this->summaryData()]);
+    }
 
     public function security(Tenant $tenant): JsonResponse
     {
@@ -136,7 +139,53 @@ final class PlatformTenantController
 
     private function summaryData(): array
     {
-        return ['total_businesses' => Tenant::count(), 'active_businesses' => Tenant::where('status', 'active')->count(), 'pending_approvals' => Tenant::where('status', 'pending')->count(), 'suspended_businesses' => Tenant::where('status', 'suspended')->count(), 'business_administrators' => $this->administratorQuery()->distinct('role_assignments.user_id')->count('role_assignments.user_id'), 'pending_invitations' => Invitation::where('status', 'pending')->where('expires_at', '>', now())->count(), 'enabled_modules' => TenantModule::where('enabled', true)->count()];
+        $monthStart = now()->startOfMonth()->subMonths(5);
+        $registrations = Tenant::query()->latest()->limit(6)->get(['id', 'name', 'slug', 'status', 'created_at']);
+        $activities = PlatformAuditLog::query()->with('actor:id,name,email')->latest()->limit(8)->get();
+        $growth = Tenant::query()
+            ->where('created_at', '>=', $monthStart)
+            ->get(['created_at'])
+            ->groupBy(fn (Tenant $tenant): string => $tenant->created_at->format('Y-m'))
+            ->map(fn ($items, string $month): array => ['month' => $month, 'count' => $items->count()])
+            ->values();
+
+        $pastDueSubscriptions = TenantSubscription::whereIn('state', ['past_due', 'unpaid'])->count();
+        $failedSecurityEvents = SecurityEvent::whereIn('event', ['auth.login_failed', 'auth.login_blocked'])
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+
+        return [
+            'total_businesses' => Tenant::count(),
+            'active_businesses' => Tenant::where('status', 'active')->count(),
+            'pending_approvals' => Tenant::where('status', 'pending')->count(),
+            'suspended_businesses' => Tenant::where('status', 'suspended')->count(),
+            'business_administrators' => $this->administratorQuery()->distinct('role_assignments.user_id')->count('role_assignments.user_id'),
+            'pending_invitations' => Invitation::where('status', 'pending')->where('expires_at', '>', now())->count(),
+            'enabled_modules' => TenantModule::where('enabled', true)->count(),
+            'total_platform_users' => User::where('is_platform_super_admin', true)->count(),
+            'active_subscriptions' => TenantSubscription::whereIn('state', ['active', 'trialing'])->count(),
+            'system_alerts' => [
+                'total' => Tenant::where('status', 'pending')->count() + $pastDueSubscriptions + $failedSecurityEvents,
+                'pending_businesses' => Tenant::where('status', 'pending')->count(),
+                'past_due_subscriptions' => $pastDueSubscriptions,
+                'failed_logins_last_24h' => $failedSecurityEvents,
+            ],
+            'business_growth' => $growth,
+            'recent_registrations' => $registrations->map(fn (Tenant $tenant): array => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'slug' => $tenant->slug,
+                'status' => $tenant->status,
+                'created_at' => $tenant->created_at?->toISOString(),
+            ])->values(),
+            'recent_activities' => $activities->map(fn (PlatformAuditLog $log): array => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'actor' => $log->actor?->only(['id', 'name', 'email']),
+                'tenant_id' => $log->tenant_id,
+                'created_at' => $log->created_at?->toISOString(),
+            ])->values(),
+        ];
     }
 
     private function tenantListPayload(Tenant $tenant): array

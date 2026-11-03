@@ -8,7 +8,9 @@
     "check": "tsc --noEmit",
     "lint": "eslint .",
     "i18n:check": "node scripts/check-i18n.mjs",
-    "test": "vitest"
+    "test": "vitest --config vitest.config.ts",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -23,11 +25,11 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "react-router-dom": "^7.1.1",
-    "tailwind-merge": "^2.5.5",
-    "zod": "^3.24.1"
+    "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.64.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",

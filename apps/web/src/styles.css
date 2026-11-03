@@ -2680,6 +2680,7 @@ html { scroll-padding-top: var(--app-sticky-offset); }
 @media (max-width: 640px) { .supplier-automation-editor, .supplier-monitoring-filters, .supplier-automation-types { grid-template-columns: 1fr; } .supplier-monitoring-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .supplier-module-toolbar { align-items: flex-start; flex-direction: column; } .supplier-automation-editor-actions { grid-column: auto; justify-content: stretch; } .supplier-automation-editor-actions button { flex: 1; } }
 @media (max-width: 520px) { .supplier-notification-filters { grid-template-columns: 1fr; } .supplier-notification-pagination { justify-content: flex-start; } .supplier-notification-pagination span { width: 100%; } }
 @media (max-width: 700px) { .dashboard-two-col { grid-template-columns: 1fr; } .metric-row { grid-template-columns: 110px 35px 1fr; } }
+@media (max-width: 760px) { .platform-dashboard-grid { grid-template-columns: 1fr; } .platform-toolbar { align-items: flex-start; flex-direction: column; } .platform-actions { width: 100%; } .platform-actions .button { flex: 1; justify-content: center; } }
 
 /* Global ERP shell and page system */
 :root {
@@ -2733,6 +2734,19 @@ html { scroll-padding-top: var(--app-sticky-offset); }
 .platform-table-heading { padding: 14px; border-bottom: 1px solid var(--border); }
 .platform-table-heading h2 { margin: 0; font-size: 15px; }
 .platform-module-toggles, .platform-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.platform-growth-list, .platform-alert-list { display: grid; gap: 12px; padding: 16px; }
+.platform-growth-row { display: grid; grid-template-columns: 72px 1fr 28px; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; }
+.platform-growth-row strong, .platform-alert-list strong { color: var(--text); text-align: right; }
+.platform-growth-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--surface-hover); }
+.platform-growth-track span { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+.platform-alert-list > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+.platform-alert-list > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.platform-quick-actions { margin-top: 16px; }
+.platform-quick-actions .platform-actions { padding: 14px; }
+.platform-setting-list { display: grid; gap: 0; padding: 6px 14px; }
+.platform-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 44px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+.platform-setting-row:last-child { border-bottom: 0; }
+.platform-setting-row strong { color: var(--text); font-size: 12px; text-align: right; }
 .platform-scope-note { align-self: center; color: var(--muted); font-size: 13px; }
 .button-small { min-height: 32px; padding: 0 9px; font-size: 12px; }
 .platform-modal-overlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 18px; overflow-y: auto; background: rgb(15 23 42 / 50%); }

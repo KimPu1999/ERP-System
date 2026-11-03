@@ -6,12 +6,15 @@ const root = path.resolve(import.meta.dirname, '..');
 const source = fs.readFileSync(path.join(root, 'src/lib/i18n.tsx'), 'utf8');
 const optionalEnglishSection = source.slice(source.indexOf('const optionalEnglish = {'), source.indexOf('} as const;', source.indexOf('const optionalEnglish = {')));
 const optionalBurmeseSection = source.slice(source.indexOf('const optionalBurmese = {'), source.indexOf('} as const;', source.indexOf('const optionalBurmese = {')));
+const platformCatalog = (names) => names.map((name) => source.slice(source.indexOf(`const ${name} = {`), source.indexOf('} as const;', source.indexOf(`const ${name} = {`))));
+const platformEnglishSections = platformCatalog(['platformEnglish', 'platformAdditionalEnglish', 'platformBillingEnglish', 'platformTableEnglish', 'platformNavigationEnglish', 'platformAnalyticsEnglish', 'platformMonitoringEnglish', 'platformInvitationEnglish', 'platformManagementEnglish', 'platformManagementExtraEnglish', 'authAdditionalEnglish']);
+const platformBurmeseSections = platformCatalog(['platformBurmese', 'platformAdditionalBurmese', 'platformBillingBurmese', 'platformTableBurmese', 'platformNavigationBurmese', 'platformAnalyticsBurmese', 'platformMonitoringBurmese', 'platformInvitationBurmese', 'platformManagementBurmese', 'platformManagementExtraBurmese', 'authAdditionalBurmese']);
 const englishSection = source.slice(source.indexOf('  en: {'), source.indexOf("  my: {"));
 const burmeseSection = source.slice(source.indexOf('  my: {'), source.indexOf('\n  },\n} as const;'));
 const keyPattern = /'([^']+)'\s*:/g;
 const keysIn = (value) => [...value.matchAll(keyPattern)].map((match) => match[1]);
-const englishKeys = new Set([...keysIn(optionalEnglishSection), ...keysIn(englishSection)]);
-const burmeseKeys = new Set([...keysIn(optionalBurmeseSection), ...keysIn(burmeseSection)]);
+const englishKeys = new Set([...keysIn(optionalEnglishSection), ...keysIn(englishSection), ...platformEnglishSections.flatMap(keysIn)]);
+const burmeseKeys = new Set([...keysIn(optionalBurmeseSection), ...keysIn(burmeseSection), ...platformBurmeseSections.flatMap(keysIn)]);
 const missingBurmese = [...englishKeys].filter((key) => !burmeseKeys.has(key));
 const missingEnglish = [...burmeseKeys].filter((key) => !englishKeys.has(key));
 

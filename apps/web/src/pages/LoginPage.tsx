@@ -27,7 +27,7 @@ export function LoginPage({ mode = 'business' }: Props) {
       setError(exception instanceof ApiError && exception.status === 422
         ? t('auth.invalidCredentials')
         : verificationRequired
-          ? t('auth.platformVerificationRequired')
+          ? t(mode === 'platform' ? 'auth.platformVerificationRequired' : 'auth.businessVerificationRequired')
           : exception instanceof ApiError && exception.status === 403
             ? t(mode === 'platform' ? 'auth.platformAccessDenied' : 'auth.businessAccessDenied')
             : exception instanceof Error ? exception.message : t('auth.unableSignIn'));

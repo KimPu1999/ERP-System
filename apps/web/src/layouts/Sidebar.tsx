@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Boxes, Building2, ChevronLeft, ClipboardCheck, FileBarChart2, LayoutDashboard, Link2, Mail, Package, PanelLeftClose, Settings, ShoppingCart, Users, WalletCards, Warehouse, X } from 'lucide-react';
+import { Boxes, Building2, ChevronLeft, ClipboardCheck, FileBarChart2, LayoutDashboard, Link2, Mail, Package, PanelLeftClose, Settings, ShieldCheck, ShoppingCart, Users, WalletCards, Warehouse, X } from 'lucide-react';
 import { useState } from 'react';
 import { Brand } from '../components/Brand';
 import { useI18n, type TranslationKey } from '../lib/i18n';
@@ -18,7 +18,7 @@ const companyGroups: Group[] = [
   { key: 'nav.approvalsReports', items: [{ key: 'nav.approvals', to: '/workflow', icon: ClipboardCheck }, { key: 'nav.reports', to: '/workflow', icon: FileBarChart2 }] },
   { key: 'nav.settings', items: [{ key: 'nav.accessSettings', to: '/organization/roles', icon: Settings }] },
 ];
-const platformItems: Item[] = [{ key: 'nav.overview', to: '/platform', icon: LayoutDashboard }, { key: 'nav.tenantManagement', to: '/platform/tenants', icon: Building2 }, { key: 'nav.businessAdministrators', to: '/platform/administrators', icon: Users }, { key: 'platform.invitations', to: '/platform/invitations', icon: Mail }, { key: 'nav.monitoring', to: '/platform/monitoring', icon: ClipboardCheck }, { key: 'nav.subscriptions', to: '/platform/control', icon: WalletCards }];
+const platformItems: Item[] = [{ key: 'nav.overview', to: '/platform', icon: LayoutDashboard }, { key: 'nav.tenantManagement', to: '/platform/tenants', icon: Building2 }, { key: 'nav.businessAdministrators', to: '/platform/administrators', icon: Users }, { key: 'nav.platformUsers', to: '/platform/users', icon: ShieldCheck }, { key: 'platform.invitations', to: '/platform/invitations', icon: Mail }, { key: 'nav.platformAnalytics', to: '/platform/analytics', icon: FileBarChart2 }, { key: 'nav.monitoring', to: '/platform/monitoring', icon: ClipboardCheck }, { key: 'nav.auditLogs', to: '/platform/audit-logs', icon: ClipboardCheck }, { key: 'nav.securityCenter', to: '/platform/security', icon: ShieldCheck }, { key: 'nav.platformSettings', to: '/platform/settings', icon: Settings }, { key: 'nav.subscriptions', to: '/platform/control', icon: WalletCards }];
 
 export function Sidebar({ platform = false, collapsed, mobileOpen, onCollapse, onClose }: { platform?: boolean; collapsed: boolean; mobileOpen: boolean; onCollapse: () => void; onClose: () => void }) {
   const { t } = useI18n();
