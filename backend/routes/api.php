@@ -79,6 +79,7 @@ use App\Http\Controllers\Api\V1\TenantExportController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\WorkspaceAccessController;
 use App\Http\Controllers\Api\V1\StaffMembershipController;
+use App\Http\Controllers\Api\V1\OperationsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -237,6 +238,32 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/billing/revenue', [PlatformBillingController::class, 'revenue']);
             Route::post('/support/access-grants', [SupportController::class, 'grant']);
             Route::post('/support/access-grants/{grant}/approve', [SupportController::class, 'approve']);
+            Route::prefix('operations')->group(function (): void {
+                Route::get('/overview', [OperationsController::class, 'overview']);
+                Route::get('/incidents', [OperationsController::class, 'incidents']);
+                Route::get('/database', [OperationsController::class, 'database']);
+                Route::get('/queues', [OperationsController::class, 'queues']);
+                Route::get('/maintenance', [OperationsController::class, 'maintenance']);
+                Route::post('/maintenance', [OperationsController::class, 'createMaintenance']);
+                Route::post('/maintenance/{maintenance}/transition', [OperationsController::class, 'transitionMaintenance']);
+                Route::get('/maintenance/notice', [OperationsController::class, 'updateMaintenanceNotice']);
+                Route::get('/backups', [OperationsController::class, 'backups']);
+                Route::post('/backups', [OperationsController::class, 'registerBackup']);
+                Route::get('/costs', [OperationsController::class, 'costs']);
+                Route::post('/costs', [OperationsController::class, 'recordCost']);
+                Route::get('/releases', [OperationsController::class, 'releases']);
+                Route::post('/releases', [OperationsController::class, 'recordRelease']);
+            });
+            Route::prefix('support')->group(function (): void {
+                Route::get('/tickets', [SupportController::class, 'platformList']);
+                Route::get('/tickets/export', [SupportController::class, 'export']);
+                Route::get('/sla-policies', [SupportController::class, 'slaPolicies']);
+                Route::post('/sla-policies', [SupportController::class, 'storeSlaPolicy']);
+                Route::get('/tickets/{ticket}', [SupportController::class, 'platformShow']);
+                Route::patch('/tickets/{ticket}', [SupportController::class, 'platformUpdate']);
+                Route::post('/tickets/{ticket}/reply', [SupportController::class, 'platformReply']);
+                Route::get('/tickets/{ticket}/attachments/{attachment}', [SupportController::class, 'platformDownloadAttachment']);
+            });
             });
         });
     });
@@ -637,6 +664,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/subscription/cancel', [TenantSubscriptionController::class, 'cancel']);
         Route::get('/support/tickets', [SupportController::class, 'tickets']);
         Route::post('/support/tickets', [SupportController::class, 'createTicket']);
+        Route::get('/support/tickets/{ticket}', [SupportController::class, 'show']);
+        Route::post('/support/tickets/{ticket}/reply', [SupportController::class, 'reply']);
+        Route::post('/support/tickets/{ticket}/close', [SupportController::class, 'closeTicket']);
+        Route::post('/support/tickets/{ticket}/reopen', [SupportController::class, 'reopenTicket']);
+        Route::get('/support/tickets/{ticket}/attachments/{attachment}', [SupportController::class, 'downloadAttachment']);
         Route::post('/support/access/{grant}/request', [SupportController::class, 'requestAccess']);
         Route::post('/tenant-exports', [TenantExportController::class, 'request']);
         Route::get('/tenant-exports', [TenantExportController::class, 'index']);

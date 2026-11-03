@@ -754,3 +754,77 @@ export const getSupplierPortalDashboard = () => api<{ data: { open_purchase_orde
 export const getSupplierPortalPurchaseOrders = (params: Record<string, string | number | undefined> = {}) => { const q = queryString(params); return api<{ data: { data: SupplierPortalOrder[]; current_page: number; last_page: number; total: number } }>('/supplier-portal/purchase-orders' + (q ? '?' + q : '')); };
 export const acknowledgeSupplierPortalOrder = (id: string, data: { type: string; notes?: string; idempotency_key: string }) => api<{ data: unknown }>('/supplier-portal/purchase-orders/' + id + '/acknowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const acceptSupplierPortalInvitation = (token: string) => api<{ data: unknown }>('/supplier-portal/invitations/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+
+/* ------------------------------------------------------------- Phase 12: Operations Center */
+
+export type OperationsOverview = {
+  production_health: { status: MonitoringStatus; _services: Array<{ service: string; status: MonitoringStatus; last_observed_at: string | null }>; last_successful_check: string | null; limitations: Record<string, string> };
+  active_incidents: PlatformMonitoringIncident[];
+  performance_alerts: { open_total: number; open_critical: number };
+  support_tickets: { open: number; in_progress: number; waiting: number; urgent_open: number; breached: number; total: number };
+  failed_jobs: { total: number; recent: Array<{ uuid: string; queue: string | null; failed_at: string | null }>; retry: string };
+  queue_backlog: number | null;
+  queue_status: MonitoringStatus;
+  worker_heartbeat: { available: boolean };
+  scheduler_status: MonitoringStatus;
+  scheduler_collector_last_run_at: string | null;
+  backups: { status: string; last_verification: { taken_at: string | null; type: string; verification_status: string } | null; last_restore_test_at: string | null };
+  maintenance: { active: MaintenanceWindow | null; notice: { notice_enabled?: boolean; configured?: boolean } | Record<string, unknown> };
+  release: { current_version: string | null; environment: string | null; deployed_at: string | null; recorded_at: string | null; config: string };
+  security_maintenance: { integration: string; path: string; summary: string };
+  capacity: { database_size: string; connections: { total: number; max: number }; host_disk: Record<string, unknown> | null; note: string };
+};
+export type MaintenanceWindow = { id: string; title: string; scope: string | null; impact_description: string | null; rollback_plan: string | null; status: string; notify_businesses: boolean; starts_at: string | null; ends_at: string | null; approved_at: string | null; approved_by: { id: string; name: string } | null; created_by: { id: string; name: string; email: string } | null };
+export type BackupVerificationRecordType = { id: string; backup_taken_at: string | null; backup_type: string; storage_location: string | null; checksum: string | null; size_bytes: number | null; verification_status: string; restore_tested_at: string | null; notes: string | null; recorded_at: string | null };
+export type OperationalCostRecordType = { id: string; occurred_on: string; provider: string; category: string; description?: string | null; amount: number; currency: string; cost_type: 'actual' | 'estimate' | 'forecast'; source: string };
+export type ReleaseRecordType = { id: string; version: string; environment: string; status: string; release_notes: string | null; known_issues: string | null; rollback_reference: string | null; deployed_at: string | null; recorded_at: string | null };
+export type OperationsRecordPayload = { data: { data: Array<Record<string, unknown>>; current_page: number; last_page: number; total: number } };
+export const getOperationsOverview = () => api<{ data: OperationsOverview }>('/platform/operations/overview');
+export const getOperationsDatabase = () => api<{ data: Record<string, unknown> }>('/platform/operations/database');
+export const getOperationsQueues = () => api<{ data: Record<string, unknown> }>('/platform/operations/queues');
+export const getOperationsIncidents = (params: Record<string, string | number | undefined> = {}) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const q = entries.length ? '?' + new URLSearchParams(entries).toString() : ''; return api<{ data: PlatformMonitoringIncident[]; meta: { current_page: number; last_page: number; total: number } }>(`/platform/operations/incidents${q}`); };
+export const getMaintenanceWindows = () => api<{ data: MaintenanceWindow[] }>('/platform/operations/maintenance');
+export const createMaintenanceWindow = (data: Record<string, unknown>) => api<{ data: MaintenanceWindow }>('/platform/operations/maintenance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const transitionMaintenanceWindow = (id: string, status: string) => api<{ data: MaintenanceWindow }>(`/platform/operations/maintenance/${id}/transition`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+export const getBackupsStatus = () => api<{ data: Record<string, unknown> }>('/platform/operations/backups');
+export const registerBackup_verification = (data: Record<string, unknown>) => api<{ data: BackupVerificationRecordType }>('/platform/operations/backups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const getCostRecords = (params: Record<string, string | number | undefined> = {}) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const q = entries.length ? '?' + new URLSearchParams(entries).toString() : ''; return api<Record<string, unknown>>(`/platform/operations/costs${q}`); };
+export const recordOperationalCost = (data: Record<string, unknown>) => api<{ data: OperationalCostRecordType }>('/platform/operations/costs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const getReleaseRecords = () => api<{ data: Record<string, unknown> }>('/platform/operations/releases');
+export const recordReleaseInfo = (data: Record<string, unknown>) => api<{ data: ReleaseRecordType }>('/platform/operations/releases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+
+/* ------------------------------------------------------------- Phase 12: Support tickets */
+
+export type SupportMessageView = { id: string; author_type: 'customer' | 'support'; visibility: 'public' | 'internal'; author: { id: string; name: string; email: string } | null; body: string; attachments: Array<{ id: string; original_name: string; mime_type: string; size_bytes: number; download_url: string }>; created_at: string | null };
+export type SupportTicketView = {
+  id: string; ticket_number: string; category: string; subject: string; description: string; priority: string; status: string; sla_status: string;
+  first_response_due_at: string | null; resolution_due_at: string | null; first_response_at: string | null; resolved_at: string | null; closed_at: string | null;
+  created_at: string | null; updated_at: string | null; reopenable: boolean;
+  requester: { id: string; name: string; email: string } | null;
+  assignee: { id: string; name: string } | null;
+  tenant?: { id: string; name: string };
+  thread?: SupportMessageView[];
+};
+export type SupportTicketListPayload = { data: SupportTicketView[]; meta: { current_page: number; last_page: number; total: number } };
+export const getSupportTickets = (params: Record<string, string | number | undefined> = {}) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const q = entries.length ? '?' + new URLSearchParams(entries).toString() : ''; return api<SupportTicketListPayload>(`/support/tickets${q}`); };
+export const createSupportTicket = (data: { subject: string; description: string; priority?: string; category?: string }, files: File[] = []) => { const form = new FormData(); Object.entries(data).forEach(([key, value]) => { if (value !== undefined) form.append(key, String(value)); }); files.forEach((file) => form.append(`attachments[]`, file)); return api<{ data: SupportTicketView }>('/support/tickets', { method: 'POST', body: form }); };
+export const getSupportTicket = (id: string) => api<{ data: SupportTicketView }>(`/support/tickets/${id}`);
+export const replySupportTicket = (id: string, body: string, files: File[] = []) => { const form = new FormData(); form.append('body', body); files.forEach((file) => form.append('attachments[]', file)); return api<{ data: unknown }>(`/support/tickets/${id}/reply`, { method: 'POST', body: form }); };
+export const closeSupportTicket = (id: string) => api<{ data: SupportTicketView }>(`/support/tickets/${id}/close`, { method: 'POST' });
+export const reopenSupportTicket = (id: string) => api<{ data: SupportTicketView }>(`/support/tickets/${id}/reopen`, { method: 'POST' });
+export const getPlatformSupportTickets = (params: Record<string, string | number | undefined> = {}) => { const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])); const q = entries.length ? '?' + new URLSearchParams(entries).toString() : ''; return api<SupportTicketListPayload>(`/platform/support/tickets${q}`); };
+export const getPlatformSupportTicket = (id: string) => api<{ data: SupportTicketView }>(`/platform/support/tickets/${id}`);
+export const updatePlatformSupportTicket = (id: string, data: Record<string, unknown>) => api<{ data: SupportTicketView }>(`/platform/support/tickets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export const replyPlatformSupportTicket = (id: string, body: string, visibility: 'public' | 'internal' = 'public') => api<{ data: unknown }>(`/platform/support/tickets/${id}/reply`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body, visibility }) });
+export const getSlaPolicies = () => api<{ data: Array<{ id: string; name: string; priority: string | null; first_response_minutes: number | null; resolution_minutes: number | null }> }>('/platform/support/sla-policies');
+export const createSlaPolicy = (data: Record<string, unknown>) => api<{ data: unknown }>('/platform/support/sla-policies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+export async function downloadTicketFile(path: string, fileName: string): Promise<void> {
+  await csrf();
+  const response = await fetch(`${API_URL}${path}`, { credentials: 'include' });
+  if (!response.ok) throw new ApiError(response.status, 'Attachment download failed.');
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url; anchor.download = fileName; anchor.click();
+  URL.revokeObjectURL(url);
+}
