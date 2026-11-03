@@ -1,0 +1,13 @@
+# ERP Cloud Laravel scheduler — ONE entry per environment.
+# Install as the erp-deploy user's crontab:
+#   sudo cp erp-scheduler.cron /etc/cron.d/erp-scheduler
+#   sudo chown root:root /etc/cron.d/erp-scheduler && sudo chmod 0644 /etc/cron.d/erp-scheduler
+#
+# The `flock` prevents overlap if schedule:run is still running when the next
+# minute fires (backstop for withoutOverlapping()) and keeps a single execution
+# context. withOutOverlapping() in console.php already holds a cache lock.
+# In a MULTI-SERVER deployment run this cron on ONLY ONE host (designated
+# scheduler primary) or rely on the cache lock being shared via redis.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * erp-deploy /usr/bin/flock -n /tmp/erp-schedule.lock /usr/bin/php /var/www/erp-api/current/artisan schedule:run >> /var/log/erp-backend/schedule.log 2>&1
