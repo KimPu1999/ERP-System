@@ -60,6 +60,20 @@ it('rejects inactive platform administrators before creating a session', functio
     expect(auth()->check())->toBeFalse();
 });
 
+it('blocks protected API access for a session suspended after login', function (): void {
+    $user = User::factory()->create();
+    $tenant = Tenant::factory()->create();
+    TenantMembership::create(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'status' => 'active']);
+
+    $this->actingAs($user);
+    $user->update(['status' => 'suspended', 'suspended_at' => now()]);
+
+    $this->withHeader('X-Tenant-Id', $tenant->id)
+        ->getJson('/api/v1/companies')
+        ->assertStatus(423)
+        ->assertJsonPath('message', 'Your account is inactive or suspended.');
+});
+
 it('verifies signed email links and redirects browser clients to the frontend result page', function (): void {
     $user = User::factory()->create(['email_verified_at' => null]);
     $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), [

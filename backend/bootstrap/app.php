@@ -5,6 +5,7 @@ use App\Http\Middleware\ResolveSupplierPortalTenant;
 use App\Http\Middleware\RequirePlatformSuperAdmin;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\ValidateProductionConfiguration;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Application;
@@ -20,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(ValidateProductionConfiguration::class);
         $middleware->statefulApi();
         $middleware->redirectGuestsTo(fn (Request $request): ?string => $request->is('api/*') ? null : route('login'));
-        $middleware->alias(['tenant' => ResolveTenant::class, 'supplier.portal' => ResolveSupplierPortalTenant::class, 'platform.admin' => RequirePlatformSuperAdmin::class]);
+        $middleware->alias(['active.user' => EnsureActiveUser::class, 'tenant' => ResolveTenant::class, 'supplier.portal' => ResolveSupplierPortalTenant::class, 'platform.admin' => RequirePlatformSuperAdmin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Keep Laravel's default exception handler binding and rendering pipeline.

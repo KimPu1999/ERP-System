@@ -95,36 +95,37 @@ Route::prefix('v1')->group(function (): void {
     });
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
-        Route::get('/auth/me', [AuthController::class, 'me']);
-        Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
-        Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll']);
-        Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm']);
-        Route::post('/auth/mfa/disable', [MfaController::class, 'disable']);
-        Route::get('/auth/sessions', [SessionController::class, 'index']);
-        Route::delete('/auth/sessions/{session}', [SessionController::class, 'destroy']);
-        Route::post('/invitations/accept', [InvitationController::class, 'accept'])->middleware('verified');
-        Route::post('/invitations/{token}/accept', [InvitationController::class, 'acceptToken'])->middleware('verified')->where('token', '[A-Za-z0-9]+');
-        Route::get('/workspace-access', WorkspaceAccessController::class);
-        Route::get('/tenants', [TenantContextController::class, 'index']);
-        Route::post('/tenants', [TenantOnboardingController::class, 'store'])->middleware('verified');
-        Route::post('/supplier-portal/invitations/accept', [SupplierPortalController::class, 'acceptInvitation'])->middleware(['supplier.portal','throttle:10,1']);
-        Route::get('/supplier-portal/me', [SupplierPortalController::class, 'me'])->middleware('supplier.portal');
-        Route::get('/supplier-portal/dashboard', [SupplierPortalController::class, 'dashboard'])->middleware('supplier.portal');
-        Route::get('/supplier-portal/purchase-orders', [SupplierPortalController::class, 'purchaseOrders'])->middleware('supplier.portal');
-        Route::get('/supplier-portal/purchase-orders/{order}', [SupplierPortalController::class, 'purchaseOrder'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/purchase-orders/{order}/acknowledge', [SupplierPortalController::class, 'acknowledge'])->middleware(['supplier.portal','throttle:30,1']);
-        Route::get('/supplier-portal/delivery-commitments', [SupplierPortalController::class, 'commitments'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/delivery-commitments', [SupplierPortalController::class, 'createCommitment'])->middleware('supplier.portal');
-        Route::get('/supplier-portal/shipments', [SupplierPortalController::class, 'shipments'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/shipments', [SupplierPortalController::class, 'createShipment'])->middleware('supplier.portal');
-        Route::get('/supplier-portal/invoice-submissions', [SupplierPortalController::class, 'invoiceSubmissions'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/invoice-submissions', [SupplierPortalController::class, 'createInvoiceSubmission'])->middleware('supplier.portal');
-        Route::get('/supplier-portal/conversations', [SupplierPortalController::class, 'conversations'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/conversations', [SupplierPortalController::class, 'createConversation'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/conversations/{conversation}/messages', [SupplierPortalController::class, 'sendMessage'])->middleware(['supplier.portal','throttle:60,1']);
-        Route::get('/supplier-portal/corrective-actions', [SupplierPortalController::class, 'actions'])->middleware('supplier.portal');
-        Route::post('/supplier-portal/corrective-actions/{action}/responses', [SupplierPortalController::class, 'respondAction'])->middleware('supplier.portal');
-        Route::middleware(['verified', 'platform.admin'])->prefix('platform')->group(function (): void {
+        Route::middleware('active.user')->group(function (): void {
+            Route::get('/auth/me', [AuthController::class, 'me']);
+            Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
+            Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll']);
+            Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm']);
+            Route::post('/auth/mfa/disable', [MfaController::class, 'disable']);
+            Route::get('/auth/sessions', [SessionController::class, 'index']);
+            Route::delete('/auth/sessions/{session}', [SessionController::class, 'destroy']);
+            Route::post('/invitations/accept', [InvitationController::class, 'accept'])->middleware('verified');
+            Route::post('/invitations/{token}/accept', [InvitationController::class, 'acceptToken'])->middleware('verified')->where('token', '[A-Za-z0-9]+');
+            Route::get('/workspace-access', WorkspaceAccessController::class);
+            Route::get('/tenants', [TenantContextController::class, 'index']);
+            Route::post('/tenants', [TenantOnboardingController::class, 'store'])->middleware('verified');
+            Route::post('/supplier-portal/invitations/accept', [SupplierPortalController::class, 'acceptInvitation'])->middleware(['supplier.portal','throttle:10,1']);
+            Route::get('/supplier-portal/me', [SupplierPortalController::class, 'me'])->middleware('supplier.portal');
+            Route::get('/supplier-portal/dashboard', [SupplierPortalController::class, 'dashboard'])->middleware('supplier.portal');
+            Route::get('/supplier-portal/purchase-orders', [SupplierPortalController::class, 'purchaseOrders'])->middleware('supplier.portal');
+            Route::get('/supplier-portal/purchase-orders/{order}', [SupplierPortalController::class, 'purchaseOrder'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/purchase-orders/{order}/acknowledge', [SupplierPortalController::class, 'acknowledge'])->middleware(['supplier.portal','throttle:30,1']);
+            Route::get('/supplier-portal/delivery-commitments', [SupplierPortalController::class, 'commitments'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/delivery-commitments', [SupplierPortalController::class, 'createCommitment'])->middleware('supplier.portal');
+            Route::get('/supplier-portal/shipments', [SupplierPortalController::class, 'shipments'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/shipments', [SupplierPortalController::class, 'createShipment'])->middleware('supplier.portal');
+            Route::get('/supplier-portal/invoice-submissions', [SupplierPortalController::class, 'invoiceSubmissions'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/invoice-submissions', [SupplierPortalController::class, 'createInvoiceSubmission'])->middleware('supplier.portal');
+            Route::get('/supplier-portal/conversations', [SupplierPortalController::class, 'conversations'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/conversations', [SupplierPortalController::class, 'createConversation'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/conversations/{conversation}/messages', [SupplierPortalController::class, 'sendMessage'])->middleware(['supplier.portal','throttle:60,1']);
+            Route::get('/supplier-portal/corrective-actions', [SupplierPortalController::class, 'actions'])->middleware('supplier.portal');
+            Route::post('/supplier-portal/corrective-actions/{action}/responses', [SupplierPortalController::class, 'respondAction'])->middleware('supplier.portal');
+            Route::middleware(['verified', 'platform.admin'])->prefix('platform')->group(function (): void {
             Route::get('/summary', [PlatformTenantController::class, 'summary']);
             Route::get('/audit-logs', [PlatformAuditController::class, 'index']);
             Route::get('/security/events', [PlatformAuditController::class, 'security']);
@@ -158,9 +159,10 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/billing/revenue', [PlatformBillingController::class, 'revenue']);
             Route::post('/support/access-grants', [SupportController::class, 'grant']);
             Route::post('/support/access-grants/{grant}/approve', [SupportController::class, 'approve']);
+            });
         });
     });
-    Route::middleware(['auth:sanctum', 'verified', 'tenant'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'active.user', 'verified', 'tenant'])->group(function (): void {
         Route::get('/me', MeController::class);
         Route::get('/members', [TenantMemberController::class, 'index']);
         Route::get('/roles', [RoleController::class, 'index']);

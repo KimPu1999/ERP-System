@@ -85,13 +85,28 @@ final class InvitationController
     public function accept(Request $request, SecurityEventLogger $events, AuditLogger $audit): JsonResponse
     {
         $data = $request->validate(['invitation_id' => ['required', 'uuid'], 'token' => ['required', 'string']]);
-        return $this->acceptInvitation($request, Invitation::whereKey($data['invitation_id'])->firstOrFail(), $data['token'], $events, $audit);
+        $context = app(TenantContext::class);
+        $context->setUserEmail((string) $request->user()->email);
+        try {
+            $invitation = Invitation::whereKey($data['invitation_id'])->whereRaw('LOWER(email) = LOWER(?)', [$request->user()->email])->firstOrFail();
+            $context->set($invitation->tenant_id);
+            return $this->acceptInvitation($request, $invitation, $data['token'], $events, $audit);
+        } finally {
+            $context->clear();
+        }
     }
 
     public function acceptToken(Request $request, string $token, SecurityEventLogger $events, AuditLogger $audit): JsonResponse
     {
-        $invitation = Invitation::where('token_hash', hash('sha256', $token))->firstOrFail();
-        return $this->acceptInvitation($request, $invitation, $token, $events, $audit);
+        $context = app(TenantContext::class);
+        $context->setUserEmail((string) $request->user()->email);
+        try {
+            $invitation = Invitation::where('token_hash', hash('sha256', $token))->whereRaw('LOWER(email) = LOWER(?)', [$request->user()->email])->firstOrFail();
+            $context->set($invitation->tenant_id);
+            return $this->acceptInvitation($request, $invitation, $token, $events, $audit);
+        } finally {
+            $context->clear();
+        }
     }
 
     private function acceptInvitation(Request $request, Invitation $invitation, string $token, SecurityEventLogger $events, AuditLogger $audit): JsonResponse

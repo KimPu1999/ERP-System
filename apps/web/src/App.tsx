@@ -21,6 +21,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { MfaVerifyPage } from './pages/MfaVerifyPage';
+import { AccessDeniedPage } from './pages/AccessDeniedPage';
 import { RoleManagementPage } from './pages/RoleManagementPage';
 import { OrganizationPage } from './pages/OrganizationPage';
 import { ProductCatalogPage } from './pages/ProductCatalogPage';
@@ -116,7 +117,7 @@ export default function App() {
       <Route path="/platform/forgot-password" element={<ResetPasswordPage />} />
       <Route path="/platform/reset-password" element={<ResetPasswordPage />} />
       <Route path="/business/login" element={<BusinessLoginPage />} />
-      <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} />
+      <Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route path="/verify-mfa" element={<MfaVerifyPage />} /><Route path="/accept-invitation" element={<AcceptInvitationPage />} /><Route path="/access-denied" element={<AccessDeniedPage />} />
     </Route>
     <Route element={<PlatformRoute />}><Route element={<PlatformLayout />}><Route path="/platform" element={<PlatformDashboard />} /><Route path="/platform/dashboard" element={<PlatformDashboard />} /><Route path="/platform/tenants" element={<TenantManagement />} /><Route path="/platform/tenants/:tenantId" element={<PlatformBusinessDetailPage />} /><Route path="/platform/administrators" element={<PlatformAdministratorsPage />} /><Route path="/platform/users" element={<PlatformUsersPage />} /><Route path="/platform/invitations" element={<PlatformAdminInvitationsPage />} /><Route path="/platform/analytics" element={<PlatformAnalyticsPage />} /><Route path="/platform/monitoring" element={<HealthPage />} /><Route path="/platform/audit-logs" element={<PlatformAuditLogsPage />} /><Route path="/platform/security" element={<PlatformSecurityPage />} /><Route path="/platform/settings" element={<PlatformSettingsPage />} /><Route path="/platform/control" element={<PlatformControlPage />} /></Route></Route>
     <Route element={<BusinessRoute />}><Route element={<CompanyLayout />}><Route path="/business/dashboard" element={<CompanyDashboard />} /><Route path="/app/dashboard" element={<CompanyDashboard />} /></Route></Route>

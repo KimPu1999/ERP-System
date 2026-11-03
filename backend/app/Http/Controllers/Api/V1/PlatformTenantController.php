@@ -99,7 +99,10 @@ final class PlatformTenantController
         if ($data['status'] === 'active') abort_if(!$tenant->companies()->exists(), 422, 'The business must have a company before it can be activated.');
         DB::transaction(function () use ($tenant, $data): void {
             $tenant->update(['status' => $data['status']]);
-            if ($data['status'] === 'suspended') TenantMembership::where('tenant_id', $tenant->id)->whereIn('status', ['active', 'suspended'])->with('user')->get()->each(fn (TenantMembership $membership) => $membership->user?->tokens()->delete());
+            if ($data['status'] === 'suspended') TenantMembership::where('tenant_id', $tenant->id)->whereIn('status', ['active', 'suspended'])->with('user')->get()->each(function (TenantMembership $membership): void {
+                $membership->user?->tokens()->delete();
+                DB::table('sessions')->where('user_id', $membership->user_id)->delete();
+            });
         });
         $audit->record($request, 'platform.tenant.status_changed', $tenant->id, $tenant, ['from' => $previous, 'to' => $tenant->status, 'reason' => $data['reason'] ?? null]);
         return response()->json(['data' => $this->tenantPayload($tenant->fresh(['modules', 'companies'])), 'status' => $tenant->status]);

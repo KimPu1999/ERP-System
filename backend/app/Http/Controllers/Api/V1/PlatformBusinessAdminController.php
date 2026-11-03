@@ -105,7 +105,10 @@ final class PlatformBusinessAdminController
                 if ($assignment) $assignment->update(['role_id' => $role->id]);
                 else RoleAssignment::create(['tenant_id' => $tenant->id, 'role_id' => $role->id, 'user_id' => $locked->user_id]);
             }
-            if (isset($data['status']) && $data['status'] !== 'active') $locked->user?->tokens()->delete();
+            if (isset($data['status']) && $data['status'] !== 'active') {
+                $locked->user?->tokens()->delete();
+                DB::table('sessions')->where('user_id', $locked->user_id)->delete();
+            }
             $audit->record($request, 'platform.business_admin.membership_updated', $tenant->id, $locked, ['before' => $before, 'after' => ['status' => $locked->status, 'role_id' => $role?->id ?? $before['role_id']]]);
         }, 3);
 

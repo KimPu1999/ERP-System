@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 final class PlatformUserController
 {
@@ -35,7 +36,10 @@ final class PlatformUserController
         }
         $before = $this->payload($user);
         $user->update(['status' => $data['status'], 'suspended_at' => $data['status'] === 'suspended' ? now() : null]);
-        if ($data['status'] === 'suspended') $user->tokens()->delete();
+        if ($data['status'] === 'suspended') {
+            $user->tokens()->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
         $audit->record($request, 'platform.user.status_changed', null, $user, ['before' => $before, 'after' => $this->payload($user)]);
         return response()->json(['data' => $this->payload($user->fresh())]);
     }

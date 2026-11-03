@@ -101,6 +101,10 @@ final class StaffMembershipController
         if ($membership->status === 'revoked' && $data['status'] !== 'revoked') abort(422, 'A revoked membership must be re-invited.');
         if (in_array($data['status'], ['suspended', 'revoked'], true)) $this->protectLastOwner($company, $membership);
         $membership->update(['status' => $data['status'], 'suspended_at' => $data['status'] === 'suspended' ? now() : null, 'revoked_at' => $data['status'] === 'revoked' ? now() : null]);
+        if (in_array($data['status'], ['suspended', 'revoked'], true)) {
+            $member->tokens()->delete();
+            DB::table('sessions')->where('user_id', $member->id)->delete();
+        }
         $audit->record($request, "company.membership.{$data['status']}", $company->tenant_id, $membership, ['company_id' => $company->id, 'member_id' => $member->id]);
         return response()->json(['data' => $this->memberPayload($membership->fresh('user'), $company)]);
     }
