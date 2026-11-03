@@ -9,7 +9,9 @@ use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
@@ -128,6 +130,45 @@ it('rate limits verification email resend requests', function (): void {
     $this->postJson('/api/v1/auth/email/resend')->assertOk();
     $this->postJson('/api/v1/auth/email/resend')->assertOk();
     $this->postJson('/api/v1/auth/email/resend')->assertTooManyRequests();
+});
+
+it('reports log transport verification resends without claiming external delivery', function (): void {
+    Config::set('mail.default', 'log');
+    $user = User::factory()->create(['email_verified_at' => null]);
+
+    $this->actingAs($user)->postJson('/api/v1/auth/email/resend')
+        ->assertOk()
+        ->assertJsonPath('status', 'not_delivered')
+        ->assertJsonPath('message', 'Email delivery is not configured for external delivery. Configure SMTP or a managed mail provider first.');
+});
+
+it('records verification notification acceptance only after the configured mailer accepts it', function (): void {
+    Config::set('mail.default', 'smtp');
+    Config::set('mail.mailers.smtp.host', 'smtp.example.test');
+    Config::set('mail.from.address', 'no-reply@example.test');
+    Notification::fake();
+    $user = User::factory()->create(['email_verified_at' => null]);
+
+    $this->actingAs($user)->postJson('/api/v1/auth/email/resend')
+        ->assertOk()
+        ->assertJsonPath('status', 'accepted_by_configured_mailer');
+
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+it('returns a safe failure when the SMTP transport rejects verification delivery', function (): void {
+    Config::set('mail.default', 'smtp');
+    Config::set('mail.mailers.smtp.host', 'smtp.example.test');
+    Config::set('mail.from.address', 'no-reply@example.test');
+    Notification::partialMock();
+    Notification::shouldReceive('send')->once()->andThrow(new RuntimeException('SMTP password must not be exposed'));
+    $user = User::factory()->create(['email_verified_at' => null]);
+
+    $this->actingAs($user)->postJson('/api/v1/auth/email/resend')
+        ->assertOk()
+        ->assertJsonPath('status', 'failed')
+        ->assertJsonPath('message', 'The email provider rejected the verification message. Check the mail configuration and try again.')
+        ->assertJsonMissing(['SMTP password must not be exposed']);
 });
 
 it('provisions platform access only for an existing verified active user', function (): void {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Services\SecurityEventLogger;
+use App\Services\EmailVerificationDeliveryService;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
@@ -36,13 +37,13 @@ final class EmailVerificationController
         return $this->verificationResponse($request, ['status' => 'verified'], 'verified', 200, $user->is_platform_super_admin ? 'platform' : 'business');
     }
 
-    public function resend(Request $request, SecurityEventLogger $events): JsonResponse
+    public function resend(Request $request, SecurityEventLogger $events, EmailVerificationDeliveryService $delivery): JsonResponse
     {
         abort_if($request->user()->hasVerifiedEmail(), 409, 'Email is already verified.');
-        $request->user()->sendEmailVerificationNotification();
-        $events->record($request, 'auth.verification_resent');
+        $result = $delivery->send($request->user());
+        $events->record($request, 'auth.verification_resent', null, null, ['delivery_status' => $result['status']]);
 
-        return response()->json(['status' => 'sent']);
+        return response()->json($result);
     }
 
     private function verificationResponse(Request $request, array $payload, string $frontendStatus, int $status = 200, ?string $mode = null): JsonResponse|RedirectResponse

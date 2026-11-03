@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\User;
-use App\Services\{SecurityEventLogger, SettingsService};
+use App\Services\{EmailVerificationDeliveryService, SecurityEventLogger, SettingsService};
 use App\Services\SecurityPolicy;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,15 +14,15 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthController
 {
-    public function register(Request $request, SecurityEventLogger $events, SettingsService $settings): JsonResponse
+    public function register(Request $request, SecurityEventLogger $events, SettingsService $settings, EmailVerificationDeliveryService $delivery): JsonResponse
     {
         abort_unless((bool) $settings->getForPolicy('business')['public_registration_enabled'], 403, 'Public business registration is currently disabled.');
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'password' => ['required', 'string', 'min:8', 'confirmed']]);
         $user = DB::transaction(fn () => User::create($data));
-        event(new Registered($user));
+        $verificationDelivery = $delivery->send($user);
         Auth::guard('web')->login($user); $request->session()->regenerate();
         $events->record($request, 'auth.registered', $user->id);
-        return response()->json(['data' => $user->only(['id', 'name', 'email', 'status']), 'email_verification_required' => true], 201);
+        return response()->json(['data' => $user->only(['id', 'name', 'email', 'status']), 'email_verification_required' => true, 'verification_delivery' => $verificationDelivery], 201);
     }
 
     public function login(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse

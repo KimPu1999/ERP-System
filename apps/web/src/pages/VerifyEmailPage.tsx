@@ -8,7 +8,7 @@ import { useI18n } from '../lib/i18n';
 export function VerifyEmailPage() {
   const { user, refresh } = useAuth();
   const { t } = useI18n();
-  const mutation = useMutation({ mutationFn: () => api<{ status: string }>('/auth/email/resend', { method: 'POST' }) });
+  const mutation = useMutation({ mutationFn: () => api<{ status: string; message: string }>('/auth/email/resend', { method: 'POST' }) });
   const navigate = useNavigate();
   const location = useLocation();
   const destination = (location.state as { from?: string } | null)?.from ?? '/';
@@ -39,7 +39,7 @@ export function VerifyEmailPage() {
     {!verificationComplete && user && <>
       <button className="primary" type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? t('auth.sendingVerification') : t('auth.resendVerification')}</button>
       <button className="secondary" type="button" onClick={() => { void checkStatus(); }}>{t('auth.iVerified')}</button>
-      {mutation.isSuccess && <p role="status">{t('auth.verificationEmailSent')}</p>}
+      {mutation.isSuccess && <p role="status" className={mutation.data.status === 'accepted_by_configured_mailer' ? 'text-success' : 'error-text'}>{mutation.data.message || t('auth.verificationEmailSent')}</p>}
       {mutation.isError && <p className="error-text" role="alert">{mutation.error.message}</p>}
     </>}
     {!user && !verificationComplete && <>
