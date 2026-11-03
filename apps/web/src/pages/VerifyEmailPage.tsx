@@ -13,6 +13,8 @@ export function VerifyEmailPage() {
   const location = useLocation();
   const destination = (location.state as { from?: string } | null)?.from ?? '/';
   const verificationStatus = new URLSearchParams(location.search).get('status');
+  const verificationMode = new URLSearchParams(location.search).get('mode');
+  const signInPath = verificationMode === 'platform' ? '/platform/login' : '/login';
   const verificationComplete = verificationStatus === 'verified' || verificationStatus === 'already_verified';
   const verificationFailed = verificationStatus === 'invalid';
   const refreshedAfterVerification = useRef(false);
@@ -40,8 +42,14 @@ export function VerifyEmailPage() {
       {mutation.isSuccess && <p role="status">{t('auth.verificationEmailSent')}</p>}
       {mutation.isError && <p className="error-text" role="alert">{mutation.error.message}</p>}
     </>}
-    {!user && <Link className="primary full-width" to="/login">{t('auth.backToSignIn')}</Link>}
-    {verificationComplete && <Link className="primary full-width" to={user ? destination : '/login'}>{t(user ? 'auth.continue' : 'auth.backToSignIn')}</Link>}
+    {!user && !verificationComplete && <>
+      <Link className="primary full-width" to={signInPath}>{t('auth.backToSignIn')}</Link>
+      {verificationMode !== 'platform' && <Link className="secondary full-width" to="/platform/login">{t('auth.platformSignIn')}</Link>}
+    </>}
+    {verificationComplete && <>
+      <Link className="primary full-width" to={user ? destination : signInPath}>{t(user ? 'auth.continue' : 'auth.backToSignIn')}</Link>
+      {!user && verificationMode !== 'platform' && <Link className="secondary full-width" to="/platform/login">{t('auth.platformSignIn')}</Link>}
+    </>}
     <span className="sr-only">{t('auth.verificationContinueHint').replace('{{destination}}', destination)}</span>
   </div></section>;
 }
