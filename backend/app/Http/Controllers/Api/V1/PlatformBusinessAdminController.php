@@ -20,11 +20,52 @@ use Illuminate\Support\Str;
  */
 final class PlatformBusinessAdminController
 {
+    public function globalIndex(Request $request): JsonResponse
+    {
+        $query = TenantMembership::query()
+            ->whereHas('user.roleAssignments', fn ($builder) => $builder
+                ->whereColumn('role_assignments.tenant_id', 'tenant_memberships.tenant_id')
+                ->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')
+                ->whereHas('role.permissions', fn ($permissions) => $permissions->whereIn('name', ['organization.manage', 'members.invite'])))
+            ->with([
+                'tenant:id,name,slug,status',
+                'user:id,name,email,status,email_verified_at,last_login_at',
+                'user.roleAssignments' => fn ($builder) => $builder
+                    ->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')
+                    ->with('role:id,name,slug'),
+            ]);
+
+        if ($search = trim((string) $request->query('search'))) {
+            $query->where(fn ($builder) => $builder
+                ->whereHas('user', fn ($user) => $user->where('name', 'ilike', "%{$search}%")->orWhere('email', 'ilike', "%{$search}%"))
+                ->orWhereHas('tenant', fn ($tenant) => $tenant->where('name', 'ilike', "%{$search}%")->orWhere('slug', 'ilike', "%{$search}%")));
+        }
+        if ($businessId = $request->query('business_id')) $query->where('tenant_id', $businessId);
+        if ($membershipStatus = $request->query('membership_status')) $query->where('status', $membershipStatus);
+        if ($businessStatus = $request->query('business_status')) $query->whereHas('tenant', fn ($tenant) => $tenant->where('status', $businessStatus));
+
+        $sort = $request->query('sort', 'created_at');
+        $direction = $request->query('direction', 'desc') === 'asc' ? 'asc' : 'desc';
+        if ($sort === 'name') {
+            $query->join('users', 'users.id', '=', 'tenant_memberships.user_id')->select('tenant_memberships.*')->orderBy('users.name', $direction);
+        } elseif ($sort === 'business') {
+            $query->join('tenants', 'tenants.id', '=', 'tenant_memberships.tenant_id')->select('tenant_memberships.*')->orderBy('tenants.name', $direction);
+        } elseif ($sort === 'email') {
+            $query->join('users', 'users.id', '=', 'tenant_memberships.user_id')->select('tenant_memberships.*')->orderBy('users.email', $direction);
+        } else {
+            $query->orderBy('created_at', $direction);
+        }
+        $query->orderBy('tenant_memberships.id', $direction);
+
+        $memberships = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
+        return response()->json(['data' => $memberships->through(fn (TenantMembership $membership) => $this->membershipPayload($membership, true))]);
+    }
+
     public function index(Tenant $tenant): JsonResponse
     {
         $memberships = TenantMembership::query()
             ->where('tenant_id', $tenant->id)
-            ->whereHas('user.roleAssignments', fn ($query) => $query->where('tenant_id', $tenant->id)->whereHas('role.permissions', fn ($permissions) => $permissions->whereIn('name', ['organization.manage', 'members.invite'])))
+            ->whereHas('user.roleAssignments', fn ($query) => $query->where('tenant_id', $tenant->id)->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')->whereHas('role.permissions', fn ($permissions) => $permissions->whereIn('name', ['organization.manage', 'members.invite'])))
             ->with(['user:id,name,email,status,email_verified_at,last_login_at', 'user.roleAssignments' => fn ($query) => $query->where('tenant_id', $tenant->id)->whereNull('company_id')->with('role:id,name,slug')])
             ->orderByDesc('created_at')
             ->paginate(min(100, max(10, (int) request()->query('per_page', 25))));
@@ -35,7 +76,7 @@ final class PlatformBusinessAdminController
 
     public function invite(Request $request, Tenant $tenant, AuditLogger $audit): JsonResponse
     {
-        abort_if($tenant->status === 'suspended', 403, 'Suspended businesses cannot receive administrator invitations.');
+        abort_if(in_array($tenant->status, ['suspended', 'rejected'], true), 403, 'This business cannot receive administrator invitations in its current state.');
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'company_id' => ['required', 'uuid'],
@@ -43,27 +84,19 @@ final class PlatformBusinessAdminController
             'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:30'],
             'personal_message' => ['nullable', 'string', 'max:2000'],
         ]);
-        $company = Company::whereKey($data['company_id'])->where('tenant_id', $tenant->id)->where('is_active', true)->firstOrFail();
-        $role = Role::whereKey($data['role_id'])->where('tenant_id', $tenant->id)->with('permissions')->firstOrFail();
-        abort_if($role->permissions->pluck('name')->intersect(['organization.manage', 'members.invite'])->isEmpty(), 422, 'The selected role is not an administrator role.');
-
         $email = strtolower(trim($data['email']));
-        abort_if(Invitation::where('tenant_id', $tenant->id)->where('company_id', $company->id)->where('email', $email)->where('status', 'pending')->where('expires_at', '>', now())->exists(), 422, 'A pending invitation already exists for this administrator.');
-        $existing = User::whereRaw('LOWER(email) = ?', [$email])->first();
-        abort_if($existing && TenantMembership::where('tenant_id', $tenant->id)->where('user_id', $existing->id)->whereIn('status', ['active', 'suspended'])->exists(), 422, 'This user already has a membership in the business.');
-
         $token = Str::random(64);
-        $invitation = Invitation::create([
-            'tenant_id' => $tenant->id,
-            'company_id' => $company->id,
-            'inviter_user_id' => $request->user()->id,
-            'role_id' => $role->id,
-            'email' => $email,
-            'personal_message' => $data['personal_message'] ?? null,
-            'token_hash' => hash('sha256', $token),
-            'expires_at' => now()->addDays($data['expires_in_days'] ?? 7),
-            'status' => 'pending',
-        ]);
+        [$invitation, $company, $role] = DB::transaction(function () use ($tenant, $data, $email, $token, $request): array {
+            $lockedTenant = Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            abort_if(in_array($lockedTenant->status, ['suspended', 'rejected'], true), 403, 'This business cannot receive administrator invitations in its current state.');
+            $company = Company::whereKey($data['company_id'])->where('tenant_id', $lockedTenant->id)->where('is_active', true)->firstOrFail();
+            $role = Role::whereKey($data['role_id'])->where('tenant_id', $lockedTenant->id)->with('permissions')->firstOrFail();
+            abort_if($role->permissions->pluck('name')->intersect(['organization.manage', 'members.invite'])->isEmpty(), 422, 'The selected role is not an administrator role.');
+            abort_if(Invitation::where('tenant_id', $lockedTenant->id)->where('company_id', $company->id)->where('email', $email)->where('status', 'pending')->where('expires_at', '>', now())->exists(), 422, 'A pending invitation already exists for this administrator.');
+            $existing = User::whereRaw('LOWER(email) = ?', [$email])->first();
+            abort_if($existing && TenantMembership::where('tenant_id', $lockedTenant->id)->where('user_id', $existing->id)->whereIn('status', ['active', 'suspended'])->exists(), 422, 'This user already has a membership in the business.');
+            return [Invitation::create(['tenant_id' => $lockedTenant->id, 'company_id' => $company->id, 'inviter_user_id' => $request->user()->id, 'role_id' => $role->id, 'email' => $email, 'personal_message' => $data['personal_message'] ?? null, 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDays($data['expires_in_days'] ?? 7), 'status' => 'pending']), $company, $role];
+        }, 3);
 
         try {
             Mail::to($email)->send(new CompanyInvitationMail($invitation, $token));
@@ -85,6 +118,19 @@ final class PlatformBusinessAdminController
         return response()->json(['data' => $invitations]);
     }
 
+    public function revokeInvitation(Request $request, Tenant $tenant, Invitation $invitation, AuditLogger $audit): JsonResponse
+    {
+        abort_unless($invitation->tenant_id === $tenant->id, 404);
+        abort_if($invitation->status !== 'pending', 422, 'Only pending invitations can be revoked.');
+        DB::transaction(function () use ($request, $tenant, $invitation, $audit): void {
+            $locked = Invitation::whereKey($invitation->id)->where('tenant_id', $tenant->id)->lockForUpdate()->firstOrFail();
+            abort_if($locked->status !== 'pending', 422, 'Only pending invitations can be revoked.');
+            $locked->update(['status' => 'revoked', 'revoked_at' => now(), 'token_hash' => hash('sha256', Str::random(64))]);
+            $audit->record($request, 'platform.business_admin.invitation_revoked', $tenant->id, $locked);
+        }, 3);
+        return response()->json(['data' => $this->invitationPayload($invitation->fresh(['company:id,name,code', 'role:id,name,slug']))]);
+    }
+
     public function updateMembership(Request $request, Tenant $tenant, TenantMembership $membership, AuditLogger $audit): JsonResponse
     {
         abort_unless($membership->tenant_id === $tenant->id, 404);
@@ -93,7 +139,8 @@ final class PlatformBusinessAdminController
         if (isset($data['role_id'])) $role = Role::whereKey($data['role_id'])->where('tenant_id', $tenant->id)->with('permissions')->firstOrFail();
 
         DB::transaction(function () use ($request, $tenant, $membership, $data, $role, $audit): void {
-            $locked = TenantMembership::whereKey($membership->id)->lockForUpdate()->firstOrFail();
+            $locked = TenantMembership::whereKey($membership->id)->with('user')->lockForUpdate()->firstOrFail();
+            abort_if($locked->status === 'revoked' && (($data['status'] ?? null) === 'active'), 422, 'Revoked memberships cannot be reactivated.');
             $isOwner = $this->isAdministrator($locked);
             if ($isOwner && isset($data['status']) && $data['status'] !== 'active') $this->protectLastAdministrator($tenant, $locked);
             if ($isOwner && $role && $role->permissions->pluck('name')->intersect(['organization.manage', 'members.invite'])->isEmpty()) $this->protectLastAdministrator($tenant, $locked);
@@ -101,6 +148,7 @@ final class PlatformBusinessAdminController
             $before = ['status' => $locked->status, 'role_id' => $locked->user?->roleAssignments()->where('tenant_id', $tenant->id)->whereNull('company_id')->value('role_id')];
             if (isset($data['status'])) $locked->update(['status' => $data['status'], 'suspended_at' => $data['status'] === 'suspended' ? now() : null, 'revoked_at' => $data['status'] === 'revoked' ? now() : null]);
             if ($role) {
+                abort_if($role->permissions->pluck('name')->intersect(['organization.manage', 'members.invite'])->isEmpty(), 422, 'The selected role is not an administrator role.');
                 $assignment = RoleAssignment::where('tenant_id', $tenant->id)->where('user_id', $locked->user_id)->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')->first();
                 if ($assignment) $assignment->update(['role_id' => $role->id]);
                 else RoleAssignment::create(['tenant_id' => $tenant->id, 'role_id' => $role->id, 'user_id' => $locked->user_id]);
@@ -165,19 +213,21 @@ final class PlatformBusinessAdminController
 
     private function isAdministrator(TenantMembership $membership): bool
     {
-        return RoleAssignment::where('tenant_id', $membership->tenant_id)->where('user_id', $membership->user_id)->whereHas('role.permissions', fn ($query) => $query->whereIn('name', ['organization.manage', 'members.invite']))->exists();
+        return RoleAssignment::where('tenant_id', $membership->tenant_id)->where('user_id', $membership->user_id)->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')->whereHas('role.permissions', fn ($query) => $query->whereIn('name', ['organization.manage', 'members.invite']))->exists();
     }
 
     private function protectLastAdministrator(Tenant $tenant, TenantMembership $target): void
     {
-        $count = TenantMembership::where('tenant_id', $tenant->id)->where('status', 'active')->whereHas('user.roleAssignments', fn ($query) => $query->where('tenant_id', $tenant->id)->whereHas('role.permissions', fn ($permissions) => $permissions->whereIn('name', ['organization.manage', 'members.invite'])))->count();
+        $count = TenantMembership::where('tenant_id', $tenant->id)->where('status', 'active')->whereHas('user.roleAssignments', fn ($query) => $query->where('tenant_id', $tenant->id)->whereNull('company_id')->whereNull('branch_id')->whereNull('department_id')->whereHas('role.permissions', fn ($permissions) => $permissions->whereIn('name', ['organization.manage', 'members.invite'])))->count();
         abort_if($count <= 1, 422, 'The last active business administrator must be retained or transferred first.');
     }
 
-    private function membershipPayload(TenantMembership $membership): array
+    private function membershipPayload(TenantMembership $membership, bool $includeBusiness = false): array
     {
-        $roles = $membership->user?->roleAssignments?->map(fn (RoleAssignment $assignment) => $assignment->role?->only(['id', 'name', 'slug']))->filter()->unique('id')->values() ?? collect();
-        return ['id' => $membership->id, 'tenant_id' => $membership->tenant_id, 'status' => $membership->status, 'created_at' => $membership->created_at?->toISOString(), 'user' => $membership->user?->only(['id', 'name', 'email', 'status', 'email_verified_at', 'last_login_at']), 'roles' => $roles];
+        $roles = $membership->user?->roleAssignments?->filter(fn (RoleAssignment $assignment) => $assignment->tenant_id === $membership->tenant_id)->map(fn (RoleAssignment $assignment) => $assignment->role?->only(['id', 'name', 'slug']))->filter()->unique('id')->values() ?? collect();
+        $payload = ['id' => $membership->id, 'tenant_id' => $membership->tenant_id, 'status' => $membership->status, 'created_at' => $membership->created_at?->toISOString(), 'user' => $membership->user?->only(['id', 'name', 'email', 'status', 'email_verified_at', 'last_login_at']), 'roles' => $roles];
+        if ($includeBusiness) $payload['business'] = $membership->tenant?->only(['id', 'name', 'slug', 'status']);
+        return $payload;
     }
 
     private function invitationPayload(Invitation $invitation): array

@@ -225,3 +225,45 @@ it('transfers ownership only to an active verified administrator', function (): 
     expect(RoleAssignment::where('tenant_id', $f['tenant']->id)->where('user_id', $f['owner']->id)->value('role_id'))->toBe($managerRole->id);
     expect(RoleAssignment::where('tenant_id', $f['tenant']->id)->where('user_id', $manager->id)->value('role_id'))->toBe($f['role']->id);
 });
+
+it('keeps business lifecycle changes explicit and rejects with a reason', function (): void {
+    Mail::fake();
+    $f = platformBusinessFixture();
+    $invitation = Invitation::create(['tenant_id' => $f['tenant']->id, 'company_id' => $f['company']->id, 'inviter_user_id' => $f['platform']->id, 'role_id' => $f['role']->id, 'email' => 'pending@example.test', 'token_hash' => hash('sha256', 'pending-token'), 'expires_at' => now()->addDay(), 'status' => 'pending']);
+
+    $this->actingAs($f['platform'])->putJson('/api/v1/platform/tenants/'.$f['tenant']->id, ['name' => 'Changed', 'status' => 'active'])->assertUnprocessable();
+    $this->actingAs($f['platform'])->patchJson('/api/v1/platform/tenants/'.$f['tenant']->id.'/status', ['status' => 'rejected'])->assertUnprocessable();
+    $this->actingAs($f['platform'])->patchJson('/api/v1/platform/tenants/'.$f['tenant']->id.'/status', ['status' => 'rejected', 'reason' => 'Incomplete registration'])->assertOk()->assertJsonPath('data.status', 'rejected');
+    expect($invitation->fresh()->status)->toBe('revoked');
+    $this->actingAs($f['platform'])->patchJson('/api/v1/platform/tenants/'.$f['tenant']->id.'/status', ['status' => 'active'])->assertUnprocessable();
+    $this->actingAs($f['platform'])->patchJson('/api/v1/platform/tenants/'.$f['tenant']->id.'/status', ['status' => 'pending'])->assertOk();
+});
+
+it('does not reactivate revoked memberships and prevents cross-business invitation access', function (): void {
+    Mail::fake();
+    $first = platformBusinessFixture();
+    $second = platformBusinessFixture();
+    $membership = TenantMembership::where('tenant_id', $first['tenant']->id)->where('user_id', $first['owner']->id)->firstOrFail();
+    $secondAdmin = User::factory()->create();
+    TenantMembership::create(['tenant_id' => $first['tenant']->id, 'user_id' => $secondAdmin->id, 'status' => 'active']);
+    RoleAssignment::create(['tenant_id' => $first['tenant']->id, 'role_id' => $first['role']->id, 'user_id' => $secondAdmin->id]);
+    $this->actingAs($first['platform'])->patchJson('/api/v1/platform/tenants/'.$first['tenant']->id.'/memberships/'.$membership->id, ['status' => 'revoked'])->assertOk();
+    $this->actingAs($first['platform'])->patchJson('/api/v1/platform/tenants/'.$first['tenant']->id.'/memberships/'.$membership->id, ['status' => 'active'])->assertUnprocessable();
+    $invitation = $this->actingAs($first['platform'])->postJson('/api/v1/platform/tenants/'.$first['tenant']->id.'/administrators/invitations', ['email' => 'cross@example.test', 'company_id' => $first['company']->id, 'role_id' => $first['role']->id])->assertCreated()->json('data.id');
+    $this->actingAs($first['platform'])->postJson('/api/v1/platform/tenants/'.$second['tenant']->id.'/administrators/invitations/'.$invitation.'/resend')->assertNotFound();
+    $this->actingAs($first['platform'])->postJson('/api/v1/platform/tenants/'.$second['tenant']->id.'/administrators/invitations/'.$invitation.'/revoke')->assertNotFound();
+});
+
+it('lists authorized business administrators globally with business scope', function (): void {
+    $f = platformBusinessFixture();
+    $response = $this->actingAs($f['platform'])->getJson('/api/v1/platform/business-admins')->assertOk();
+    $response->assertJsonStructure(['data' => ['data' => [['business' => ['id', 'name', 'slug', 'status'], 'user', 'roles']]]]);
+    expect($response->json('data.total'))->toBe(1);
+    $this->actingAs($f['owner'])->getJson('/api/v1/platform/business-admins')->assertForbidden();
+});
+
+it('exports only authorized business directory fields', function (): void {
+    $f = platformBusinessFixture();
+    $this->actingAs($f['platform'])->get('/api/v1/platform/tenants/export')->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    $this->actingAs($f['owner'])->get('/api/v1/platform/tenants/export')->assertForbidden();
+});

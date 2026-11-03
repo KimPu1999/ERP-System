@@ -140,7 +140,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/invitations/{invitation}/resend', [PlatformAdminInvitationController::class, 'resend']);
             Route::post('/invitations/{invitation}/revoke', [PlatformAdminInvitationController::class, 'revoke']);
             Route::get('/tenants', [PlatformTenantController::class, 'index']);
+            Route::get('/tenants/export', [PlatformTenantController::class, 'export']);
             Route::post('/tenants', [PlatformTenantController::class, 'store']);
+            Route::get('/business-admins', [PlatformBusinessAdminController::class, 'globalIndex']);
             Route::get('/tenants/{tenant}', [PlatformTenantController::class, 'show']);
             Route::put('/tenants/{tenant}', [PlatformTenantController::class, 'update']);
             Route::patch('/tenants/{tenant}/status', [PlatformTenantController::class, 'changeStatus']);
@@ -148,8 +150,9 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/tenants/{tenant}/activity', [PlatformTenantController::class, 'activity']);
             Route::get('/tenants/{tenant}/administrators', [PlatformBusinessAdminController::class, 'index']);
             Route::get('/tenants/{tenant}/administrators/invitations', [PlatformBusinessAdminController::class, 'invitations']);
-            Route::post('/tenants/{tenant}/administrators/invitations', [PlatformBusinessAdminController::class, 'invite']);
-            Route::post('/tenants/{tenant}/administrators/invitations/{invitation}/resend', [PlatformBusinessAdminController::class, 'resendInvitation']);
+            Route::post('/tenants/{tenant}/administrators/invitations', [PlatformBusinessAdminController::class, 'invite'])->middleware('throttle:10,1');
+            Route::post('/tenants/{tenant}/administrators/invitations/{invitation}/resend', [PlatformBusinessAdminController::class, 'resendInvitation'])->middleware('throttle:10,1');
+            Route::post('/tenants/{tenant}/administrators/invitations/{invitation}/revoke', [PlatformBusinessAdminController::class, 'revokeInvitation'])->middleware('throttle:30,1');
             Route::patch('/tenants/{tenant}/memberships/{membership}', [PlatformBusinessAdminController::class, 'updateMembership']);
             Route::post('/tenants/{tenant}/ownership-transfer', [PlatformBusinessAdminController::class, 'transferOwnership']);
             Route::get('/tenants/{tenant}/modules', [ModuleController::class, 'platformIndex']);
