@@ -3718,6 +3718,21 @@ table { min-width: 0; }
 .security-center-tabs a:hover, .security-center-tabs a:focus-visible, .security-center-tabs a.active { color: var(--blue); background: var(--surface-hover); }
 .security-center-tabs a.active { border-bottom-color: var(--blue); }
 .security-events-card { margin-top: 0; }
+.security-recent-events-card { margin-top: 14px; }
+.security-recent-events-heading { min-height: 72px; padding: 14px 12px 11px; }
+.security-recent-events-heading h2 { margin-top: 2px; font-size: 16px; letter-spacing: -.02em; }
+.security-recent-events-heading .text-link { align-self: flex-end; margin-bottom: 2px; }
+.security-recent-events-table { min-width: 0 !important; table-layout: fixed; }
+.security-recent-events-table th, .security-recent-events-table td { padding: 10px 12px; }
+.security-recent-events-table th:nth-child(1) { width: 44%; }
+.security-recent-events-table th:nth-child(2) { width: 30%; }
+.security-recent-events-table th:nth-child(3) { width: 14%; }
+.security-recent-events-table th:nth-child(4) { width: 12%; }
+.security-recent-events-table tbody tr { min-height: 68px; }
+.security-recent-events-table td { height: 68px; font-size: 12px; }
+.security-recent-events-table td strong { display: block; overflow: hidden; color: var(--text); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.security-recent-events-table td small { max-width: 100%; }
+.security-recent-events-table td:nth-child(2), .security-recent-events-table td:nth-child(4) { color: var(--text); font-size: 12px; }
 .security-events-card td small { display: block; max-width: 260px; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .security-result-badge { display: inline-flex; align-items: center; min-height: 22px; padding: 0 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface-muted); font-size: 10px; font-weight: 750; text-transform: capitalize; }
 .security-result-badge.success { color: #166534; border-color: #bbf7d0; background: #f0fdf4; }
