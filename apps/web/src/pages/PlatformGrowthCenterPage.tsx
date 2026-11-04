@@ -95,7 +95,7 @@ function SignalValue({ signal, t, formatNumber }: { signal: GrowthSignal } & Loc
 }
 
 function MetricTile({ label, value, note }: { label: string; value: string; note?: ReactNode }) {
-  return <article className="platform-kpi">
+  return <article className="platform-kpi platform-growth-metric">
     <span>{label}</span>
     <strong>{value}</strong>
     {note ? <small className="muted">{note}</small> : null}

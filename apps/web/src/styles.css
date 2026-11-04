@@ -7367,3 +7367,49 @@ table tbody tr:hover { background: var(--surface-hover); }
 .dark .button-primary:hover:not(:disabled) {
   background: var(--blue-hover) !important;
 }
+
+/* Growth analytics KPI cards: keep labels, values, and definitions readable
+   when a metric has a long value or an evidence definition. */
+.platform-growth-metric {
+  display: flex;
+  min-height: 150px;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+.platform-growth-metric > span:not(.platform-kpi-icon) {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+.platform-growth-metric > strong {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: clamp(22px, 2vw, 30px);
+  line-height: 1.12;
+}
+.platform-growth-metric > small {
+  display: block;
+  max-width: 100%;
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+@media (max-width: 900px) {
+  .platform-growth-metric { min-height: 132px; }
+}
+@media (max-width: 560px) {
+  .platform-growth-metric { min-height: 0; }
+}
