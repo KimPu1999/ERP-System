@@ -5836,6 +5836,15 @@ table tbody tr:hover { background: var(--surface-hover); }
 .form-grid input, .form-grid select, .platform-settings-form input, .platform-settings-form select, .platform-settings-form textarea { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; }
 .platform-settings-form textarea { resize: vertical; }
 .settings-toggle-list { display: grid; gap: 12px; }
+.settings-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: var(--surface); cursor: pointer; transition: border-color .16s ease, background .16s ease; }
+.settings-toggle-row:hover { border-color: #93c5fd; background: var(--surface-muted); }
+.settings-toggle-row > span { min-width: 0; color: var(--text); font-size: 12px; font-weight: 700; }
+.settings-toggle-row input { appearance: none; position: relative; flex: 0 0 auto; width: 42px; height: 24px; min-height: 24px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-muted); cursor: pointer; transition: border-color .16s ease, background .16s ease; }
+.settings-toggle-row input::after { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, .2); content: ''; transition: transform .16s ease; }
+.settings-toggle-row input:checked { border-color: var(--blue); background: var(--blue); }
+.settings-toggle-row input:checked::after { transform: translateX(18px); }
+.settings-toggle-row input:focus-visible { outline: 3px solid rgba(37, 99, 235, .22); outline-offset: 2px; }
+.platform-settings-form-subscriptions .form-grid > .settings-toggle-row, .platform-settings-form-maintenance .form-grid > .settings-toggle-row { min-height: 40px; padding: 8px 10px; }
 .platform-settings-form-notifications { max-width: 980px; }
 .platform-settings-form-notifications .table-card-heading { align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .platform-settings-form-notifications .table-card-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
@@ -5857,6 +5866,7 @@ table tbody tr:hover { background: var(--surface-hover); }
 .notification-setting-row input:focus-visible { outline: 3px solid rgba(37, 99, 235, .22); outline-offset: 2px; }
 :root.dark .notifications-settings-intro, .dark .notifications-settings-intro { border-color: #1d4ed8; background: #172554; }
 :root.dark .notifications-settings-badge, .dark .notifications-settings-badge { border-color: #3b82f6; background: #1e3a8a; color: #dbeafe; }
+:root.dark .settings-toggle-row, .dark .settings-toggle-row { background: var(--surface); }
 .platform-branding-assets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .platform-branding-assets .panel { display: grid; gap: 10px; align-content: start; padding: 13px; }
 .platform-brand-preview { width: 100%; height: 82px; object-fit: contain; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-muted); }
