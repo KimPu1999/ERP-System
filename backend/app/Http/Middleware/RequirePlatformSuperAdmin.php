@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use App\Services\SecurityPolicy;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +11,6 @@ final class RequirePlatformSuperAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $policy = app(SecurityPolicy::class);
         $user = $request->user();
         abort_unless(
             $user
@@ -23,7 +21,6 @@ final class RequirePlatformSuperAdmin
             403,
             'Active verified platform administrator access required.',
         );
-        abort_unless(! $policy->platformMfaRequired() || $user->mfa_enabled_at, 403, 'Platform MFA enrollment is required before platform access can be granted.');
         $context = app(TenantContext::class);
         $previous = $context->snapshot();
         $context->setPlatformAdmin(true);
