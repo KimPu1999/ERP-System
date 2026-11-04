@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { getPlatformTenant, getPlatformTenantActivity, getPlatformTenantSecurity, updatePlatformTenant, updatePlatformTenantModule, type ModuleKey, type PlatformTenantInput } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 
@@ -9,8 +9,9 @@ const moduleOptions: Array<{ key: ModuleKey; label: string }> = [{ key: 'pos', l
 export function PlatformBusinessDetailPage() {
   const { t } = useI18n();
   const { tenantId = '' } = useParams();
+  const [searchParams] = useSearchParams();
   const client = useQueryClient();
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState(() => searchParams.get('tab') ?? 'overview');
   const tenant = useQuery({ queryKey: ['platform-tenant', tenantId], queryFn: () => getPlatformTenant(tenantId), enabled: Boolean(tenantId) });
   const security = useQuery({ queryKey: ['platform-tenant-security', tenantId], queryFn: () => getPlatformTenantSecurity(tenantId), enabled: Boolean(tenantId) && tab === 'security' });
   const activity = useQuery({ queryKey: ['platform-tenant-activity', tenantId], queryFn: () => getPlatformTenantActivity(tenantId), enabled: Boolean(tenantId) && tab === 'activity' });
