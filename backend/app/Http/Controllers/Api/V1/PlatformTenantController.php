@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Mail\CompanyInvitationMail;
-use App\Models\{Company, Invitation, Permission, PlatformAuditLog, Role, Tenant, TenantMembership, TenantSubscription};
+use App\Models\{Company, Invitation, Permission, PlatformAuditLog, Role, RoleAssignment, Tenant, TenantMembership, TenantSubscription};
 use App\Services\{AuditLogger, PlatformOverviewService, SettingsService, SubscriptionService};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

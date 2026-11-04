@@ -44,21 +44,28 @@ final class WorkspaceAccessController
         }
 
         $context = app(TenantContext::class);
+        $previous = $context->snapshot();
         $context->setUserEmail((string) $user->email);
         try {
             $invitations = Invitation::query()
-                ->with([
-                    'tenant:id,name,slug,status',
-                    'company:id,tenant_id,name,code,is_active',
-                ])
                 ->whereRaw('LOWER(email) = LOWER(?)', [$user->email])
                 ->where('status', 'pending')
                 ->whereNull('accepted_at')
                 ->where('expires_at', '>', now())
                 ->orderBy('expires_at')
                 ->get(['id', 'tenant_id', 'company_id', 'email', 'expires_at']);
+            // The pending invitee is entitled to the workspace summary shown
+            // on the access screen. Load those relations under the bounded
+            // tenant context granted by each invitation (same grant pattern
+            // as the accept flow); without it, enforced row level security
+            // would hide the tenant and company.
+            foreach ($invitations->groupBy('tenant_id') as $tenantId => $tenantInvitations) {
+                $context->set((string) $tenantId);
+                $tenantInvitations->each(fn (Invitation $invitation): bool => (($invitation->setRelation('tenant', $invitation->tenant()->select(['id', 'name', 'slug', 'status'])->first())) && true));
+                $tenantInvitations->each(fn (Invitation $invitation): bool => (($invitation->setRelation('company', $invitation->company()->select(['id', 'tenant_id', 'name', 'code', 'is_active'])->first())) && true));
+            }
         } finally {
-            $context->clearUserEmail();
+            $context->restoreSnapshot($previous);
         }
 
         return response()->json(['data' => [

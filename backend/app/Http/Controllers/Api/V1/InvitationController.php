@@ -20,6 +20,7 @@ use App\Services\SubscriptionService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -77,8 +78,26 @@ final class InvitationController
 
     public function preview(string $token): JsonResponse
     {
-        $invitation = Invitation::where('token_hash', hash('sha256', $token))->with(['company:id,name,code,is_active', 'role:id,name,slug'])->first();
+        $context = app(TenantContext::class);
+        $previous = $context->snapshot();
+        // Guest flows have no user context. The invitation hash itself
+        // grants read access to that single invitation row via the
+        // connection-local setting honored by invitations_tenant_isolation.
+        if (DB::getDriverName() === 'pgsql') DB::statement("SELECT set_config('app.invitation_token', ?, false)", [hash('sha256', $token)]);
+        try {
+            $invitation = Invitation::where('token_hash', hash('sha256', $token))->first();
+        } finally {
+            $context->restoreSnapshot($previous);
+        }
         if (! $invitation) return response()->json(['status' => 'invalid'], 404);
+        // Invitation resolved by token: grant the bounded workspace context
+        // while loading the summary fields the preview responds with.
+        $context->set($invitation->tenant_id);
+        try {
+            $invitation->load(['company:id,name,code,is_active', 'role:id,name,slug']);
+        } finally {
+            $context->restoreSnapshot($previous);
+        }
         return response()->json(['data' => ['status' => $this->currentStatus($invitation), 'company' => $invitation->company?->only(['id', 'name', 'code']), 'role' => $invitation->role?->only(['id', 'name', 'slug']), 'expires_at' => $invitation->expires_at?->toISOString()]]);
     }
 
@@ -86,26 +105,28 @@ final class InvitationController
     {
         $data = $request->validate(['invitation_id' => ['required', 'uuid'], 'token' => ['required', 'string']]);
         $context = app(TenantContext::class);
+        $previous = $context->snapshot();
         $context->setUserEmail((string) $request->user()->email);
         try {
             $invitation = Invitation::whereKey($data['invitation_id'])->whereRaw('LOWER(email) = LOWER(?)', [$request->user()->email])->firstOrFail();
             $context->set($invitation->tenant_id);
             return $this->acceptInvitation($request, $invitation, $data['token'], $events, $audit, $subscriptions);
         } finally {
-            $context->clear();
+            $context->restoreSnapshot($previous);
         }
     }
 
     public function acceptToken(Request $request, string $token, SecurityEventLogger $events, AuditLogger $audit, SubscriptionService $subscriptions): JsonResponse
     {
         $context = app(TenantContext::class);
+        $previous = $context->snapshot();
         $context->setUserEmail((string) $request->user()->email);
         try {
             $invitation = Invitation::where('token_hash', hash('sha256', $token))->whereRaw('LOWER(email) = LOWER(?)', [$request->user()->email])->firstOrFail();
             $context->set($invitation->tenant_id);
             return $this->acceptInvitation($request, $invitation, $token, $events, $audit, $subscriptions);
         } finally {
-            $context->clear();
+            $context->restoreSnapshot($previous);
         }
     }
 

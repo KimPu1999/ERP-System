@@ -25,7 +25,8 @@ final class RequirePlatformSuperAdmin
         );
         abort_unless(! $policy->platformMfaRequired() || $user->mfa_enabled_at, 403, 'Platform MFA enrollment is required before platform access can be granted.');
         $context = app(TenantContext::class);
+        $previous = $context->snapshot();
         $context->setPlatformAdmin(true);
-        try { return $next($request); } finally { $context->setPlatformAdmin(false); }
+        try { return $next($request); } finally { $context->restoreSnapshot($previous); }
     }
 }

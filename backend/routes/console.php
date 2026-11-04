@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\{EvaluateSupplierAutomationRule, RunAutomationRule};
+use App\Support\TenantContext;
 use App\Models\{AuditLogArchive, AutomationRule, PlatformAuditLog, SecuritySetting, User};
 use App\Services\MonitoringService;
 use Illuminate\Support\Facades\{Artisan, Cache, DB, Schedule};
@@ -76,24 +77,33 @@ Artisan::command('erp:release-check', function (): int {
 });
 
 Artisan::command('erp:purchasing-automation', function (): int {
-    Cache::put('erp:purchasing-automation:last_run', now()->toIso8601String(), now()->addHours(2));
-    $now = now()->utc()->format('Y-m-d-H');
-    AutomationRule::where('is_active', true)->orderBy('id')->chunkById(100, function ($rules) use ($now): void {
-        foreach ($rules as $rule) {
-            if (in_array($rule->event_key, AutomationRule::SUPPLIER_ALLOWLIST, true)) {
-                $period = match ($rule->frequency) {
-                    'once' => 'once',
-                    'daily' => now()->utc()->format('Y-m-d'),
-                    'weekly' => now()->utc()->format('o-W'),
-                    'monthly' => now()->utc()->format('Y-m'),
-                    default => $now,
-                };
-                EvaluateSupplierAutomationRule::dispatch($rule->tenant_id, $rule->id, $period);
-            } else {
-                RunAutomationRule::dispatch($rule->tenant_id, $rule->id, 'purchasing:'.$rule->id.':'.$now);
+    // The sweep only reads rule definitions to dispatch tenant-scoped jobs.
+    // With forced row level security the owner role observes the
+    // platform context so unscoped reads remain explicit and bounded.
+    $previous = app(TenantContext::class)->snapshot();
+    DB::statement("SELECT set_config('app.platform_admin', 'true', false)");
+    try {
+        Cache::put('erp:purchasing-automation:last_run', now()->toIso8601String(), now()->addHours(2));
+        $now = now()->utc()->format('Y-m-d-H');
+        AutomationRule::where('is_active', true)->orderBy('id')->chunkById(100, function ($rules) use ($now): void {
+            foreach ($rules as $rule) {
+                if (in_array($rule->event_key, AutomationRule::SUPPLIER_ALLOWLIST, true)) {
+                    $period = match ($rule->frequency) {
+                        'once' => 'once',
+                        'daily' => now()->utc()->format('Y-m-d'),
+                        'weekly' => now()->utc()->format('o-W'),
+                        'monthly' => now()->utc()->format('Y-m'),
+                        default => $now,
+                    };
+                    EvaluateSupplierAutomationRule::dispatch($rule->tenant_id, $rule->id, $period);
+                } else {
+                    RunAutomationRule::dispatch($rule->tenant_id, $rule->id, 'purchasing:'.$rule->id.':'.$now);
+                }
             }
-        }
-    });
+        });
+    } finally {
+        app(TenantContext::class)->restoreSnapshot($previous);
+    }
     $this->info('Dispatched bounded tenant-scoped Purchasing automation batches. Supplier notifications remain non-financial.');
     return 0;
 })->purpose('Dispatch safe non-financial Purchasing automation rules');
@@ -112,6 +122,11 @@ Artisan::command('platform:security-prune', function (): int {
     $configured = SecuritySetting::where('key', 'audit_retention_days')->value('value');
     $days = max(30, min(3650, (int) (is_array($configured) ? ($configured['value'] ?? 365) : 365)));
     $cutoff = now()->subDays($days);
+    // Retention cleanup is a platform-level operation: it must observe all
+    // tenants' audit rows, so the explicit platform context is set for the
+    // whole sweep (forced row level security otherwise filters tenant rows).
+    $previous = app(TenantContext::class)->snapshot();
+    DB::statement("SELECT set_config('app.platform_admin', 'true', false)");
     DB::statement("SELECT set_config('app.allow_audit_prune', 'on', false)");
     PlatformAuditLog::where('created_at', '<', $cutoff)->orderBy('id')->chunkById(500, function ($logs): void {
         foreach ($logs as $log) {
@@ -123,6 +138,7 @@ Artisan::command('platform:security-prune', function (): int {
     });
     DB::statement("SELECT set_config('app.allow_audit_prune', 'off', false)");
     DB::table('security_events')->where('created_at', '<', $cutoff)->delete();
+    app(TenantContext::class)->restoreSnapshot($previous);
     $this->info("Security retention cleanup completed through {$cutoff->toISOString()}.");
     return 0;
 })->purpose('Archive immutable audit events and prune expired security telemetry');

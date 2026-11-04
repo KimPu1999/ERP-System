@@ -15,6 +15,16 @@ abstract class TestCase extends BaseTestCase
         $this->acquireTestDatabaseSuiteLock();
 
         parent::setUp();
+
+        // Feature fixtures create tenant-scoped rows directly without HTTP
+        // middleware. Run test data operations under the explicit platform
+        // context so forced row level security accepts them; middleware
+        // snapshot/restore re-establishes the exact request context on its
+        // own, while RlsEnforcementTest verifies the database-level
+        // isolation with the platform context deliberately disabled.
+        if (config('database.default') === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("SELECT set_config('app.platform_admin', 'true', false)");
+        }
     }
 
     /**

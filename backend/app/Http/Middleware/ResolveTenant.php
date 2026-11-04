@@ -16,13 +16,17 @@ final class ResolveTenant
         $user = $request->user();
         abort_unless($user && $tenantId && preg_match('/^[0-9a-f-]{36}$/i', $tenantId), 403, 'Tenant context is invalid.');
         $context = app(TenantContext::class);
+        $previous = $context->snapshot();
         try {
             $context->set($tenantId);
             abort_unless($user->tenantMemberships()->where('tenant_id', $tenantId)->where('status', 'active')->exists(), 403, 'Tenant access denied.');
             abort_unless(Tenant::whereKey($tenantId)->where('status', 'active')->exists(), 403, 'Workspace is inactive.');
             return $next($request);
         } finally {
-            $context->clear();
+            // Restore the caller's exact security context: unconditional
+            // clearing would silently rewrite platform/tenant state on
+            // connections shared with platform sweeps or nested requests.
+            $context->restoreSnapshot($previous);
         }
     }
 }

@@ -77,7 +77,7 @@ final class OperationsController
                    (SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock')::int AS lock_waits,
                    (SELECT setting FROM pg_settings WHERE name = 'max_connections')::int AS max_connections
         SQL);
-        $slowQueries = DB::select("SELECT pid, state, wait_event_type, now() - query_start AS started_ago, LEFT(query, 180) AS query FROM pg_stat_activity WHERE state = 'active' AND now() - query_start > interval '1 second' AND pid <> pg_backend_pid() ORDER BY query_start LIMIT 20");
+        $slowQueries = DB::select("SELECT pid, state, wait_event_type, ROUND(EXTRACT(EPOCH FROM (now() - query_start)) * 1000) AS started_ago_ms, LEFT(query, 180) AS query FROM pg_stat_activity WHERE state = 'active' AND now() - query_start > interval '1 second' AND pid <> pg_backend_pid() ORDER BY query_start LIMIT 20");
         $locks = DB::select("SELECT LEFT(a.query, 180) AS blocked_query, l.locktype, l.granted FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid WHERE NOT l.granted LIMIT 20");
         $tableSizes = DB::select(<<<'SQL'
             SELECT s.relname AS table,
@@ -107,7 +107,7 @@ final class OperationsController
                 'pid' => $r->pid,
                 'state' => $r->state,
                 'wait_event_type' => $r->wait_event_type,
-                'started_ago_ms' => (int) ceil(($r->started_ago ?? 0) * 1000),
+                'started_ago_ms' => (int) round((float) ($r->started_ago_ms ?? 0)),
                 'query' => $r->query,
             ])->values()->all(),
             'lock_waits' => collect($locks)->map(fn ($r) => ['query' => $r->blocked_query, 'locktype' => $r->locktype, 'granted' => (bool) $r->granted])->values()->all(),

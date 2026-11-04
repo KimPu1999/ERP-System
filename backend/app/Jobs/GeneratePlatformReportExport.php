@@ -20,6 +20,7 @@ final class GeneratePlatformReportExport implements ShouldQueue
 
     public function handle(PlatformAnalyticsService $analytics, TenantContext $context): void
     {
+        $previous = $context->snapshot();
         $context->setPlatformAdmin(true);
         $export = ReportExport::where('platform_scope', true)->findOrFail($this->exportId);
         try {
@@ -57,7 +58,7 @@ final class GeneratePlatformReportExport implements ShouldQueue
             $export->update(['state' => 'failed', 'error' => 'The report export failed.']);
             throw $exception;
         } finally {
-            $context->setPlatformAdmin(false);
+            $context->restoreSnapshot($previous);
         }
     }
 

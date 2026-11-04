@@ -12,6 +12,7 @@ final class ResolveSupplierPortalTenant {
         if(DB::getDriverName()==='pgsql'){DB::statement("SELECT set_config('app.portal_user_id', ?, false)",[(string)$user->id]);}
         $token=(string)$request->input('token','');if($token&&DB::getDriverName()==='pgsql')DB::statement("SELECT set_config('app.portal_invitation_hash', ?, false)",[hash('sha256',$token)]);
         $context=app(TenantContext::class);
+        $previous=$context->snapshot();
         try {
             $membership=SupplierPortalMembership::where('user_id',$user->id)->where('status','active')->first();
             $tenant=$membership?->tenant_id;
@@ -20,7 +21,7 @@ final class ResolveSupplierPortalTenant {
             $context->set((string)$tenant);
             return $next($request);
         } finally {
-            $context->clear();
+            $context->restoreSnapshot($previous);
             if(DB::getDriverName()==='pgsql'){DB::statement("SELECT set_config('app.portal_user_id', '', false)");DB::statement("SELECT set_config('app.portal_invitation_hash', '', false)");}
         }
     }
