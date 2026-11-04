@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Building2, Landmark, Network, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
-import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Building2, Landmark, Network, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
 
@@ -21,7 +21,6 @@ export function OrganizationLayout() {
   const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
   const companies = useQuery({ queryKey: ['dashboard-companies', 'organization'], queryFn: getDashboardCompanies });
   const permissions = useQuery({ queryKey: ['me', 'organization'], queryFn: getMe, retry: false });
   const companyList = companies.data?.data.data ?? [];
@@ -51,15 +50,11 @@ export function OrganizationLayout() {
     if (value) next.set('company_id', value); else next.delete('company_id');
     setSearchParams(next, { replace: true });
   };
-  const goBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate('/');
-  };
 
   return <div className="organization-layout">
     <header className="organization-layout-heading">
       <div>
-        <div className="organization-title-row"><button className="organization-back-button" type="button" onClick={goBack}><ArrowLeft size={15} />{t('org.back')}</button>{location.pathname === '/organization' ? <h1>{t('nav.organization')}</h1> : <span className="workspace-shell-label">{t('nav.organization')}</span>}</div>
+        <div className="organization-title-row">{location.pathname === '/organization' ? <h1>{t('nav.organization')}</h1> : <span className="workspace-shell-label">{t('nav.organization')}</span>}</div>
       </div>
       {companyId && <div className="organization-layout-context"><label className="organization-context-selector"><Building2 size={14} /><span className="sr-only">{t('app.selectCompany')}</span><select aria-label={t('app.selectCompany')} value={companyId} onChange={(event) => selectCompany(event.target.value)}>{companyList.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label>{selectedCompany && <span className="organization-status-pill"><i />{selectedCompany.is_active ? t('common.active') : t('common.inactive')}</span>}</div>}
     </header>
