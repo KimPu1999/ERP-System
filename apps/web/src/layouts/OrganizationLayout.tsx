@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, Landmark, Network, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
-import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
+import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
 
@@ -20,7 +20,6 @@ const navItems: OrganizationNavItem[] = [
 export function OrganizationLayout() {
   const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
   const companies = useQuery({ queryKey: ['dashboard-companies', 'organization'], queryFn: getDashboardCompanies });
   const permissions = useQuery({ queryKey: ['me', 'organization'], queryFn: getMe, retry: false });
   const companyList = companies.data?.data.data ?? [];
@@ -44,20 +43,7 @@ export function OrganizationLayout() {
   };
 
   const withCompanyContext = (to: string) => `${to}${companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''}`;
-  const selectedCompany = companyList.find((company) => company.id === companyId);
-  const selectCompany = (value: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (value) next.set('company_id', value); else next.delete('company_id');
-    setSearchParams(next, { replace: true });
-  };
-
   return <div className="organization-layout">
-    <header className="organization-layout-heading">
-      <div>
-        <div className="organization-title-row">{location.pathname === '/organization' ? <h1>{t('nav.organization')}</h1> : <span className="workspace-shell-label">{t('nav.organization')}</span>}</div>
-      </div>
-      {companyId && <div className="organization-layout-context"><label className="organization-context-selector"><Building2 size={14} /><span className="sr-only">{t('app.selectCompany')}</span><select aria-label={t('app.selectCompany')} value={companyId} onChange={(event) => selectCompany(event.target.value)}>{companyList.map((company) => <option value={company.id} key={company.id}>{company.name}</option>)}</select></label>{selectedCompany && <span className="organization-status-pill"><i />{selectedCompany.is_active ? t('common.active') : t('common.inactive')}</span>}</div>}
-    </header>
     <nav className="organization-nav" aria-label={t('nav.organization')}>
       <div className="organization-nav-inner">
         {navItems.filter((item) => allowed(item.permission)).map(({ label, to, permission, icon: Icon }) => <NavLink key={to} end={permission === 'overview'} to={withCompanyContext(to)} className={({ isActive }) => `organization-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{t(label)}</span></NavLink>)}

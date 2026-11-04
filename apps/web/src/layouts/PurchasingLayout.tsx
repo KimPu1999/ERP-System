@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, Banknote, Bell, ClipboardCheck, ClipboardList, FileCheck2, FileMinus2, PackageCheck, Receipt, RotateCcw, Settings2, ShieldCheck, ShoppingCart, Truck, Users, type LucideIcon } from 'lucide-react';
+import { BarChart3, Banknote, Bell, ClipboardCheck, ClipboardList, FileCheck2, FileMinus2, PackageCheck, Receipt, RotateCcw, Settings2, ShieldCheck, ShoppingCart, Users, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
@@ -32,10 +32,6 @@ export function PurchasingLayout() {
   const canManage = permissions.isLoading || (permissions.data?.data.permissions ?? []).includes('procurement.manage') || (permissions.data?.data.permissions ?? []).includes('organization.manage');
 
   return <div className="purchasing-workspace-layout">
-    <header className="purchasing-layout-heading">
-      <span className="workspace-shell-label">{t('nav.purchasing')}</span>
-      {companyId && <span className="purchasing-context-chip"><Truck size={14} />{companyList.find((company) => company.id === companyId)?.name ?? t('org.selectedCompany')}</span>}
-    </header>
     <nav className="purchasing-nav" aria-label={t('nav.purchasing')}><div className="purchasing-nav-inner">
       {purchasingNavItems.map(({ label, to, icon: Icon, unavailable }) => { const text = t(label); return to && !unavailable ? <NavLink key={`${label}-${to}`} to={href(to)} end={to === '/purchasing'} className={({ isActive }) => `purchasing-nav-link ${isActive ? 'active' : ''} ${label === 'purchase.orders' && !canManage ? 'restricted' : ''}`}><Icon size={14} aria-hidden="true" /><span>{text}</span></NavLink> : <span key={`${label}-${to ?? 'disabled'}`} className="purchasing-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{text}</span><small>Planned</small></span>; })}
     </div></nav>

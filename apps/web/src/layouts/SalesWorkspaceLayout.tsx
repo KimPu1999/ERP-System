@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, Building2, ClipboardList, CreditCard, FileText, HandCoins, Receipt, RotateCcw, ShoppingCart, Target, Truck, Users, type LucideIcon } from 'lucide-react';
+import { BarChart3, ClipboardList, CreditCard, FileText, HandCoins, Receipt, RotateCcw, ShoppingCart, Target, Truck, Users, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
@@ -34,10 +34,6 @@ export function SalesWorkspaceLayout() {
   const href = (to: string) => `${to}${companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''}`;
 
   return <div className="sales-workspace-layout">
-    <header className="sales-layout-heading">
-      <span className="workspace-shell-label">{t('nav.salesWorkspace')}</span>
-      {companyId && <span className="sales-context-chip"><Building2 size={14} />{companyList.find((company) => company.id === companyId)?.name ?? t('org.selectedCompany')}</span>}
-    </header>
     <nav className="sales-nav" aria-label={t('nav.salesWorkspace')}><div className="sales-nav-inner">
       {[...salesNavItems.filter((item) => item.label !== 'sales.settings'), salesSettingsNavItem].filter((item) => permitted(item.permission)).map(({ label, to, icon: Icon, unavailable }) => { const text = t(label); return to && !unavailable ? <NavLink key={`${label}-${to}`} to={href(to)} end={to === '/crm-sales'} className={({ isActive }) => `sales-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{text}</span></NavLink> : <span key={`${label}-${to ?? 'disabled'}`} className="sales-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{text}</span><small>Planned</small></span>; })}
     </div></nav>

@@ -6720,6 +6720,208 @@ table tbody tr:hover { background: var(--surface-hover); }
 :root.dark .platform-settings-nav a.active { color: var(--mint); background: var(--blue-soft); border-color: color-mix(in srgb, var(--mint) 28%, var(--border)); }
 :root.dark .platform-settings-nav a:hover { color: var(--text); background: var(--surface-hover); }
 
+/* Keep page tabs visible below the global header while content scrolls. */
+.monitoring-tabs,
+.operations-tabs,
+.security-center-tabs,
+.platform-detail-tabs,
+.settings-tabs,
+.company-profile-tabs,
+.purchase-detail-tabs,
+.pos-tabs,
+.optional-tabs,
+.project-tabs,
+.staff-tabs,
+.sales-settings-tabs,
+.supplier-monitoring-tabs,
+.fixed-asset-tabs,
+.sales-nav,
+.purchasing-nav,
+.organization-nav {
+  position: sticky;
+  top: 64px;
+  z-index: 15;
+  margin-top: 0;
+  background: var(--background);
+}
+.monitoring-tabs a.active,
+.operations-tabs a.active,
+.security-center-tabs a.active,
+.organization-nav-link.active,
+.sales-nav-link.active,
+.purchasing-nav-link.active,
+.platform-detail-tabs button.active,
+.settings-tabs button.active,
+.company-profile-tabs button.active,
+.purchase-detail-tabs button.active,
+.pos-tabs button.active,
+.optional-tabs a.active,
+.project-tabs button.active,
+.staff-tabs button.active,
+.sales-settings-tabs button.active,
+.supplier-monitoring-tabs button.is-active,
+.fixed-asset-tabs button.active { color: var(--blue-hover); background: var(--blue-soft); border-color: var(--blue); box-shadow: inset 0 -2px 0 var(--blue); }
+:root.dark .monitoring-tabs a,
+:root.dark .operations-tabs a,
+:root.dark .security-center-tabs a,
+:root.dark .organization-nav-link,
+:root.dark .sales-nav-link,
+:root.dark .purchasing-nav-link,
+:root.dark .platform-detail-tabs button,
+:root.dark .settings-tabs button,
+:root.dark .company-profile-tabs button,
+:root.dark .purchase-detail-tabs button,
+:root.dark .pos-tabs button,
+:root.dark .optional-tabs a,
+:root.dark .project-tabs button,
+:root.dark .staff-tabs button,
+:root.dark .sales-settings-tabs button,
+:root.dark .supplier-monitoring-tabs button,
+:root.dark .fixed-asset-tabs button { color: var(--muted); background: var(--surface); border-color: var(--border); }
+:root.dark .monitoring-tabs a:hover,
+:root.dark .operations-tabs a:hover,
+:root.dark .security-center-tabs a:hover,
+:root.dark .organization-nav-link:hover,
+:root.dark .sales-nav-link:hover,
+:root.dark .purchasing-nav-link:hover,
+:root.dark .platform-detail-tabs button:hover,
+:root.dark .settings-tabs button:hover,
+:root.dark .company-profile-tabs button:hover,
+:root.dark .purchase-detail-tabs button:hover,
+:root.dark .pos-tabs button:hover,
+:root.dark .optional-tabs a:hover,
+:root.dark .project-tabs button:hover,
+:root.dark .staff-tabs button:hover,
+:root.dark .sales-settings-tabs button:hover,
+:root.dark .supplier-monitoring-tabs button:hover,
+:root.dark .fixed-asset-tabs button:hover { color: var(--text); background: var(--surface-hover); border-color: var(--border-strong); }
+:root.dark .monitoring-tabs a.active,
+:root.dark .operations-tabs a.active,
+:root.dark .security-center-tabs a.active,
+:root.dark .organization-nav-link.active,
+:root.dark .sales-nav-link.active,
+:root.dark .purchasing-nav-link.active,
+:root.dark .platform-detail-tabs button.active,
+:root.dark .settings-tabs button.active,
+:root.dark .company-profile-tabs button.active,
+:root.dark .purchase-detail-tabs button.active,
+:root.dark .pos-tabs button.active,
+:root.dark .optional-tabs a.active,
+:root.dark .project-tabs button.active,
+:root.dark .staff-tabs button.active,
+:root.dark .sales-settings-tabs button.active,
+:root.dark .supplier-monitoring-tabs button.is-active,
+:root.dark .fixed-asset-tabs button.active { color: var(--mint); background: var(--blue-soft); border-color: var(--mint); }
+@media (max-width: 680px) { .monitoring-tabs, .operations-tabs, .security-center-tabs, .platform-detail-tabs, .settings-tabs, .company-profile-tabs, .purchase-detail-tabs, .pos-tabs, .optional-tabs, .project-tabs, .staff-tabs, .sales-settings-tabs, .supplier-monitoring-tabs, .fixed-asset-tabs, .sales-nav, .purchasing-nav, .organization-nav { top: 64px; margin-top: 0; } }
+
+/* Platform operations reference layout: compact toolbar, tabs, KPI strip, and service panel. */
+.platform-page { background: var(--background); }
+.platform-page.page-section { padding-top: 18px; }
+.platform-page .operations-toolbar { min-height: 44px; margin: 0 0 4px; padding-left: 0; }
+.platform-page > .operations-tabs { margin: 0 0 12px; padding: 2px 0; border: 0; }
+.platform-page .operations-tabs a { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.platform-page .operations-tabs a.active { color: var(--blue-hover); background: var(--blue-soft); border-color: var(--blue); box-shadow: inset 0 -3px 0 var(--blue); }
+.platform-page .operations-kpi { min-height: 118px; padding: 16px; border-radius: 11px; }
+.platform-page .operations-kpi .platform-kpi-icon { width: 40px; height: 40px; border-radius: 10px; }
+.platform-page .operations-kpi strong { font-size: 23px; }
+:root.dark .platform-page .operations-tabs a { color: var(--muted); background: var(--surface); border-color: var(--border); }
+:root.dark .platform-page .operations-tabs a.active { color: var(--mint); background: var(--blue-soft); border-color: var(--mint); }
+
+/* Tabs stay attached to the global header; only the page content scrolls underneath. */
+.monitoring-tabs,
+.operations-tabs,
+.security-center-tabs,
+.platform-detail-tabs,
+.settings-tabs,
+.company-profile-tabs,
+.purchase-detail-tabs,
+.pos-tabs,
+.optional-tabs,
+.project-tabs,
+.staff-tabs,
+.sales-settings-tabs,
+.supplier-monitoring-tabs,
+.fixed-asset-tabs,
+.sales-nav,
+.purchasing-nav,
+.organization-nav {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40;
+  isolation: isolate;
+  background: var(--background) !important;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.monitoring-tabs::-webkit-scrollbar,
+.operations-tabs::-webkit-scrollbar,
+.security-center-tabs::-webkit-scrollbar,
+.platform-detail-tabs::-webkit-scrollbar,
+.settings-tabs::-webkit-scrollbar,
+.company-profile-tabs::-webkit-scrollbar,
+.purchase-detail-tabs::-webkit-scrollbar,
+.pos-tabs::-webkit-scrollbar,
+.optional-tabs::-webkit-scrollbar,
+.project-tabs::-webkit-scrollbar,
+.staff-tabs::-webkit-scrollbar,
+.sales-settings-tabs::-webkit-scrollbar,
+.supplier-monitoring-tabs::-webkit-scrollbar,
+.fixed-asset-tabs::-webkit-scrollbar,
+.sales-nav::-webkit-scrollbar,
+.purchasing-nav::-webkit-scrollbar,
+.organization-nav::-webkit-scrollbar { display: none; }
+.monitoring-tabs::before,
+.operations-tabs::before,
+.security-center-tabs::before,
+.platform-detail-tabs::before,
+.settings-tabs::before,
+.company-profile-tabs::before,
+.purchase-detail-tabs::before,
+.pos-tabs::before,
+.optional-tabs::before,
+.project-tabs::before,
+.staff-tabs::before,
+.sales-settings-tabs::before,
+.supplier-monitoring-tabs::before,
+.fixed-asset-tabs::before,
+.sales-nav::before,
+.purchasing-nav::before,
+.organization-nav::before { position: absolute; inset: 0 -2px; z-index: -1; background: var(--background); content: ''; }
+
+/* Sticky shell + independently scrolling tab row. */
+.monitoring-tabs,
+.operations-tabs { display: block; overflow: visible; }
+.monitoring-tabs .tab-scroll,
+.operations-tabs .tab-scroll { display: flex; align-items: center; gap: 8px; width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
+.monitoring-tabs .tab-scroll::-webkit-scrollbar,
+.operations-tabs .tab-scroll::-webkit-scrollbar { display: none; }
+
+/* Workspace tabs sit directly under the fixed application header. Their
+   outer shell remains sticky while only the inner row scrolls horizontally. */
+.sales-nav,
+.purchasing-nav,
+.organization-nav {
+  position: sticky !important;
+  top: 0 !important;
+  margin-top: 0 !important;
+  overflow: visible !important;
+}
+.sales-nav-inner,
+.purchasing-nav-inner,
+.organization-nav-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.sales-nav-inner::-webkit-scrollbar,
+.purchasing-nav-inner::-webkit-scrollbar,
+.organization-nav-inner::-webkit-scrollbar { display: none; }
+
 /* Keep settings switches compact even when broad form-input rules are applied. */
 .settings-toggle-row input,
 .notification-setting-row input {
