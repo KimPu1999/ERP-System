@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Notifications\QueuedVerifyEmail;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -43,6 +44,12 @@ final class EmailVerificationDeliveryService
         }
 
         try {
+            if ((bool) config('mail.verification_queue', false)) {
+                $user->notify(new QueuedVerifyEmail());
+                Log::info('Email verification was queued for the configured mail transport.', $context + ['status' => 'queued', 'queue' => 'mail']);
+                return ['status' => 'queued', 'message' => 'The verification message was queued for delivery.'];
+            }
+
             $user->sendEmailVerificationNotification();
             Log::info('Email verification was accepted by the configured mail transport.', $context + ['status' => 'accepted_by_configured_mailer']);
             return ['status' => 'accepted_by_configured_mailer', 'message' => 'The verification message was accepted by the configured mail transport. Inbox delivery is not verified.'];

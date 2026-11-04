@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 final class AuthController
 {
@@ -20,6 +21,13 @@ final class AuthController
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'password' => ['required', 'string', 'min:8', 'confirmed']]);
         $user = DB::transaction(fn () => User::create($data));
         $verificationDelivery = $delivery->send($user);
+        if (! in_array($verificationDelivery['status'], ['accepted_by_configured_mailer', 'queued'], true)) {
+            return response()->json([
+                'message' => 'Account created, but the verification message could not be delivered. Configure email delivery and request a new link.',
+                'email_verification_required' => true,
+                'verification_delivery' => ['status' => $verificationDelivery['status']],
+            ], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
         Auth::guard('web')->login($user); $request->session()->regenerate();
         $events->record($request, 'auth.registered', $user->id);
         return response()->json(['data' => $user->only(['id', 'name', 'email', 'status']), 'email_verification_required' => true, 'verification_delivery' => $verificationDelivery], 201);

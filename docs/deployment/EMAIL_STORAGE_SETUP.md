@@ -6,6 +6,7 @@
 - Mail config read path: `config/mail.php` — scheme-based SMTP (`MAIL_SCHEME=smtp|smtps`) per `MAIL_HOST/PORT/USERNAME/PASSWORD/MAIL_EHLO_DOMAIN/MAIL_FROM_*`.
 - Transactional senders in `backend/app/Mail/`, `Notification` classes (verification e-mail, password reset, platform invitation flow, business invitations via `Invitation` flows, platform notifications).
 - Production guard: `MAIL_MAILER=log` triggers a 503 in production through `ValidateProductionConfiguration`, and phase logs show the explicit "not_delivered / non_delivery_transport" markers (see `backend/storage/logs/laravel.log` 2026-11-03) — **a successful in-app dispatch through the log mailer is NOT delivery.**
+- Registration and authenticated resend now return success only when SMTP accepts the message or when `MAIL_VERIFICATION_QUEUE=true` successfully queues it. If queueing is enabled, run `php artisan queue:work --queue=mail` continuously; otherwise verification remains synchronous.
 - Phase 10 evidence: the SMTP code path is exercised by tests (accept-by-configured-transport on one branch, delivery-failure WARNING on another) — but no real SMTP provider has ever accepted mail from this project. This must be exercised before launch.
 
 ### Setup procedure (requires user approval to register a provider)

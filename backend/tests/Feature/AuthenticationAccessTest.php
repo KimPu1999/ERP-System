@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 
 it('rejects invalid credentials without creating a session', function (): void {
@@ -179,6 +180,38 @@ it('records verification notification acceptance only after the configured maile
         ->assertJsonPath('status', 'accepted_by_configured_mailer');
 
     Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+it('does not claim registration succeeded when the only mailer is the local log transport', function (): void {
+    Config::set('mail.default', 'log');
+
+    $response = $this->postJson('/api/v1/auth/register', [
+        'name' => 'Platform Operator',
+        'email' => 'operator@example.test',
+        'password' => 'secret-password',
+        'password_confirmation' => 'secret-password',
+    ]);
+
+    $response->assertStatus(503)
+        ->assertJsonPath('verification_delivery.status', 'logged_only')
+        ->assertJsonMissing(['message' => 'Verification email sent.']);
+    expect(User::where('email', 'operator@example.test')->exists())->toBeTrue();
+    expect(auth()->check())->toBeFalse();
+});
+
+it('confirms queued verification delivery only after the notification is queued', function (): void {
+    Config::set('mail.default', 'smtp');
+    Config::set('mail.mailers.smtp.host', 'smtp.example.test');
+    Config::set('mail.from.address', 'no-reply@example.test');
+    Config::set('mail.verification_queue', true);
+    Queue::fake();
+    $user = User::factory()->create(['email_verified_at' => null]);
+
+    $this->actingAs($user)->postJson('/api/v1/auth/email/resend')
+        ->assertOk()
+        ->assertJsonPath('status', 'queued');
+
+    Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class);
 });
 
 it('returns a safe failure when the SMTP transport rejects verification delivery', function (): void {
