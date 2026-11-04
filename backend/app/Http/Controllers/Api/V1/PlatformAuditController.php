@@ -46,11 +46,15 @@ final class PlatformAuditController
 
     public function security(Request $request): JsonResponse
     {
-        $request->validate(['search' => ['nullable', 'string', 'max:120'], 'category' => ['nullable', 'string', 'max:50'], 'result' => ['nullable', 'string', 'max:30'], 'user_id' => ['nullable', 'uuid'], 'from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d'], 'per_page' => ['nullable', 'integer', 'min:10', 'max:100']]);
+        $request->validate(['search' => ['nullable', 'string', 'max:120'], 'event' => ['nullable', 'string', 'max:150'], 'category' => ['nullable', 'string', 'max:50'], 'result' => ['nullable', 'string', 'max:30'], 'user_id' => ['nullable', 'uuid'], 'from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d'], 'per_page' => ['nullable', 'integer', 'min:10', 'max:100']]);
         $query = SecurityEvent::query()->with('user:id,name,email')->latest();
         if ($search = trim((string) $request->query('search'))) {
-            $query->where('event', 'ilike', "%{$search}%");
+            $query->where(function ($searchQuery) use ($search): void {
+                $searchQuery->where('event', 'ilike', "%{$search}%")
+                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('email', 'ilike', "%{$search}%")->orWhere('name', 'ilike', "%{$search}%"));
+            });
         }
+        if ($event = trim((string) $request->query('event'))) $query->where('event', $event);
         foreach (['category', 'result', 'user_id'] as $filter) if ($value = trim((string) $request->query($filter))) $query->where($filter, $value);
         if ($from = $request->query('from')) $query->where('created_at', '>=', Carbon::createFromFormat('Y-m-d', $from)->startOfDay());
         if ($to = $request->query('to')) $query->where('created_at', '<=', Carbon::createFromFormat('Y-m-d', $to)->endOfDay());

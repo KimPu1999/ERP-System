@@ -77,7 +77,8 @@ function MaintenancePanel({ value, onDone, formatDate, t }: { value: Maintenance
   const transition = useMutation({ mutationFn: ({ id, status }: { id: string; status: string }) => transitionMaintenanceWindow(id, status), onSuccess: onDone });
   const nextFor = (status: string): Array<[string, string]> => status === 'planned' ? [['approved', 'ops.approve']] : status === 'approved' ? [['in_progress', 'ops.start'], ['cancelled', 'ops.cancel']] : status === 'in_progress' ? [['completed', 'ops.complete']] : [];
   return <>
-    <form className="panel" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
+    <form className="panel operations-entry-form operations-backup-form" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
+      <div className="operations-form-heading"><span className="operations-form-icon"><HardDriveDownload size={17} /></span><div><h2>{t('ops.verificationRecords', 'Backup evidence')}</h2><p className="muted">{t('ops.evidenceNote')}</p></div></div>
       <div className="platform-form-grid">{[
         <label key="title"><span>{t('ops.windowTitle')} *</span><input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required maxLength={180} /></label>,
         <label key="starts"><span>{t('ops.startsAt')} *</span><input type="datetime-local" value={draft.starts_at} onChange={(e) => setDraft({ ...draft, starts_at: e.target.value })} required /></label>,
@@ -105,14 +106,13 @@ function BackupsPanel({ value, t, formatDate, onDone, statusBadge }: { value: un
         <label key="storage"><span>{t('ops.storage')}</span><input value={draft.storage_location} onChange={(e) => setDraft({ ...draft, storage_location: e.target.value })} placeholder="s3://… / /backups/…" /></label>,
         <label key="status"><span>{t('ops.status')}</span><select value={draft.verification_status} onChange={(e) => setDraft({ ...draft, verification_status: e.target.value })}><option value="registered">{t('ops.registered')}</option><option value="restore_verified">{t('ops.restoreVerified')}</option><option value="failed">{t('ops.failed')}</option></select></label>,
       ]}</div>
-      <p className="muted">{t('ops.evidenceNote')}</p>
       <button className="button button-primary" type="submit" disabled={create.isPending || !draft.backup_taken_at}><HardDriveDownload size={14} /> {t('ops.registerEvidence')}</button>
       {create.isError && <div className="alert alert-danger" role="alert">{t('ops.evidenceError')}</div>}
     </form>
-    <div className="platform-dashboard-grid">
-      <article className="panel"><h2>{t('ops.backupStatus')}</h2><p>{statusBadge(data.status ?? 'not_configured')}</p><p className="muted">{String(data.scheduling ?? '')}</p><p className="muted">{t('ops.rpoNote')}</p><p>{t('ops.lastRestoreTest')}: {data.last_restore_test?.verified_at ? formatDate(data.last_restore_test.verified_at, { dateStyle: 'short', timeStyle: 'short' }) : t('ops.noneRecorded')}</p></article>
-      <article className="panel"><h2>{t('ops.policy')}</h2><ul>{Object.entries(data.policy ?? {}).map(([key, text]) => <li key={key}><strong>{key}</strong>: {String(text)}</li>)}</ul></article>
-      <article className="panel"><h2>{t('ops.verificationRecords')}</h2>{(data.records ?? []).length === 0 ? <p className="muted">{t('ops.noBackupRecords')}</p> : <div className="table-scroll"><table><thead><tr><th>{t('ops.takenAt')}</th><th>{t('ops.type')}</th><th>{t('ops.status')}</th><th>{t('ops.storage')}</th></tr></thead><tbody>{(data.records ?? []).map((record) => <tr key={record.id}><td>{formatDate(record.backup_taken_at, { dateStyle: 'short', timeStyle: 'short' })}</td><td>{record.backup_type}</td><td>{record.verification_status}</td><td>{record.storage_location ?? '—'}</td></tr>)}</tbody></table></div>}</article>
+    <div className="platform-dashboard-grid operations-backups-grid">
+      <article className="panel operations-backup-summary"><div className="operations-card-heading"><span className="operations-card-icon"><CheckCircle2 size={16} /></span><h2>{t('ops.backupStatus')}</h2></div><p>{statusBadge(data.status ?? 'not_configured')}</p><p className="muted">{String(data.scheduling ?? '')}</p><p className="muted">{t('ops.rpoNote')}</p><p>{t('ops.lastRestoreTest')}: {data.last_restore_test?.verified_at ? formatDate(data.last_restore_test.verified_at, { dateStyle: 'short', timeStyle: 'short' }) : t('ops.noneRecorded')}</p></article>
+      <article className="panel operations-backup-policy"><div className="operations-card-heading"><span className="operations-card-icon"><ShieldAlert size={16} /></span><h2>{t('ops.policy')}</h2></div><ul>{Object.entries(data.policy ?? {}).map(([key, text]) => <li key={key}><strong>{key.replaceAll('_', ' ')}</strong><span>{String(text)}</span></li>)}</ul></article>
+      <article className="panel operations-backup-records"><div className="operations-card-heading"><span className="operations-card-icon"><Clock3 size={16} /></span><h2>{t('ops.verificationRecords')}</h2></div>{(data.records ?? []).length === 0 ? <p className="muted operations-empty-copy">{t('ops.noBackupRecords')}</p> : <div className="table-scroll"><table><thead><tr><th>{t('ops.takenAt')}</th><th>{t('ops.type')}</th><th>{t('ops.status')}</th><th>{t('ops.storage')}</th></tr></thead><tbody>{(data.records ?? []).map((record) => <tr key={record.id}><td>{formatDate(record.backup_taken_at, { dateStyle: 'short', timeStyle: 'short' })}</td><td>{record.backup_type}</td><td>{record.verification_status}</td><td>{record.storage_location ?? '—'}</td></tr>)}</tbody></table></div>}</article>
     </div>
   </>;
 }

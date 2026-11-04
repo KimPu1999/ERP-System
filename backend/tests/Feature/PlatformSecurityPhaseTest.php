@@ -16,6 +16,19 @@ it('exposes real security overview only to platform administrators', function ()
     $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/security/overview')->assertForbidden();
 });
 
+it('filters security events by account, event type and date range with pagination', function (): void {
+    config(['security.platform_mfa_required' => false]);
+    $platform = User::factory()->create(['is_platform_super_admin' => true]);
+    $other = User::factory()->create();
+    SecurityEvent::create(['user_id' => $platform->id, 'event' => 'auth.login_failed', 'category' => 'authentication', 'result' => 'failure', 'created_at' => now()->subDay()]);
+    SecurityEvent::create(['user_id' => $other->id, 'event' => 'auth.platform_login_succeeded', 'category' => 'authentication', 'result' => 'success', 'created_at' => now()]);
+
+    $this->actingAs($platform)->getJson('/api/v1/platform/security/events?search='.$platform->email.'&event=auth.login_failed&from='.now()->subDays(2)->toDateString().'&to='.now()->toDateString().'&per_page=10')
+        ->assertOk()
+        ->assertJsonPath('data.total', 1)
+        ->assertJsonPath('data.data.0.event', 'auth.login_failed');
+});
+
 it('records successful login and new-device activity without storing a device fingerprint', function (): void {
     config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true, 'email_verified_at' => now(), 'password' => 'password']);
