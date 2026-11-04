@@ -5,23 +5,25 @@ namespace App\Http\Controllers\Api\V1;
 use App\Jobs\GeneratePlatformReportExport;
 use App\Models\ReportExport;
 use App\Services\{AuditLogger, PlatformAnalyticsService};
+use Closure;
 use Illuminate\Http\{JsonResponse, Request};
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 final class PlatformAnalyticsController
 {
-    public function overview(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $analytics->overview($request)]); }
-    public function businesses(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request, true); return response()->json(['data' => $analytics->businesses($request)]); }
-    public function users(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $analytics->users($request)]); }
-    public function subscriptions(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $analytics->subscriptions($request)]); }
-    public function revenue(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $analytics->revenue($request)]); }
-    public function usage(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request, true); return response()->json(['data' => $analytics->usage($request)]); }
+    public function overview(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $this->rememberAnalytics($request, 'overview', fn (): array => $analytics->overview($request))]); }
+    public function businesses(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request, true); return response()->json(['data' => $this->rememberAnalytics($request, 'businesses', fn (): array => $analytics->businesses($request))]); }
+    public function users(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $this->rememberAnalytics($request, 'users', fn (): array => $analytics->users($request))]); }
+    public function subscriptions(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $this->rememberAnalytics($request, 'subscriptions', fn (): array => $analytics->subscriptions($request))]); }
+    public function revenue(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request); return response()->json(['data' => $this->rememberAnalytics($request, 'revenue', fn (): array => $analytics->revenue($request))]); }
+    public function usage(Request $request, PlatformAnalyticsService $analytics): JsonResponse { $this->validateFilters($request, true); return response()->json(['data' => $this->rememberAnalytics($request, 'usage', fn (): array => $analytics->usage($request))]); }
 
     public function financial(Request $request, PlatformAnalyticsService $analytics): JsonResponse
     {
         $request->validate(['report' => ['nullable', 'in:invoices,outstanding,payments,refunds'], 'tenant_id' => ['nullable', 'uuid'], 'status' => ['nullable', 'in:open,paid,past_due,pending,succeeded,failed'], 'currency_code' => ['nullable', 'alpha', 'size:3'], 'search' => ['nullable', 'string', 'max:120'], 'sort' => ['nullable', 'in:created_at,issued_on,due_on,total,amount,status'], 'direction' => ['nullable', 'in:asc,desc']]);
         $this->validateFilters($request, true);
-        return response()->json(['data' => $analytics->financial($request)]);
+        return response()->json(['data' => $this->rememberAnalytics($request, 'financial', fn (): array => $analytics->financial($request))]);
     }
 
     public function exports(Request $request): JsonResponse
@@ -54,5 +56,14 @@ final class PlatformAnalyticsController
     private function validateFilters(Request $request, bool $pagination = false): void
     {
         $request->validate(['period' => ['nullable', 'in:today,yesterday,last_7_days,last_30_days,this_month,last_month,this_year,daily,weekly,monthly,yearly,custom'], 'granularity' => ['nullable', 'in:daily,weekly,monthly,yearly'], 'from' => ['required_if:period,custom', 'nullable', 'date_format:Y-m-d'], 'to' => ['required_if:period,custom', 'nullable', 'date_format:Y-m-d'], 'date_from' => ['nullable', 'date_format:Y-m-d'], 'date_to' => ['nullable', 'date_format:Y-m-d'], 'per_page' => [$pagination ? 'nullable' : 'sometimes', 'integer', 'min:10', 'max:100']]);
+    }
+
+    private function rememberAnalytics(Request $request, string $report, Closure $callback): array
+    {
+        $filters = $request->query();
+        ksort($filters);
+        $key = 'platform-analytics:' . $report . ':' . sha1(http_build_query($filters));
+
+        return Cache::remember($key, now()->addSeconds(30), $callback);
     }
 }
