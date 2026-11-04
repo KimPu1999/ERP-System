@@ -86,14 +86,18 @@ function shortId(value: string): string {
 function useGrowthChart(growth: PlatformSummary['business_growth'], seriesName: string): EChartsOption {
   const labels = growth.map((row) => row.label ?? row.month ?? row.bucket);
   const values = growth.map((row) => row.count);
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--blue').trim() || '#168A67';
+  const muted = styles.getPropertyValue('--muted').trim() || '#64748B';
+  const border = styles.getPropertyValue('--border').trim() || '#E5EBE8';
   return useMemo(() => ({
     animationDuration: 350,
     aria: { enabled: true },
     tooltip: { trigger: 'axis' },
-    legend: { bottom: 0, data: [seriesName], textStyle: { color: '#64748B', fontSize: 11 } },
+    legend: { bottom: 0, data: [seriesName], textStyle: { color: muted, fontSize: 11 } },
     grid: { top: 18, right: 14, bottom: 38, left: 46 },
-    xAxis: { type: 'category', boundaryGap: false, data: labels, axisLabel: { color: '#64748B', fontSize: 10, hideOverlap: true } },
-    yAxis: { type: 'value', minInterval: 1, axisLabel: { color: '#64748B', fontSize: 10 }, splitLine: { lineStyle: { color: '#E2E8F0' } } },
-    series: [{ name: seriesName, type: 'line', smooth: true, showSymbol: false, data: values, lineStyle: { width: 2, color: '#2563EB' }, itemStyle: { color: '#2563EB' }, areaStyle: { color: 'rgba(37,99,235,.12)' } }],
-  }), [labels, seriesName, values]);
+    xAxis: { type: 'category', boundaryGap: false, data: labels, axisLabel: { color: muted, fontSize: 10, hideOverlap: true } },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: { color: muted, fontSize: 10 }, splitLine: { lineStyle: { color: border } } },
+    series: [{ name: seriesName, type: 'line', smooth: true, showSymbol: false, data: values, lineStyle: { width: 2, color: accent }, itemStyle: { color: accent }, areaStyle: { color: accent, opacity: .12 } }],
+  }), [accent, border, labels, muted, seriesName, values]);
 }

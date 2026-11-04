@@ -46,7 +46,7 @@ function RevenueOverviewChart({ data, error, isLoading, onRetry }: { data?: Dash
   const option = useMemo<EChartsOption | null>(() => {
     if (!data?.available || !data.points.length) return null;
     const currency = data.currency.code;
-    return lineOption(data.points.map((point) => point.label), [{ name: 'Current period', values: data.points.map((point) => point.current), color: '#2563EB', area: true }, { name: 'Comparison period', values: data.points.map((point) => point.previous), color: '#94A3B8', dashed: true }], currency, theme);
+    return lineOption(data.points.map((point) => point.label), [{ name: 'Current period', values: data.points.map((point) => point.current), color: chartColors(theme).accent, area: true }, { name: 'Comparison period', values: data.points.map((point) => point.previous), color: chartColors(theme).comparison, dashed: true }], currency, theme);
   }, [data, theme]);
   return <ChartState isLoading={isLoading} error={error} available={data?.available ?? true} reason={data?.reason} hasData={Boolean(data?.points.length)} onRetry={onRetry} emptyMessage="No recognized revenue activity for this period.">{option && <ReactECharts option={option} notMerge lazyUpdate style={{ width: '100%', height: 245 }} opts={{ renderer: 'svg' }} />}</ChartState>;
 }
@@ -57,7 +57,7 @@ function CompanyGrowthWidget({ data, error, isLoading, onRetry }: { data?: Dashb
   const fill = growth === null ? 0 : Math.min(100, Math.max(0, growth));
   const option = useMemo<EChartsOption>(() => ({
     animationDuration: 500,
-    series: [{ type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max: 100, center: ['50%', '72%'], radius: '92%', pointer: { show: false }, progress: { show: true, width: 14, itemStyle: { color: '#2563EB' } }, axisLine: { lineStyle: { width: 14, color: [[1, chartColors(theme).border]] } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false }, data: [{ value: fill }] }],
+    series: [{ type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max: 100, center: ['50%', '72%'], radius: '92%', pointer: { show: false }, progress: { show: true, width: 14, itemStyle: { color: chartColors(theme).accent } }, axisLine: { lineStyle: { width: 14, color: [[1, chartColors(theme).border]] } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false }, data: [{ value: fill }] }],
   }), [fill, theme]);
   return <ChartState isLoading={isLoading} error={error} available={data?.available ?? true} reason={data?.reason} hasData={growth !== null} onRetry={onRetry} emptyMessage="Growth is unavailable until a comparable prior period exists.">{data && growth !== null && <div className="growth-widget"><div className="growth-gauge"><ReactECharts option={option} notMerge lazyUpdate style={{ width: '100%', height: 150 }} opts={{ renderer: 'svg' }} /><strong className={growth < 0 ? 'negative' : ''}>{growth > 0 ? '+' : ''}{growth.toFixed(2)}%</strong></div><div className="growth-values"><span>Current period<strong>{formatMoney(data.current_period.value, data.currency.code)}</strong></span><span>Previous period<strong>{formatMoney(data.previous_period.value, data.currency.code)}</strong></span></div>{data.target ? <p className="analytics-note">Target progress: {data.target.percent}%</p> : <p className="analytics-note">No configured target.</p>}</div>}</ChartState>;
 }
@@ -70,7 +70,7 @@ function FinancialPerformanceChart({ data, error, isLoading, onRetry }: { data?:
     const labels = data.points.map((point) => point.label);
     const current = data.points.map((point) => point.current[tab]);
     const previous = data.points.map((point) => point.previous[tab]);
-    return lineOption(labels, [{ name: `Current ${tab}`, values: current, color: tab === 'expenses' ? '#F59E0B' : tab === 'profit' ? '#10B981' : '#2563EB', area: true }, { name: 'Comparison period', values: previous, color: '#94A3B8', dashed: true }], data.currency.code, theme);
+    return lineOption(labels, [{ name: `Current ${tab}`, values: current, color: tab === 'expenses' ? '#D9902F' : tab === 'profit' ? chartColors(theme).accent : chartColors(theme).accent, area: true }, { name: 'Comparison period', values: previous, color: chartColors(theme).comparison, dashed: true }], data.currency.code, theme);
   }, [data, tab, theme]);
   const total = data?.totals?.current?.[tab] ?? '0';
   return <div className="financial-chart"><div className="analytics-tabs" role="tablist" aria-label="Financial performance metric">{(['income', 'expenses', 'profit'] as FinancialTab[]).map((item) => <button type="button" role="tab" aria-selected={tab === item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item[0].toUpperCase() + item.slice(1)}</button>)}</div><div className="financial-total"><span>Selected period</span><strong>{data?.available ? formatMoney(total, data.currency.code) : '—'}</strong></div><ChartState isLoading={isLoading} error={error} available={data?.available ?? true} reason={data?.reason} hasData={Boolean(data?.points.length)} onRetry={onRetry} emptyMessage="No posted general-ledger activity for this period.">{option && <ReactECharts option={option} notMerge lazyUpdate style={{ width: '100%', height: 190 }} opts={{ renderer: 'svg' }} />}</ChartState></div>;
@@ -88,7 +88,7 @@ function ChartState({ isLoading, error, available, reason, hasData, emptyMessage
   return <>{children}</>;
 }
 
-function chartColors(theme = 'light') { const styles = getComputedStyle(document.documentElement); return { border: styles.getPropertyValue('--border').trim() || (theme === 'dark' ? '#263750' : '#E2E8F0'), muted: styles.getPropertyValue('--muted').trim() || (theme === 'dark' ? '#94A3B8' : '#64748B') }; }
+function chartColors(theme = 'light') { const styles = getComputedStyle(document.documentElement); return { accent: styles.getPropertyValue('--blue').trim() || (theme === 'dark' ? '#42C9A0' : '#168A67'), comparison: styles.getPropertyValue('--border-strong').trim() || '#94A3B8', border: styles.getPropertyValue('--border').trim() || (theme === 'dark' ? '#2A4136' : '#E5EBE8'), muted: styles.getPropertyValue('--muted').trim() || (theme === 'dark' ? '#A7B9AF' : '#64748B') }; }
 function compactNumber(value: number) { return Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(value); }
 function useThemeVersion() {
   const [theme, setTheme] = useState(() => document.documentElement.classList.contains('dark') ? 'dark' : 'light');
