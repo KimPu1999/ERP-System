@@ -6890,11 +6890,78 @@ table tbody tr:hover { background: var(--surface-hover); }
 
 /* Sticky shell + independently scrolling tab row. */
 .monitoring-tabs,
-.operations-tabs { display: block; overflow: visible; }
+.operations-tabs,
+.security-center-tabs {
+  display: block !important;
+  overflow: visible !important;
+}
 .monitoring-tabs .tab-scroll,
-.operations-tabs .tab-scroll { display: flex; align-items: center; gap: 8px; width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
+.operations-tabs .tab-scroll,
+.security-center-tabs .tab-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
 .monitoring-tabs .tab-scroll::-webkit-scrollbar,
-.operations-tabs .tab-scroll::-webkit-scrollbar { display: none; }
+.operations-tabs .tab-scroll::-webkit-scrollbar,
+.security-center-tabs .tab-scroll::-webkit-scrollbar { display: none; }
+
+/* Security navigation is a single horizontal row. The outer shell owns the
+   sticky position; the inner tab viewport owns horizontal scrolling. */
+.security-center-tabs {
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+  overflow: visible !important;
+  white-space: nowrap;
+}
+.security-center-tabs > .scrollable-tabs-controls {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+.security-center-tabs > .scrollable-tabs-controls > .tab-scroll {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  width: auto !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap;
+}
+.security-center-tabs > .scrollable-tabs-controls > .tab-scroll > a {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.security-center-tabs > .scrollable-tabs-controls > .scrollable-tabs-arrow {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 30px;
+}
+.security-center-tabs {
+  margin-top: 10px !important;
+  margin-bottom: 12px !important;
+  padding: 4px 0 !important;
+}
+.security-center-tabs .scrollable-tabs-arrow {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+  opacity: 1;
+}
+.security-center-tabs .scrollable-tabs-arrow:disabled {
+  color: var(--muted);
+  opacity: .45;
+}
 
 /* Workspace tabs sit directly under the fixed application header. Their
    outer shell remains sticky while only the inner row scrolls horizontally. */

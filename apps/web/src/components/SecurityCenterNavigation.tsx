@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { AlertTriangle, ClipboardCheck, FileBarChart2, KeyRound, ListChecks, LockKeyhole, Settings2, ShieldCheck, Users, type LucideIcon } from 'lucide-react';
+import { ScrollableTabs } from './ScrollableTabs';
 import { useI18n } from '../lib/i18n';
 
 export function SecurityCenterNavigation() {
@@ -18,6 +19,8 @@ export function SecurityCenterNavigation() {
   ];
 
   return <nav className="security-center-tabs" aria-label={t('security.center')}>
-    {links.map(([label, to, Icon]) => <NavLink end={to === '/platform/security'} to={to} key={to} className={({ isActive }) => isActive ? 'active' : undefined}><Icon size={16} aria-hidden="true" /><span>{label}</span></NavLink>)}
+    <ScrollableTabs className="tab-scroll" label={t('security.center')}>
+      {links.map(([label, to, Icon]) => <NavLink end={to === '/platform/security'} to={to} key={to} className={({ isActive }) => isActive ? 'active' : undefined}><Icon size={16} aria-hidden="true" /><span>{label}</span></NavLink>)}
+    </ScrollableTabs>
   </nav>;
 }
