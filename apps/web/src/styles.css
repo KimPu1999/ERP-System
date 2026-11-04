@@ -6044,3 +6044,110 @@ table tbody tr:hover { background: var(--surface-hover); }
 .erp-page-header-with-back { display: flex; align-items: center; gap: 12px; }
 .erp-tab-back-navigation { margin-bottom: 10px; }
 @media (max-width: 680px) { .content > .erp-back-navigation { margin: 12px 16px 0; } .erp-back-navigation { min-height: 32px; } }
+
+/* Global compact platform/workspace shell: keep the shared back control close to
+   the sticky application header and let pages lead with their functional content. */
+.content { padding-top: 3px; }
+.content > .erp-back-navigation { margin: 0 16px; }
+.page-section { padding-top: 0; }
+.platform-page.page-section { padding-top: 0; }
+.platform-toolbar,
+.page-heading,
+.purchasing-page-header,
+.purchasing-detail-header,
+.inventory-page-header,
+.sales-page-heading,
+.sales-invoices-heading,
+.sales-payments-heading,
+.sales-returns-heading,
+.sales-reports-header { min-height: 36px; margin-top: 0; margin-bottom: 8px; padding: 4px 0; }
+.platform-toolbar > div:first-child,
+.page-heading > div:first-child,
+.purchasing-page-header > div:first-child,
+.purchasing-detail-header > div:first-child,
+.inventory-page-header > div:first-child,
+.sales-page-heading > div:first-child,
+.sales-invoices-heading > div:first-child,
+.sales-payments-heading > div:first-child,
+.sales-returns-heading > div:first-child,
+.sales-reports-header > div:first-child { min-width: 0; }
+.platform-toolbar h1,
+.page-heading h1,
+.purchasing-page-header h1,
+.purchasing-detail-header h1,
+.inventory-page-header h1,
+.sales-page-heading h1,
+.sales-invoices-heading h1,
+.sales-payments-heading h1,
+.sales-returns-heading h1,
+.sales-reports-header h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; border: 0; clip: rect(0 0 0 0); white-space: nowrap; }
+.platform-toolbar > div > .eyebrow,
+.page-heading > div > .eyebrow,
+.purchasing-page-header > div > .eyebrow,
+.purchasing-detail-header > div > .eyebrow,
+.inventory-page-header > div > .eyebrow,
+.sales-page-heading > div > .eyebrow,
+.sales-invoices-heading > div > .eyebrow,
+.sales-payments-heading > div > .eyebrow,
+.sales-returns-heading > div > .eyebrow,
+.sales-reports-header > div > .eyebrow { display: none; }
+.platform-toolbar:not(:has(button, a, select)),
+.page-heading:not(:has(button, a, select)),
+.purchasing-page-header:not(:has(button, a, select)),
+.purchasing-detail-header:not(:has(button, a, select)),
+.inventory-page-header:not(:has(button, a, select)),
+.sales-page-heading:not(:has(button, a, select)),
+.sales-invoices-heading:not(:has(button, a, select)),
+.sales-payments-heading:not(:has(button, a, select)),
+.sales-returns-heading:not(:has(button, a, select)),
+.sales-reports-header:not(:has(button, a, select)) { display: none; }
+.platform-toolbar .platform-actions,
+.page-heading-actions,
+.purchasing-page-actions,
+.sales-page-actions { gap: 8px; }
+.platform-toolbar .button,
+.page-heading-actions > *,
+.purchasing-page-actions > *,
+.sales-page-actions > * { min-height: 36px; }
+.page-header,
+.hr-page-header,
+.accounting-page-header { min-height: 36px; margin-top: 0; margin-bottom: 8px; padding: 4px 0; }
+.page-header h1,
+.hr-page-header h1,
+.accounting-page-header h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; border: 0; clip: rect(0 0 0 0); white-space: nowrap; }
+.page-header > div > .eyebrow,
+.hr-page-header > div > .eyebrow,
+.accounting-page-header > div > .eyebrow { display: none; }
+.page-header:not(:has(button, a, select)),
+.hr-page-header:not(:has(button, a, select)),
+.accounting-page-header:not(:has(button, a, select)) { display: none; }
+.sales-nav,
+.purchasing-nav,
+.organization-nav { min-height: 44px; margin-bottom: 8px; }
+.sales-nav-link,
+.purchasing-nav-link,
+.organization-nav-link { min-height: 34px; }
+.purchasing-page .settings-tabs,
+.company-profile-tabs,
+.purchase-detail-tabs { margin-top: 0; margin-bottom: 3px; }
+.platform-page > .platform-toolbar + *,
+.page-section > .page-heading + *,
+.purchasing-page-header + *,
+.purchasing-detail-header + *,
+.sales-page-heading + * { margin-top: 3px; }
+@media (max-width: 680px) {
+  .content > .erp-back-navigation { margin: 0 16px; }
+  .platform-toolbar,
+  .page-heading,
+  .purchasing-page-header,
+  .purchasing-detail-header,
+  .inventory-page-header,
+  .sales-page-heading,
+  .sales-invoices-heading,
+  .sales-payments-heading,
+  .sales-returns-heading,
+  .sales-reports-header { min-height: 36px; margin-bottom: 6px; padding: 3px 0; }
+  .sales-nav,
+  .purchasing-nav,
+  .organization-nav { min-height: 42px; margin-bottom: 6px; }
+}
