@@ -871,3 +871,184 @@ export async function downloadTicketFile(path: string, fileName: string): Promis
   anchor.href = url; anchor.download = fileName; anchor.click();
   URL.revokeObjectURL(url);
 }
+
+// ---------------------------------------------------------------------------
+// Phase 16 — Improvement Center (continuous improvement, product maturity)
+// ---------------------------------------------------------------------------
+
+export type ImprovementFeedbackStatus = 'submitted' | 'under_review' | 'needs_information' | 'accepted' | 'planned' | 'declined' | 'resolved' | 'closed';
+export type ImprovementFeedbackCategory = 'bug' | 'feature_request' | 'usability' | 'performance' | 'documentation' | 'other';
+
+export type ImprovementFeedback = {
+  id: string; feedback_number: string; tenant?: { id: string; name: string } | null;
+  category: ImprovementFeedbackCategory; module: string | null; subject: string; message?: string;
+  status: ImprovementFeedbackStatus; assigned_to?: { id: string; name: string } | null;
+  submitted_by?: { id: string; name: string; email: string } | null; duplicate_of?: { id: string; feedback_number: string; subject: string } | null;
+  has_attachments: boolean; satisfaction_score: number | null; created_at: string; updated_at?: string;
+  attachments?: Array<{ path: string; original_name: string; mime_type: string; size_bytes: number }>;
+  source?: string; support_ticket_id?: string | null; resolution_outcome?: string | null; satisfaction_comment?: string | null; duplicate_of_id?: string | null;
+};
+
+export type ImprovementFeedbackDetail = ImprovementFeedback & {
+  notes: Array<{ id: string; author_type: string; visibility: string; body: string; author: { id: string; name: string; email?: string } | null; created_at: string }>;
+  history: Array<{ from_status: string | null; to_status: string; reason: string | null; actor: { id: string; name: string } | null; created_at: string }>;
+  possible_transitions: string[];
+  duplicates: Array<{ id: string; feedback_number: string; subject: string; status: string; created_at: string }>;
+  linked_ticket: { id: string; endpoint: string } | null; ticket_summary: { id: string; ticket_number: string; subject: string; status: string } | null;
+};
+
+export type ImprovementRequest = {
+  id: string; request_key: string; title: string; status: string; module: string | null; priority: string;
+  owner: { id: string; name: string } | null; effort_estimate: string; risk: string | null;
+  target_release_id: string | null; created_at: string;
+  description?: string; origin?: Array<{ type: string; id?: string; number?: string }>; business_impact?: string | null;
+  requester_reference?: string | null; linked_issues?: string[] | null; release_evidence?: unknown; target_release_notes?: string | null;
+};
+
+export type ImprovementRequestDetail = ImprovementRequest & {
+  events: Array<{ event: string; payload: unknown; actor_id: string | null; created_at: string }>;
+  possible_transitions: string[];
+  source_feedback: Array<{ id: string; number: string; subject: string; status: string }>;
+};
+
+export type ImprovementRoadmapItem = {
+  id: string; title: string; module: string | null; status: string; priority: string;
+  owner: { id: string; name: string } | null; source_type: string; source_id: string | null;
+  target_release_id: string | null; target_quarter: string | null; visibility: string; created_at: string;
+  description?: string | null; dependencies?: string[] | null; completion_criteria?: string | null;
+  release_evidence?: unknown; customer_summary?: string | null;
+};
+
+export type ImprovementDefect = {
+  id: string; defect_number: string; title: string; module: string | null; environment: string;
+  severity: 'P0' | 'P1' | 'P2' | 'P3'; status: string; assignee: { id: string; name: string } | null;
+  fix_version: string | null; retest_result: string | null; reopened_count: number; closed_at: string | null; created_at: string;
+  reproduction_steps?: string | null; expected_result?: string | null; actual_result?: string | null; error_summary?: string | null;
+  root_cause?: string | null; related_change_ref?: string | null; related_test_ref?: string | null; fix_release_id?: string | null;
+  retest_verified_at?: string | null; source_feedback_id?: string | null; source_incident_id?: string | null; source_ticket_id?: string | null;
+};
+
+export type ImprovementDefectDetail = ImprovementDefect & {
+  events: Array<{ event: string; payload: unknown; actor_id: string | null; created_at: string }>;
+  possible_transitions: string[];
+  source_feedback: { id: string; feedback_number: string; subject: string } | null;
+  source_incident: { id: string; title: string; severity: string; status: string } | null;
+  source_ticket: { id: string; endpoint: string } | null;
+};
+
+export type ImprovementRollout = {
+  id: string;
+  flag: { id: string; key: string; description: string | null; default_enabled: boolean; scope: string; review_at: string | null; is_sensitive: boolean } | null;
+  stage: string; scope: string; owner: { id: string; name: string } | null; audience: unknown;
+  rollout_percentage: number | null; approval_status: string; approved_at: string | null; review_at: string | null;
+  monitoring_link: string | null; is_active: boolean; updated_at: string;
+};
+
+export type ImprovementRelease = {
+  id: string; release_id: string | null; version: string; environment: string; status: string;
+  release_notes: string | null; release_notes_my: string | null; release_notes_sections: Record<string, unknown> | null;
+  known_issues: string | null; linked_features: string[] | null; linked_fixes: string[] | null;
+  audience: string; customer_visible: boolean; published_at: string | null; deployment_ref: string | null;
+  approval_state: string; deployed_at: string | null; rollback_reference: string | null; recorded_at: string;
+};
+
+export type ImprovementSlo = {
+  id: string; name: string; sli_type: string; metric_source: string; target: string; window_days: number;
+  is_active: boolean; approved_by: { id: string; name: string } | null; criteria: Record<string, unknown> | null;
+  observed: number | null; status: string; observations_in_window: number;
+  error_budget: { seconds: number; used_seconds: number | null; used_percent: number | null } | null;
+  not_configured_reason: string | null; description: string | null;
+};
+
+export type ImprovementOverview = {
+  last_updated_at: string;
+  feedback: { open: number; by_status: Record<string, number>; feature_requests_submitted: number };
+  feature_requests: { open: number; by_status: Record<string, number>; approved: number };
+  defects: { open_total: number; critical_open: number; high_open: number; by_severity: Record<string, number> };
+  planned_releases: number;
+  current_release: { version: string; environment: string; deployed_at: string } | null;
+  adoption_summary: { source: string; endpoint: string; not_aggregated_here: string };
+  customer_satisfaction: { response_count: number; avg_score: number | null; state: string; date_range: { from: string | null; to: string | null } };
+  reliability: { source: string; services: Array<{ service: string; status: string }> };
+  engineering_quality: { weeks: Array<{ week: string; opened: number; closed: number }> };
+  status_note: string;
+};
+
+export type ImprovementMaturityAssessment = {
+  id: string; dimension: string; period: string; level: string; reviewer: { id: string; name: string } | null;
+  assessed_at: string; evidence?: string; gaps?: string | null; improvement_actions?: string | null;
+};
+
+export type ImprovementReview = {
+  id: string; cadence: string; title: string; findings: string | null; decisions: string | null;
+  owner: { id: string; name: string } | null; next_action: string | null; priority: string;
+  review_date: string; evidence: unknown; creator: { id: string; name: string } | null;
+};
+
+const improvementQuery = (params: Record<string, string | number | undefined>) => {
+  const entries = Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1]));
+  return entries.length ? '?' + new URLSearchParams(entries).toString() : '';
+};
+const improvementJson = (method: 'POST' | 'PATCH', data: unknown) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+
+export const getImprovementOverview = () => api<{ data: ImprovementOverview }>('/platform/improvement/overview');
+export const getImprovementFeedback = (params: Record<string, string | number | undefined> = {}) => api<{ data: ImprovementFeedback[]; meta: { current_page: number; last_page: number; total: number } }>(`/platform/improvement/feedback${improvementQuery(params)}`);
+export const getImprovementFeedbackDetail = (id: string) => api<{ data: ImprovementFeedbackDetail }>(`/platform/improvement/feedback/${id}`);
+export const updateImprovementFeedback = (id: string, data: Record<string, unknown>) => api<{ data: ImprovementFeedback }>(`/platform/improvement/feedback/${id}`, improvementJson('PATCH', data));
+export const addImprovementFeedbackNote = (id: string, visibility: 'public' | 'internal', body: string) => api<{ data: unknown }>(`/platform/improvement/feedback/${id}/notes`, improvementJson('POST', { visibility, body }));
+export const convertImprovementFeedback = (id: string, type: 'feature_request' | 'defect', title: string, module?: string) => api<{ data: unknown }>(`/platform/improvement/feedback/${id}/convert`, improvementJson('POST', { type, title, module }));
+export const getImprovementRequests = (params: Record<string, string | number | undefined> = {}) => api<{ data: ImprovementRequest[]; meta: { current_page: number; last_page: number; total: number } }>(`/platform/improvement/requests${improvementQuery(params)}`);
+export const getImprovementRequestDetail = (id: string) => api<{ data: ImprovementRequestDetail }>(`/platform/improvement/requests/${id}`);
+export const createImprovementRequest = (data: Record<string, unknown>) => api<{ data: ImprovementRequest }>('/platform/improvement/requests', improvementJson('POST', data));
+export const updateImprovementRequest = (id: string, data: Record<string, unknown>) => api<{ data: ImprovementRequest }>(`/platform/improvement/requests/${id}`, improvementJson('PATCH', data));
+export const getImprovementRoadmap = (params: Record<string, string | number | undefined> = {}) => api<{ data: { items: ImprovementRoadmapItem[]; by_status: Record<string, number> } }>(`/platform/improvement/roadmap${improvementQuery(params)}`);
+export const createImprovementRoadmapItem = (data: Record<string, unknown>) => api<{ data: ImprovementRoadmapItem }>('/platform/improvement/roadmap', improvementJson('POST', data));
+export const updateImprovementRoadmapItem = (id: string, data: Record<string, unknown>) => api<{ data: ImprovementRoadmapItem }>(`/platform/improvement/roadmap/${id}`, improvementJson('PATCH', data));
+export const getImprovementDefects = (params: Record<string, string | number | undefined> = {}) => api<{ data: ImprovementDefect[]; meta: { current_page: number; last_page: number; total: number } }>(`/platform/improvement/defects${improvementQuery(params)}`);
+export const getImprovementDefectDetail = (id: string) => api<{ data: ImprovementDefectDetail }>(`/platform/improvement/defects/${id}`);
+export const createImprovementDefect = (data: Record<string, unknown>) => api<{ data: ImprovementDefect }>('/platform/improvement/defects', improvementJson('POST', data));
+export const updateImprovementDefect = (id: string, data: Record<string, unknown>) => api<{ data: ImprovementDefect }>(`/platform/improvement/defects/${id}`, improvementJson('PATCH', data));
+export const getImprovementRollouts = (params: Record<string, string | number | undefined> = {}) => api<{ data: { rollouts: ImprovementRollout[]; flag_authority_note: string } }>(`/platform/improvement/rollouts${improvementQuery(params)}`);
+export const updateImprovementRollout = (id: string, data: Record<string, unknown>) => api<{ data: ImprovementRollout }>(`/platform/improvement/rollouts/${id}`, improvementJson('PATCH', data));
+export const engageImprovementKillSwitch = (id: string, reason: string) => api<{ data: ImprovementRollout }>(`/platform/improvement/rollouts/${id}/kill-switch`, improvementJson('POST', { reason }));
+export const getImprovementReleases = (params: Record<string, string | number | undefined> = {}) => api<{ data: { records: ImprovementRelease[]; status_note: string } }>(`/platform/improvement/releases${improvementQuery(params)}`);
+export const getImprovementRelease = (id: string) => api<{ data: ImprovementRelease }>(`/platform/improvement/releases/${id}`);
+export const updateImprovementRelease = (id: string, data: Record<string, unknown>) => api<{ data: ImprovementRelease }>(`/platform/improvement/releases/${id}`, improvementJson('PATCH', data));
+export const getImprovementReliability = () => api<{ data: { slos: ImprovementSlo[]; measurement_model: Record<string, string>; incidents: Array<{ id: string; title: string; severity: string; status: string; started_at: string }> } }>('/platform/improvement/reliability');
+export const createImprovementSlo = (data: Record<string, unknown>) => api<{ data: ImprovementSlo }>('/platform/improvement/reliability/slos', improvementJson('POST', data));
+export const getImprovementQuality = () => api<{ data: Record<string, unknown> }>('/platform/improvement/quality');
+export const getImprovementSatisfaction = (params: Record<string, string | undefined> = {}) => api<{ data: Record<string, unknown> }>(`/platform/improvement/satisfaction${improvementQuery(params)}`);
+export const getImprovementMaturity = () => api<{ data: { assessments: ImprovementMaturityAssessment[]; history: ImprovementMaturityAssessment[]; rubric: string[]; methodology_note: string; missing_dimensions: string[] } }>('/platform/improvement/maturity');
+export const createImprovementMaturity = (data: Record<string, unknown>) => api<{ data: ImprovementMaturityAssessment }>('/platform/improvement/maturity', improvementJson('POST', data));
+export const getImprovementReviews = (params: Record<string, string | number | undefined> = {}) => api<{ data: ImprovementReview[]; meta: { current_page: number; last_page: number; total: number } }>(`/platform/improvement/reviews${improvementQuery(params)}`);
+export const createImprovementReview = (data: Record<string, unknown>) => api<{ data: ImprovementReview }>('/platform/improvement/reviews', improvementJson('POST', data));
+
+// Business side
+export type BusinessFeedback = {
+  id: string; feedback_number: string; category: ImprovementFeedbackCategory; module: string | null;
+  subject: string; status: ImprovementFeedbackStatus; has_attachments: boolean;
+  assignee: { id: string; name: string } | null; created_at: string;
+  message?: string; attachments?: Array<{ path: string; original_name: string; size_bytes: number }>;
+  satisfaction_score?: number | null; resolution_outcome?: string | null;
+};
+export type BusinessFeedbackDetail = BusinessFeedback & {
+  notes: Array<{ id: string; author_type: string; body: string; author: { id: string; name: string } | null; created_at: string }>;
+  status_history: Array<{ from_status: string | null; to_status: string; created_at: string }>;
+  has_satisfaction_response: boolean;
+};
+export type BusinessReleaseNote = { id: string; version: string; release_notes: string | null; release_notes_my: string | null; sections: Record<string, unknown> | null; known_limitations: string | null; deployed_at: string | null };
+export type BusinessRoadmapEntry = { id: string; title: string; summary: string | null; module: string | null; status: string; target_quarter: string | null };
+
+export const getBusinessFeedback = (params: Record<string, string | number | undefined> = {}) => api<{ data: BusinessFeedback[]; meta: { current_page: number; last_page: number; total: number } }>(`/business/feedback${improvementQuery(params)}`);
+export const submitBusinessFeedback = (data: { category: string; module?: string; subject: string; message: string }, attachment?: File) => {
+  if (!attachment) return api<{ data: BusinessFeedback }>('/business/feedback', improvementJson('POST', data));
+  const form = new FormData();
+  Object.entries(data).forEach(([key, value]) => { if (value) form.append(key, String(value)); });
+  form.append('attachment', attachment);
+  return api<{ data: BusinessFeedback }>('/business/feedback', { method: 'POST', body: form });
+};
+export const getBusinessFeedbackDetail = (id: string) => api<{ data: BusinessFeedbackDetail }>(`/business/feedback/${id}`);
+export const commentBusinessFeedback = (id: string, body: string) => api<{ data: unknown }>(`/business/feedback/${id}/comments`, improvementJson('POST', { body }));
+export const rateBusinessFeedback = (id: string, score: number, comment?: string) => api<{ data: unknown }>(`/business/feedback/${id}/satisfaction`, improvementJson('POST', { score, comment }));
+export const getBusinessReleaseNotes = () => api<{ data: BusinessReleaseNote[]; meta: { available: boolean } }>('/business/releases');
+export const getBusinessRoadmap = () => api<{ data: BusinessRoadmapEntry[] }>('/business/roadmap');

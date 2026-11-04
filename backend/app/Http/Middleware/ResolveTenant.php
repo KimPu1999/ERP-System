@@ -17,16 +17,30 @@ final class ResolveTenant
         abort_unless($user && $tenantId && preg_match('/^[0-9a-f-]{36}$/i', $tenantId), 403, 'Tenant context is invalid.');
         $context = app(TenantContext::class);
         $previous = $context->snapshot();
+        $requestError = null;
         try {
             $context->set($tenantId);
             abort_unless($user->tenantMemberships()->where('tenant_id', $tenantId)->where('status', 'active')->exists(), 403, 'Tenant access denied.');
             abort_unless(Tenant::whereKey($tenantId)->where('status', 'active')->exists(), 403, 'Workspace is inactive.');
             return $next($request);
+        } catch (\Throwable $caught) {
+            $requestError = $caught;
+            throw $caught;
         } finally {
-            // Restore the caller's exact security context: unconditional
-            // clearing would silently rewrite platform/tenant state on
-            // connections shared with platform sweeps or nested requests.
-            $context->restoreSnapshot($previous);
+            try {
+                // Restore the caller's exact security context: unconditional
+                // clearing would silently rewrite platform/tenant state on
+                // connections shared with platform sweeps or nested requests.
+                $context->restoreSnapshot($previous);
+            } catch (\Throwable $restoreError) {
+                report($restoreError);
+                if ($requestError !== null) {
+                    // The request already failed (e.g. an aborted transaction);
+                    // surface the original root cause instead of the restore error.
+                    throw $requestError;
+                }
+                throw $restoreError;
+            }
         }
     }
 }

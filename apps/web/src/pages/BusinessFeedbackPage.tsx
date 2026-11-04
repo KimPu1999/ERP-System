@@ -1,0 +1,126 @@
+import { Plus, Star } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  commentBusinessFeedback, getBusinessFeedback, getBusinessFeedbackDetail, getBusinessReleaseNotes,
+  getBusinessRoadmap, rateBusinessFeedback, submitBusinessFeedback, type BusinessFeedbackDetail,
+} from '../lib/api';
+import { useI18n } from '../lib/i18n';
+
+export type BusinessFeedbackMode = 'feedback' | 'releases' | 'roadmap';
+
+export function BusinessFeedbackPage({ mode }: { mode: BusinessFeedbackMode }) {
+  const { t } = useI18n();
+  const title = mode === 'feedback' ? t('improvement.businessTitle') : mode === 'releases' ? t('improvement.releasesTitleBusiness') : t('improvement.roadmapTitleBusiness');
+  const description = mode === 'feedback' ? t('improvement.businessDescription') : mode === 'releases' ? t('improvement.releasesDescriptionBusiness') : t('improvement.roadmapDescriptionBusiness');
+  return <section className="platform-page page-section">
+    <div className="platform-toolbar"><div><p className="eyebrow">{t('app.workspace')}</p><h1>{title}</h1><p className="muted">{description}</p></div></div>
+    {mode === 'feedback' && <FeedbackWorkspace />}
+    {mode === 'releases' && <ReleaseNotesView />}
+    {mode === 'roadmap' && <RoadmapView />}
+  </section>;
+}
+
+function FeedbackWorkspace() {
+  const { t, formatDate } = useI18n();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+  const listQuery = useQuery({ queryKey: ['business-feedback', page, perPage], queryFn: () => getBusinessFeedback({ page, per_page: perPage }), staleTime: 30_000, placeholderData: (previous) => previous });
+  const detailQuery = useQuery({ queryKey: ['business-feedback-detail', selected], enabled: selected !== null, queryFn: () => getBusinessFeedbackDetail(selected as string) });
+
+  const [form, setForm] = useState({ category: 'bug', module: '', subject: '', message: '' });
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const submitMutation = useMutation({
+    mutationFn: () => submitBusinessFeedback({ category: form.category, module: form.module || undefined, subject: form.subject, message: form.message }, fileInput.current?.files?.[0]),
+    onSuccess: async () => { setForm({ category: 'bug', module: '', subject: '', message: '' }); if (fileInput.current) fileInput.current.value = ''; setFeedbackError(null); await listQuery.refetch(); },
+    onError: (error) => setFeedbackError(error instanceof Error ? error.message : t('improvement.submitError')),
+  });
+  const commentMutation = useMutation({ mutationFn: (body: string) => commentBusinessFeedback(selected as string, body), onSuccess: () => void detailQuery.refetch() });
+  const rateMutation = useMutation({ mutationFn: (score: number) => rateBusinessFeedback(selected as string, score), onSuccess: () => void detailQuery.refetch() });
+
+  return <>
+    <article className="panel">
+      <div className="table-card-heading"><h2>{t('improvement.submitFeedback')}</h2></div>
+      <div className="platform-actions">
+        <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} aria-label={t('improvement.category')}>
+          {['bug', 'feature_request', 'usability', 'performance', 'documentation', 'other'].map((category) => <option key={category} value={category}>{t(`improvement.category.${category}`)}</option>)}
+        </select>
+        <input value={form.module} onChange={(event) => setForm({ ...form, module: event.target.value })} placeholder={t('improvement.module')} />
+        <input value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })} placeholder={t('improvement.subject')} />
+      </div>
+      <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} placeholder={t('improvement.message')} rows={3} />
+      <div className="platform-actions">
+        <input ref={fileInput} type="file" accept=".png,.jpg,.jpeg,.pdf,.txt,.csv,.zip,.doc,.docx,.xlsx" aria-label={t('improvement.attachment')} />
+        <button className="button button-primary" type="button" disabled={!form.subject || !form.message || submitMutation.isPending} onClick={() => submitMutation.mutate()}><Plus size={14} /> {submitMutation.isPending ? t('improvement.submitting') : t('improvement.submitFeedback')}</button>
+      </div>
+      {submitMutation.isSuccess && <p className="muted" role="status">{t('improvement.submitted')}</p>}
+      {feedbackError && <div className="alert alert-danger" role="alert">{feedbackError}</div>}
+    </article>
+
+    <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>#</th><th>{t('improvement.subject')}</th><th>{t('improvement.category')}</th><th>{t('improvement.status')}</th><th>{t('platform.created')}</th></tr></thead><tbody>
+      {listQuery.isLoading && <tr><td colSpan={5} role="status">{t('common.loading')}</td></tr>}
+      {listQuery.isError && <tr><td colSpan={5} className="muted">{t('improvement.loadError')}</td></tr>}
+      {!listQuery.isLoading && !listQuery.isError && (listQuery.data?.data ?? []).length === 0 && <tr><td colSpan={5} className="muted">{t('common.noData')}</td></tr>}
+      {(listQuery.data?.data ?? []).map((row) => <tr key={row.id} onClick={() => setSelected(row.id)} className="cursor-pointer"><td>{row.feedback_number}</td><td>{row.subject}</td><td>{t(`improvement.category.${row.category}`)}</td><td><span className="badge">{t(`improvement.status.${row.status}`)}</span></td><td>{formatDate(row.created_at)}</td></tr>)}
+    </tbody></table></div>
+      <div className="platform-actions">
+        <select value={perPage} onChange={(event) => { setPerPage(Number(event.target.value)); setPage(1); }} aria-label={t('common.rows')}>{[10, 20, 50].map((size) => <option key={size} value={size}>{size}</option>)}</select>
+        <button className="table-action" type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>{t('common.previous')}</button>
+        <span className="muted">{t('common.page')} {page}</span>
+        <button className="table-action" type="button" disabled={page >= (listQuery.data?.meta.last_page ?? 1)} onClick={() => setPage(page + 1)}>{t('common.next')}</button>
+      </div>
+    </article>
+
+    {selected && detailQuery.data && <FeedbackThread value={(detailQuery.data as { data: BusinessFeedbackDetail }).data} onComment={(body) => commentMutation.mutate(body)} onRate={(score) => rateMutation.mutate(score)} onClose={() => setSelected(null)} pending={commentMutation.isPending || rateMutation.isPending} />}
+  </>;
+}
+
+function FeedbackThread({ value, onComment, onRate, onClose, pending }: { value: BusinessFeedbackDetail; onComment: (body: string) => void; onRate: (score: number) => void; onClose: () => void; pending: boolean }) {
+  const { t, formatDate } = useI18n();
+  const [body, setBody] = useState('');
+  const canRate = ['resolved', 'closed'].includes(value.status) && !value.has_satisfaction_response;
+  return <article className="panel">
+    <div className="table-card-heading"><div><h2>{value.feedback_number}</h2><p className="muted">{value.subject}</p></div><button className="table-action" type="button" onClick={onClose}>{t('common.close')}</button></div>
+    <p className="muted">{value.message}</p>
+    <p className="muted">{t('improvement.status')}: {t(`improvement.status.${value.status}`)} · {formatDate(value.created_at)}</p>
+    {value.resolution_outcome && <p className="muted">{t('improvement.resolutionOutcome')}: {value.resolution_outcome}</p>}
+    <h3>{t('improvement.notes')}</h3>
+    <ul>{value.notes.length ? value.notes.map((note) => <li key={note.id}><strong>{note.author?.name ?? '—'}</strong>: {note.body} <span className="muted">({formatDate(note.created_at)})</span></li>) : <li className="muted">{t('common.noData')}</li>}</ul>
+    <div className="platform-actions">
+      <input value={body} onChange={(event) => setBody(event.target.value)} placeholder={t('improvement.comment')} />
+      <button className="button button-secondary" type="button" disabled={!body || pending} onClick={() => { onComment(body); setBody(''); }}>{t('improvement.comment')}</button>
+    </div>
+    {canRate && <div className="platform-actions">
+      <span>{t('improvement.satisfactionPrompt')}</span>
+      {[1, 2, 3, 4, 5].map((score) => <button key={score} className="table-action" type="button" disabled={pending} onClick={() => onRate(score)} aria-label={`${score}`}><Star size={14} /> {score}</button>)}
+    </div>}
+    {value.has_satisfaction_response && <p className="muted">{t('improvement.alreadyRated')}</p>}
+  </article>;
+}
+
+function ReleaseNotesView() {
+  const { t, formatDate } = useI18n();
+  const query = useQuery({ queryKey: ['business-release-notes'], queryFn: () => getBusinessReleaseNotes() });
+  if (query.isLoading) return <div className="panel" role="status">{t('common.loading')}</div>;
+  if (query.isError) return <div className="alert alert-danger" role="alert">{t('improvement.loadError')}</div>;
+  const notes = query.data?.data ?? [];
+  if (!notes.length) return <div className="panel"><p className="muted">{t('improvement.noReleases')}</p></div>;
+  return <>{notes.map((note) => <article className="panel" key={note.id}>
+    <div className="table-card-heading"><h2>{note.version}</h2><span className="muted">{formatDate(note.deployed_at)}</span></div>
+    <p>{note.release_notes}</p>
+    {note.release_notes_my && <p className="muted">{note.release_notes_my}</p>}
+    {note.known_limitations && <p className="muted"><strong>{t('improvement.knownLimitations')}:</strong> {note.known_limitations}</p>}
+  </article>)}</>;
+}
+
+function RoadmapView() {
+  const { t } = useI18n();
+  const query = useQuery({ queryKey: ['business-roadmap'], queryFn: () => getBusinessRoadmap() });
+  if (query.isLoading) return <div className="panel" role="status">{t('common.loading')}</div>;
+  if (query.isError) return <div className="alert alert-danger" role="alert">{t('improvement.loadError')}</div>;
+  const items = query.data?.data ?? [];
+  if (!items.length) return <div className="panel"><p className="muted">{t('improvement.noRoadmap')}</p></div>;
+  return <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.subject')}</th><th>{t('improvement.description')}</th><th>{t('improvement.status')}</th><th>{t('improvement.targetQuarter')}</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td>{item.title}</td><td>{item.summary ?? '—'}</td><td><span className="badge">{t(`improvement.status.${item.status}`)}</span></td><td>{item.target_quarter ?? '—'}</td></tr>)}</tbody></table></div></article>;
+}

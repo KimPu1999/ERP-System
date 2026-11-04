@@ -83,6 +83,8 @@ use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\WorkspaceAccessController;
 use App\Http\Controllers\Api\V1\StaffMembershipController;
 use App\Http\Controllers\Api\V1\OperationsController;
+use App\Http\Controllers\Api\V1\PlatformImprovementController;
+use App\Http\Controllers\Api\V1\FeedbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -268,6 +270,43 @@ Route::prefix('v1')->group(function (): void {
                 Route::get('/releases', [OperationsController::class, 'releases']);
                 Route::post('/releases', [OperationsController::class, 'recordRelease']);
             });
+            Route::prefix('improvement')->group(function (): void {
+                Route::get('/overview', [PlatformImprovementController::class, 'overview']);
+                Route::get('/feedback', [PlatformImprovementController::class, 'feedbackIndex']);
+                Route::get('/feedback/{feedback}', [PlatformImprovementController::class, 'feedbackShow']);
+                Route::patch('/feedback/{feedback}', [PlatformImprovementController::class, 'feedbackUpdate']);
+                Route::post('/feedback/{feedback}/transition', [PlatformImprovementController::class, 'feedbackTransition']);
+                Route::post('/feedback/{feedback}/convert', [PlatformImprovementController::class, 'feedbackConvert']);
+                Route::post('/feedback/{feedback}/notes', [PlatformImprovementController::class, 'feedbackNote']);
+                Route::get('/requests', [PlatformImprovementController::class, 'requestsIndex']);
+                Route::post('/requests', [PlatformImprovementController::class, 'requestStore']);
+                Route::get('/requests/{requestModel}', [PlatformImprovementController::class, 'requestShow']);
+                Route::patch('/requests/{requestModel}', [PlatformImprovementController::class, 'requestUpdate']);
+                Route::get('/roadmap', [PlatformImprovementController::class, 'roadmapIndex']);
+                Route::post('/roadmap', [PlatformImprovementController::class, 'roadmapStore']);
+                Route::patch('/roadmap/{item}', [PlatformImprovementController::class, 'roadmapUpdate']);
+                Route::get('/defects', [PlatformImprovementController::class, 'defectsIndex']);
+                Route::post('/defects', [PlatformImprovementController::class, 'defectStore']);
+                Route::get('/defects/{defect}', [PlatformImprovementController::class, 'defectShow']);
+                Route::patch('/defects/{defect}', [PlatformImprovementController::class, 'defectUpdate']);
+                Route::get('/rollouts', [PlatformImprovementController::class, 'rolloutsIndex']);
+                Route::post('/rollouts', [PlatformImprovementController::class, 'rolloutStore']);
+                Route::patch('/rollouts/{rollout}', [PlatformImprovementController::class, 'rolloutUpdate']);
+                Route::post('/rollouts/{rollout}/kill-switch', [PlatformImprovementController::class, 'rolloutKillSwitch']);
+                Route::post('/rollouts/{rollout}/tenants', [PlatformImprovementController::class, 'rolloutTenants']);
+                Route::get('/releases', [PlatformImprovementController::class, 'releasesIndex']);
+                Route::get('/releases/{record}', [PlatformImprovementController::class, 'releaseShow']);
+                Route::patch('/releases/{record}', [PlatformImprovementController::class, 'releaseUpdate']);
+                Route::get('/reliability', [PlatformImprovementController::class, 'reliability']);
+                Route::post('/reliability/slos', [PlatformImprovementController::class, 'sloStore']);
+                Route::patch('/reliability/slos/{slo}', [PlatformImprovementController::class, 'sloUpdate']);
+                Route::get('/quality', [PlatformImprovementController::class, 'quality']);
+                Route::get('/satisfaction', [PlatformImprovementController::class, 'satisfaction']);
+                Route::get('/maturity', [PlatformImprovementController::class, 'maturityIndex']);
+                Route::post('/maturity', [PlatformImprovementController::class, 'maturityStore']);
+                Route::get('/reviews', [PlatformImprovementController::class, 'reviewsIndex']);
+                Route::post('/reviews', [PlatformImprovementController::class, 'reviewStore']);
+            });
             Route::prefix('support')->group(function (): void {
                 Route::get('/tickets', [SupportController::class, 'platformList']);
                 Route::get('/tickets/export', [SupportController::class, 'export']);
@@ -284,6 +323,13 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware(['auth:sanctum', 'active.user', 'verified', 'tenant'])->group(function (): void {
         Route::get('/me', MeController::class);
         Route::get('/business/onboarding', [BusinessOnboardingController::class, 'show']);
+        Route::get('/business/feedback', [FeedbackController::class, 'index']);
+        Route::post('/business/feedback', [FeedbackController::class, 'store'])->middleware('throttle:15,1');
+        Route::get('/business/feedback/{feedback}', [FeedbackController::class, 'show']);
+        Route::post('/business/feedback/{feedback}/comments', [FeedbackController::class, 'comment']);
+        Route::post('/business/feedback/{feedback}/satisfaction', [FeedbackController::class, 'satisfaction'])->middleware('throttle:10,1');
+        Route::get('/business/releases', [FeedbackController::class, 'releases']);
+        Route::get('/business/roadmap', [FeedbackController::class, 'roadmap']);
         Route::post('/business/onboarding/{step}/complete', [BusinessOnboardingController::class, 'complete'])->where('step', '[a-z_]+')->middleware('throttle:30,1');
         Route::get('/business/self-service', [BusinessSelfServiceController::class, 'overview']);
         Route::get('/business/account', [BusinessSelfServiceController::class, 'overview']);
