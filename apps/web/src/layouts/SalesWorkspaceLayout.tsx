@@ -4,6 +4,7 @@ import { BarChart3, ClipboardList, CreditCard, FileText, HandCoins, Receipt, Rot
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
+import { ScrollableTabs } from '../components/ScrollableTabs';
 
 type SalesNavItem = { label: TranslationKey; to?: string; icon: LucideIcon; permission?: string; unavailable?: string };
 
@@ -34,9 +35,9 @@ export function SalesWorkspaceLayout() {
   const href = (to: string) => `${to}${companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''}`;
 
   return <div className="sales-workspace-layout">
-    <nav className="sales-nav" aria-label={t('nav.salesWorkspace')}><div className="sales-nav-inner">
+    <nav className="sales-nav" aria-label={t('nav.salesWorkspace')}><ScrollableTabs className="sales-nav-inner" label={t('nav.salesWorkspace')}>
       {[...salesNavItems.filter((item) => item.label !== 'sales.settings'), salesSettingsNavItem].filter((item) => permitted(item.permission)).map(({ label, to, icon: Icon, unavailable }) => { const text = t(label); return to && !unavailable ? <NavLink key={`${label}-${to}`} to={href(to)} end={to === '/crm-sales'} className={({ isActive }) => `sales-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{text}</span></NavLink> : <span key={`${label}-${to ?? 'disabled'}`} className="sales-nav-link disabled" aria-disabled="true" title={unavailable}><Icon size={14} aria-hidden="true" /><span>{text}</span><small>Planned</small></span>; })}
-    </div></nav>
+    </ScrollableTabs></nav>
     <Outlet />
   </div>;
 }

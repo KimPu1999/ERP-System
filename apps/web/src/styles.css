@@ -7048,3 +7048,109 @@ table tbody tr:hover { background: var(--surface-hover); }
 .notification-setting-row input:checked::after { transform: translateX(18px); }
 .settings-toggle-row input:focus-visible,
 .notification-setting-row input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Purchase-order filters: keep every control inside the card and let the
+   layout reflow before the viewport can clip the right-most action. */
+.purchasing-page .purchasing-filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.7fr) repeat(6, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.purchasing-page .purchasing-filter-toolbar > label,
+.purchasing-page .purchasing-filter-toolbar > label.purchasing-search {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.purchasing-page .purchasing-filter-toolbar input,
+.purchasing-page .purchasing-filter-toolbar select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.purchasing-page .purchasing-filter-toolbar .purchasing-refresh {
+  min-width: 0;
+  white-space: nowrap;
+}
+@media (max-width: 1180px) {
+  .purchasing-page .purchasing-filter-toolbar {
+    grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(0, 1fr));
+  }
+  .purchasing-page .purchasing-filter-toolbar > label.purchasing-search {
+    grid-column: span 2;
+  }
+  .purchasing-page .purchasing-filter-toolbar .purchasing-refresh {
+    justify-self: start;
+  }
+}
+@media (max-width: 720px) {
+  .purchasing-page .purchasing-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .purchasing-page .purchasing-filter-toolbar > label.purchasing-search,
+  .purchasing-page .purchasing-filter-toolbar .purchasing-refresh {
+    grid-column: 1 / -1;
+  }
+  .purchasing-page .purchasing-filter-toolbar .purchasing-refresh {
+    justify-self: stretch;
+  }
+}
+@media (max-width: 460px) {
+  .purchasing-page .purchasing-filter-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .purchasing-page .purchasing-filter-toolbar > label.purchasing-search,
+  .purchasing-page .purchasing-filter-toolbar .purchasing-refresh {
+    grid-column: auto;
+  }
+}
+
+/* Horizontal tab controls: arrow buttons scroll the inner tab row without
+   creating page-level horizontal overflow. */
+.scrollable-tabs-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+.scrollable-tabs-controls > .tab-scroll,
+.scrollable-tabs-controls > .sales-nav-inner,
+.scrollable-tabs-controls > .purchasing-nav-inner,
+.scrollable-tabs-controls > .organization-nav-inner {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.scrollable-tabs-arrow {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background-color .15s ease, opacity .15s ease;
+}
+.scrollable-tabs-arrow:hover:not(:disabled),
+.scrollable-tabs-arrow:focus-visible:not(:disabled) {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.scrollable-tabs-arrow:disabled { cursor: default; opacity: .3; }
+.scrollable-tabs-arrow:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+:root.dark .scrollable-tabs-arrow { border-color: var(--border); color: var(--muted); background: transparent; }
+:root.dark .scrollable-tabs-arrow:hover:not(:disabled),
+:root.dark .scrollable-tabs-arrow:focus-visible:not(:disabled) { color: var(--mint); border-color: var(--mint); background: transparent; }
+@media (max-width: 680px) {
+  .scrollable-tabs-arrow { flex-basis: 26px; width: 26px; height: 32px; }
+}

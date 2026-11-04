@@ -4,6 +4,7 @@ import { Building2, Landmark, Network, ShieldCheck, Users, Warehouse, type Lucid
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { getDashboardCompanies, getMe } from '../lib/api';
 import { useI18n, type TranslationKey } from '../lib/i18n';
+import { ScrollableTabs } from '../components/ScrollableTabs';
 
 type OrganizationNavItem = { label: TranslationKey; to: string; permission: string; icon: LucideIcon };
 
@@ -45,9 +46,9 @@ export function OrganizationLayout() {
   const withCompanyContext = (to: string) => `${to}${companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''}`;
   return <div className="organization-layout">
     <nav className="organization-nav" aria-label={t('nav.organization')}>
-      <div className="organization-nav-inner">
+      <ScrollableTabs className="organization-nav-inner" label={t('nav.organization')}>
         {navItems.filter((item) => allowed(item.permission)).map(({ label, to, permission, icon: Icon }) => <NavLink key={to} end={permission === 'overview'} to={withCompanyContext(to)} className={({ isActive }) => `organization-nav-link ${isActive ? 'active' : ''}`}><Icon size={14} aria-hidden="true" /><span>{t(label)}</span></NavLink>)}
-      </div>
+      </ScrollableTabs>
     </nav>
     <Outlet />
   </div>;
