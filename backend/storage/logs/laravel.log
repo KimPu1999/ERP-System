@@ -36927,3 +36927,4 @@ LINE 1: select count(*) as \"aggregate\" from \"product_feedback\"
 #91 {main}
 "} 
 [2026-11-04 08:39:36] testing.NOTICE: Row level security enforcement enabled on tenant-scoped tables. {"tables":166} 
+[2026-11-04 09:13:49] local.NOTICE: Row level security enforcement enabled on tenant-scoped tables. {"tables":179} 
