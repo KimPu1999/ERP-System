@@ -180,13 +180,21 @@ export function CompanyProfilePage() {
   const [documentCategory, setDocumentCategory] = useState('registration_certificate');
   const companies = useQuery({ queryKey: ['dashboard-companies'], queryFn: getDashboardCompanies });
   const companyList = useMemo(() => companies.data?.data.data ?? [], [companies.data]);
-  const companyId = params.get('company_id') ?? companyList[0]?.id ?? '';
+  const requestedCompanyId = params.get('company_id');
+  const companyId = requestedCompanyId && companyList.some((item) => item.id === requestedCompanyId)
+    ? requestedCompanyId
+    : companyList[0]?.id ?? '';
   const tab = tabFromQuery(params.get('tab'));
   const profile = useQuery({ queryKey: ['company-profile', companyId], queryFn: () => getCompany(companyId), enabled: Boolean(companyId) });
   const documents = useQuery({ queryKey: ['company-documents', companyId], queryFn: () => getCompanyDocuments(companyId), enabled: Boolean(companyId) });
   const activity = useQuery({ queryKey: ['company-activity', companyId], queryFn: () => getCompanyActivity(companyId), enabled: Boolean(companyId) });
   const updateParams = (changes: Record<string, string | null>) => { const next = new URLSearchParams(params); Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); setParams(next, { replace: true }); };
-  useEffect(() => { if (!params.get('company_id') && companyList[0]?.id) { const next = new URLSearchParams(params); next.set('company_id', companyList[0].id); setParams(next, { replace: true }); } }, [companyList, params, setParams]);
+  useEffect(() => {
+    if (!companies.isSuccess || !companyId || requestedCompanyId === companyId) return;
+    const next = new URLSearchParams(params);
+    next.set('company_id', companyId);
+    setParams(next, { replace: true });
+  }, [companies.isSuccess, companyId, params, requestedCompanyId, setParams]);
   useEffect(() => { setEditMode(params.get('edit') === '1'); }, [params]);
   const invalidateProfile = () => { client.invalidateQueries({ queryKey: ['company-profile', companyId] }); client.invalidateQueries({ queryKey: ['dashboard-companies'] }); client.invalidateQueries({ queryKey: ['companies'] }); client.invalidateQueries({ queryKey: ['organization-overview'] }); };
   const upload = useMutation({ mutationFn: ({ kind, file }: { kind: 'logo' | 'cover'; file: File }) => uploadCompanyAsset(companyId, kind, file), onSuccess: () => { setAssetError(''); setNotice('Branding updated.'); invalidateProfile(); } });
@@ -217,7 +225,18 @@ export function CompanyProfilePage() {
     return <section className="page-section company-profile-page"><div className="company-profile-state card"><span className="state-icon"><Building2 size={22} /></span><h1>{hasInactive ? 'Your company is not active' : 'Set up your company'}</h1>{hasInactive && <p>A company exists in this workspace, but it is inactive or pending activation. Contact an authorized administrator for the next step.</p>}{!hasInactive && <ul className="state-checklist"><li><Check size={14} /> Company identity and legal details</li><li><Check size={14} /> Contact, address and localization</li><li><Check size={14} /> Optional branding and documents</li></ul>}<div className="profile-actions state-actions"><Link className="secondary" to="/"><ArrowLeft size={15} />Back to dashboard</Link>{!hasInactive && <Link className="primary" to="/company"><Pencil size={15} />Open company setup</Link>}</div></div></section>;
   }
   if (profile.isLoading) return <section className="page-section company-profile-page"><div className="company-profile-skeleton" aria-label="Loading company profile"><div /><div /><div /><div /></div></section>;
-  if (profile.isError || !company) return <section className="page-section company-profile-page"><div className="company-profile-state card"><span className="state-icon danger"><ShieldCheck size={20} /></span><h1>{profile.error instanceof ApiError && profile.error.status === 403 ? 'Company access is not authorized' : 'Unable to load company profile'}</h1><p>{profile.error instanceof ApiError && profile.error.status === 403 ? 'Your account cannot view this company. Select another authorized company or contact an administrator.' : profile.error instanceof ApiError ? profile.error.message : 'The company profile could not be found.'}</p><div className="profile-actions state-actions"><button className="secondary" type="button" onClick={() => profile.refetch()}>Retry</button><Link className="secondary" to="/">Back to dashboard</Link></div></div></section>;
+  if (profile.isError || !company) {
+    const status = profile.error instanceof ApiError ? profile.error.status : 0;
+    const isForbidden = status === 403;
+    const isMissing = status === 404;
+    const title = isForbidden ? 'Company access is not authorized' : isMissing ? 'Company profile is unavailable' : 'Unable to load company profile';
+    const message = isForbidden
+      ? 'Your account cannot view this company. Select another authorized company or contact an administrator.'
+      : isMissing
+        ? 'This company no longer exists in your authorized workspace. Return to the dashboard and choose another company.'
+        : profile.error instanceof ApiError ? profile.error.message : 'The company profile could not be found.';
+    return <section className="page-section company-profile-page"><div className="company-profile-state card"><span className="state-icon danger"><ShieldCheck size={20} /></span><h1>{title}</h1><p>{message}</p><div className="profile-actions state-actions"><button className="secondary" type="button" onClick={() => profile.refetch()}>Retry</button><Link className="secondary" to="/">Back to dashboard</Link></div></div></section>;
+  }
   return <section className="page-section company-profile-page">
     <div className="organization-tab-toolbar company-profile-tab-toolbar"><div />{!editMode && <button className="primary" type="button" onClick={openEdit}><Pencil size={15} />Edit profile</button>}</div>
     <header className="company-profile-header card"><div className="company-profile-brand"><div className="company-profile-logo">{company.logo_url ? <img src={company.logo_url} alt="Company logo" /> : <span>{(company.trading_name || company.name).slice(0, 1).toUpperCase()}</span>}</div><div className="company-profile-brand-copy"><div className="profile-title-line"><h2>{company.trading_name || company.name}</h2><span className="status-badge active">{statusLabel(company.is_active)}</span></div><p>{company.legal_name && company.legal_name !== company.trading_name ? company.legal_name : 'Legal name not provided'} · {display(company.business_type)}</p><div className="company-profile-meta"><span>Code: <strong>{display(company.code)}</strong></span><span>Company ID: <strong>{company.id.slice(0, 8)}…</strong></span></div></div></div><div className="company-profile-cover-mini">{company.cover_image_url ? <img src={company.cover_image_url} alt="Company cover" /> : <span><Landmark size={19} /></span>}</div></header>
