@@ -3093,6 +3093,32 @@ html { scroll-padding-top: var(--app-sticky-offset); }
 .platform-table-heading { padding: 14px; border-bottom: 1px solid var(--border); }
 .platform-table-heading h2 { margin: 0; font-size: 15px; }
 .platform-module-toggles, .platform-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.platform-businesses-page .platform-business-header-actions { gap: 8px; }
+.platform-businesses-page .platform-business-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 118px;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.platform-businesses-page .platform-business-action:hover:not(:disabled) { border-color: #93c5fd; background: var(--blue-soft); color: var(--blue); box-shadow: 0 3px 8px rgba(37, 99, 235, .10); transform: translateY(-1px); }
+.platform-businesses-page .platform-business-action:active:not(:disabled) { transform: translateY(0); }
+.platform-businesses-page .platform-business-action svg { flex: 0 0 auto; }
+.platform-businesses-page .platform-business-action.button-primary { border-color: var(--blue); color: #fff; background: linear-gradient(135deg, var(--blue), var(--blue-hover)); box-shadow: 0 4px 10px rgba(37, 99, 235, .16); }
+.platform-businesses-page .platform-business-action.button-primary:hover:not(:disabled) { border-color: var(--blue-hover); color: #fff; background: var(--blue-hover); box-shadow: 0 6px 14px rgba(37, 99, 235, .22); }
+.platform-businesses-page .platform-business-action:disabled { cursor: not-allowed; opacity: .65; box-shadow: none; transform: none; }
 .platform-growth-list, .platform-alert-list { display: grid; gap: 12px; padding: 16px; }
 .platform-growth-row { display: grid; grid-template-columns: 72px 1fr 28px; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; }
 .platform-growth-row strong, .platform-alert-list strong { color: var(--text); text-align: right; }
