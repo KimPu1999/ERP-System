@@ -41,34 +41,35 @@ function FeedbackWorkspace() {
   const rateMutation = useMutation({ mutationFn: (score: number) => rateBusinessFeedback(selected as string, score), onSuccess: () => void detailQuery.refetch() });
 
   return <>
-    <article className="panel">
+    <article className="panel business-feedback-submit">
       <div className="table-card-heading"><h2>{t('improvement.submitFeedback')}</h2></div>
-      <div className="platform-actions">
+      <div className="business-feedback-form-grid">
+        <label><span>{t('improvement.category')}</span>
         <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} aria-label={t('improvement.category')}>
           {['bug', 'feature_request', 'usability', 'performance', 'documentation', 'other'].map((category) => <option key={category} value={category}>{t(`improvement.category.${category}`)}</option>)}
-        </select>
-        <input value={form.module} onChange={(event) => setForm({ ...form, module: event.target.value })} placeholder={t('improvement.module')} />
-        <input value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })} placeholder={t('improvement.subject')} />
+        </select></label>
+        <label><span>{t('improvement.module')}</span><input value={form.module} onChange={(event) => setForm({ ...form, module: event.target.value })} placeholder={t('improvement.module')} /></label>
+        <label><span>{t('improvement.subject')}</span><input value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })} placeholder={t('improvement.subject')} required /></label>
       </div>
-      <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} placeholder={t('improvement.message')} rows={3} />
-      <div className="platform-actions">
-        <input ref={fileInput} type="file" accept=".png,.jpg,.jpeg,.pdf,.txt,.csv,.zip,.doc,.docx,.xlsx" aria-label={t('improvement.attachment')} />
+      <label className="business-feedback-message"><span>{t('improvement.message')}</span><textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} placeholder={t('improvement.message')} rows={4} required /></label>
+      <div className="business-feedback-form-footer">
+        <label className="business-feedback-file"><span>{t('improvement.attachment')}</span><input ref={fileInput} type="file" accept=".png,.jpg,.jpeg,.pdf,.txt,.csv,.zip,.doc,.docx,.xlsx" /></label>
         <button className="button button-primary" type="button" disabled={!form.subject || !form.message || submitMutation.isPending} onClick={() => submitMutation.mutate()}><Plus size={14} /> {submitMutation.isPending ? t('improvement.submitting') : t('improvement.submitFeedback')}</button>
       </div>
       {submitMutation.isSuccess && <p className="muted" role="status">{t('improvement.submitted')}</p>}
       {feedbackError && <div className="alert alert-danger" role="alert">{feedbackError}</div>}
     </article>
 
-    <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>#</th><th>{t('improvement.subject')}</th><th>{t('improvement.category')}</th><th>{t('improvement.status')}</th><th>{t('platform.created')}</th></tr></thead><tbody>
+    <article className="platform-table-card business-feedback-list"><div className="table-scroll"><table><thead><tr><th>#</th><th>{t('improvement.subject')}</th><th>{t('improvement.category')}</th><th>{t('improvement.status')}</th><th>{t('platform.created')}</th></tr></thead><tbody>
       {listQuery.isLoading && <tr><td colSpan={5} role="status">{t('common.loading')}</td></tr>}
       {listQuery.isError && <tr><td colSpan={5} className="muted">{t('improvement.loadError')}</td></tr>}
       {!listQuery.isLoading && !listQuery.isError && (listQuery.data?.data ?? []).length === 0 && <tr><td colSpan={5} className="muted">{t('common.noData')}</td></tr>}
       {(listQuery.data?.data ?? []).map((row) => <tr key={row.id} onClick={() => setSelected(row.id)} className="cursor-pointer"><td>{row.feedback_number}</td><td>{row.subject}</td><td>{t(`improvement.category.${row.category}`)}</td><td><span className="badge">{t(`improvement.status.${row.status}`)}</span></td><td>{formatDate(row.created_at)}</td></tr>)}
     </tbody></table></div>
-      <div className="platform-actions">
+      <div className="business-feedback-pagination">
         <select value={perPage} onChange={(event) => { setPerPage(Number(event.target.value)); setPage(1); }} aria-label={t('common.rows')}>{[10, 20, 50].map((size) => <option key={size} value={size}>{size}</option>)}</select>
         <button className="table-action" type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>{t('common.previous')}</button>
-        <span className="muted">{t('common.page')} {page}</span>
+        <span className="muted feedback-page-number">{t('common.page')} {page}</span>
         <button className="table-action" type="button" disabled={page >= (listQuery.data?.meta.last_page ?? 1)} onClick={() => setPage(page + 1)}>{t('common.next')}</button>
       </div>
     </article>

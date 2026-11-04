@@ -3237,6 +3237,30 @@ html { scroll-padding-top: var(--app-sticky-offset); }
 .feedback-table-card td small { display: block; max-width: 340px; overflow: hidden; margin-top: 3px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .request-policy-note { margin: 8px 0 0; padding: 8px 11px; border-left: 3px solid var(--border-strong, var(--border)); background: var(--surface-muted); font-size: 11px; }
 .improvement-page-quality .platform-table-card, .improvement-page-maturity .platform-table-card { margin-top: 10px; }
+.business-feedback-submit { overflow: hidden; padding: 0; }
+.business-feedback-submit .table-card-heading { margin: 0; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.business-feedback-submit .table-card-heading h2 { margin: 0; color: var(--text); font-size: 16px; }
+.business-feedback-form-grid { display: grid; grid-template-columns: minmax(160px, .7fr) minmax(180px, 1fr) minmax(260px, 1.6fr); gap: 12px 14px; margin: 16px 20px 0; }
+.business-feedback-form-grid label, .business-feedback-message, .business-feedback-file { display: grid; gap: 6px; min-width: 0; color: var(--text); font-size: 11px; font-weight: 700; }
+.business-feedback-form-grid input, .business-feedback-form-grid select, .business-feedback-message textarea, .business-feedback-file input { width: 100%; min-width: 0; box-sizing: border-box; min-height: 40px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface); font: inherit; font-size: 12px; }
+.business-feedback-message { margin: 14px 20px 0; }
+.business-feedback-message textarea { min-height: 98px; resize: vertical; }
+.business-feedback-form-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 14px 20px 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.business-feedback-file { flex: 1 1 auto; }
+.business-feedback-file input { min-height: 38px; padding: 7px 9px; }
+.business-feedback-form-footer .button { flex: 0 0 auto; min-height: 40px; }
+.business-feedback-list { overflow: hidden; }
+.business-feedback-list table { min-width: 0; table-layout: fixed; }
+.business-feedback-list th:first-child, .business-feedback-list td:first-child { width: 18%; }
+.business-feedback-list th:nth-child(2), .business-feedback-list td:nth-child(2) { width: 30%; }
+.business-feedback-list th:nth-child(3), .business-feedback-list td:nth-child(3) { width: 20%; }
+.business-feedback-list th:nth-child(4), .business-feedback-list td:nth-child(4) { width: 17%; }
+.business-feedback-list th:nth-child(5), .business-feedback-list td:nth-child(5) { width: 15%; }
+.business-feedback-list tbody td[colspan] { height: 112px; color: var(--muted); text-align: center; vertical-align: middle; }
+.business-feedback-pagination { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 8px 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.business-feedback-pagination select { min-width: 58px; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 7px; color: var(--text); background: var(--surface); font: inherit; }
+.business-feedback-pagination .table-action { min-height: 30px; padding: 0 6px; }
+.business-feedback-pagination .feedback-page-number { margin-left: 2px; }
 @media (max-width: 760px) {
   .improvement-page .platform-toolbar { align-items: flex-start; }
   .improvement-page-quality .platform-overview-filter-bar { grid-template-columns: 1fr 1fr; }
@@ -3256,6 +3280,11 @@ html { scroll-padding-top: var(--app-sticky-offset); }
   .improvement-form-footer { align-items: stretch; flex-direction: column; }
   .improvement-page-satisfaction .satisfaction-stat-grid { grid-template-columns: 1fr 1fr; max-width: none; }
   .satisfaction-summary-heading, .satisfaction-section-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .business-feedback-form-grid { grid-template-columns: 1fr; }
+  .business-feedback-form-footer { align-items: stretch; flex-direction: column; }
+  .business-feedback-form-footer .button { width: 100%; justify-content: center; }
+  .business-feedback-list table { min-width: 620px; table-layout: auto; }
+  .business-feedback-pagination { flex-wrap: wrap; }
 }
 @media (max-width: 480px) {
   .improvement-page-quality .platform-overview-filter-bar, .improvement-page-requests .platform-overview-filter-bar, .improvement-page-feedback .platform-overview-filter-bar, .improvement-page-satisfaction .satisfaction-stat-grid { grid-template-columns: 1fr; }
