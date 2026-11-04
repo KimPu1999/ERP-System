@@ -6047,7 +6047,7 @@ table tbody tr:hover { background: var(--surface-hover); }
 
 /* Global compact platform/workspace shell: keep the shared back control close to
    the sticky application header and let pages lead with their functional content. */
-.content { padding-top: 10px; }
+.content { padding-top: 24px; }
 .content > .erp-back-navigation { margin: 0 16px; }
 .page-section { padding-top: 0; }
 .platform-page.page-section { padding-top: 0; }
@@ -6157,7 +6157,7 @@ table tbody tr:hover { background: var(--surface-hover); }
 .content { position: relative; }
 .content > .erp-back-navigation {
   position: absolute;
-  top: 10px;
+  top: 24px;
   left: 16px;
   z-index: 20;
   margin: 0;
@@ -6194,7 +6194,8 @@ table tbody tr:hover { background: var(--surface-hover); }
   margin-left: auto;
 }
 @media (max-width: 680px) {
-  .content > .erp-back-navigation { left: 16px; }
+  .content { padding-top: 16px; }
+  .content > .erp-back-navigation { top: 16px; left: 16px; }
   .platform-toolbar,
   .page-heading,
   .page-header,
