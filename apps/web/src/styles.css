@@ -5835,6 +5835,16 @@ table tbody tr:hover { background: var(--surface-hover); }
 .form-grid .field, .platform-settings-form > .field { display: grid; gap: 6px; min-width: 0; color: var(--text); font-size: 12px; font-weight: 650; }
 .form-grid input, .form-grid select, .platform-settings-form input, .platform-settings-form select, .platform-settings-form textarea { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; }
 .platform-settings-form textarea { resize: vertical; }
+.page-header > div > p.muted,
+.page-heading > div > p.muted,
+.platform-toolbar > div > p.muted,
+[class*="page-header"] > div > p.muted,
+[class*="page-heading"] > div > p.muted,
+.sales-deliveries-header > div > p.muted,
+.sales-invoices-heading > div > p.muted,
+.sales-payments-heading > div > p.muted,
+.sales-returns-heading > div > p.muted,
+.sales-reports-header > div > p.muted { display: none !important; }
 .settings-toggle-list { display: grid; gap: 12px; }
 .settings-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: var(--surface); cursor: pointer; transition: border-color .16s ease, background .16s ease; }
 .settings-toggle-row:hover { border-color: #93c5fd; background: var(--surface-muted); }
