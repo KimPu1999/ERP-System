@@ -9228,3 +9228,13 @@ Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
 This is a platform email configuration test. It contains no authentication or recovery links.  
+[2026-11-04 04:30:53] testing.DEBUG: From: ERP System <kimpiang1999@gmail.com>
+To: recipient@example.test
+Subject: ERP Cloud platform email test
+MIME-Version: 1.0
+Date: Wed, 04 Nov 2026 04:30:53 +0000
+Message-ID: <2a00ea2e60a38f9ff0cb0d57536cd263@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+This is a platform email configuration test. It contains no authentication or recovery links.  
