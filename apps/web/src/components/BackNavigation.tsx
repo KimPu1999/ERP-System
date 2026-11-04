@@ -13,9 +13,16 @@ function isSafe(entry: HistoryEntry, current: HistoryEntry) {
   return entry.pathname !== current.pathname || entry.search !== current.search;
 }
 
+function fallbackPath(pathname: string): string {
+  if (pathname === '/platform' || pathname === '/platform/dashboard' || pathname.startsWith('/platform/')) return '/platform';
+  if (pathname === '/business/dashboard' || pathname === '/app/dashboard' || pathname.startsWith('/business/')) return '/business/dashboard';
+  if (pathname === '/') return '/';
+  return '';
+}
+
 function parentPath(pathname: string): string {
-  if (pathname.startsWith('/platform/')) return '/platform/dashboard';
-  if (pathname.startsWith('/business/')) return '/business/dashboard';
+  const fallback = fallbackPath(pathname);
+  if (fallback) return fallback;
   if (pathname.startsWith('/organization/')) return '/organization';
   if (pathname.startsWith('/purchasing/')) return '/purchasing';
   if (pathname.startsWith('/crm-sales/')) return '/crm-sales';
@@ -27,10 +34,14 @@ function parentPath(pathname: string): string {
 }
 
 function isAllowed(pathname: string) {
-  return pathname !== '/' && !BLOCKED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return pathname.startsWith('/') && !pathname.startsWith('//') && pathname !== '/' && !BLOCKED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-export function BackNavigation({ className = '' }: { className?: string }) {
+function isRootDashboard(pathname: string) {
+  return pathname === '/' || pathname === '/platform' || pathname === '/platform/dashboard' || pathname === '/business/dashboard' || pathname === '/app/dashboard';
+}
+
+export function GlobalBackButton({ className = '' }: { className?: string }) {
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,10 +78,15 @@ export function BackNavigation({ className = '' }: { className?: string }) {
     navigate(destination);
   }, [destination, navigate, t]);
 
-  return <button type="button" className={`erp-back-navigation ${className}`.trim()} onClick={goBack} aria-label={t('org.back')}>
+  if (isRootDashboard(location.pathname)) return null;
+
+  return <button type="button" className={`erp-back-navigation global-back-button ${className}`.trim()} onClick={goBack} aria-label={t('org.back')}>
     <ArrowLeft size={15} aria-hidden="true" /> <span>{t('org.back')}</span>
   </button>;
 }
+
+/** @deprecated Use GlobalBackButton for the application shell. */
+export const BackNavigation = GlobalBackButton;
 
 export function PageHeaderWithBack({ children }: { children: ReactNode }) {
   return <div className="erp-page-header-with-back"><BackNavigation />{children}</div>;

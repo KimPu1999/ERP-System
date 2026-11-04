@@ -6333,6 +6333,12 @@ table tbody tr:hover { background: var(--surface-hover); }
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }
+.sales-nav,
+.purchasing-nav,
+.organization-nav,
+.monitoring-tabs,
+.operations-tabs,
+.security-center-tabs { margin-top: 3px; }
 .monitoring-tabs::-webkit-scrollbar,
 .operations-tabs::-webkit-scrollbar,
 .security-center-tabs::-webkit-scrollbar,
@@ -6533,4 +6539,56 @@ table tbody tr:hover { background: var(--surface-hover); }
   .sales-settings-tabs,
   .supplier-monitoring-tabs,
   .fixed-asset-tabs { margin-top: 8px; margin-bottom: 12px; }
+}
+
+/* The Back action belongs to the global application header, not page content. */
+.content { padding-top: 3px; }
+.app-header { background: var(--background); }
+.global-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.global-back-button:hover { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+.global-back-button svg { flex: 0 0 auto; }
+.platform-toolbar,
+.page-heading,
+.page-header,
+.purchasing-page-header,
+.purchasing-detail-header,
+.inventory-page-header,
+.sales-page-heading,
+.sales-invoices-heading,
+.sales-payments-heading,
+.sales-returns-heading,
+.sales-reports-header,
+.hr-page-header,
+.accounting-page-header,
+.operations-toolbar,
+.optional-header,
+.monitoring-center-header,
+.inventory-operations-header,
+.warehouse-management-header,
+.catalog-reference-header,
+.customer-directory-header,
+.fixed-asset-header,
+.product-catalog-header,
+.project-header,
+.pos-header { padding-left: 0; }
+@media (max-width: 680px) {
+  .content { padding-top: 3px; }
+  .global-back-button { height: 34px; min-height: 34px; padding: 0 9px; }
 }
