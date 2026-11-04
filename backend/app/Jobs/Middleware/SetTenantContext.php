@@ -11,6 +11,12 @@ final class SetTenantContext
     public function handle(object $job, object $next): void
     {
         $context = app(TenantContext::class);
-        try { $context->set($this->tenantId); $next($job); } finally { $context->clear(); }
+        $previousTenantId = $context->id();
+        try {
+            $context->set($this->tenantId);
+            $next($job);
+        } finally {
+            $context->restore($previousTenantId);
+        }
     }
 }
