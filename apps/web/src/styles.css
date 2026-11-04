@@ -6047,7 +6047,7 @@ table tbody tr:hover { background: var(--surface-hover); }
 
 /* Global compact platform/workspace shell: keep the shared back control close to
    the sticky application header and let pages lead with their functional content. */
-.content { padding-top: 3px; }
+.content { padding-top: 10px; }
 .content > .erp-back-navigation { margin: 0 16px; }
 .page-section { padding-top: 0; }
 .platform-page.page-section { padding-top: 0; }
@@ -6150,4 +6150,133 @@ table tbody tr:hover { background: var(--surface-hover); }
   .sales-nav,
   .purchasing-nav,
   .organization-nav { min-height: 42px; margin-bottom: 6px; }
+}
+
+/* Shared one-row page actions: Back stays on the left while each page's
+   refresh/context actions occupy the same top row on the right. */
+.content { position: relative; }
+.content > .erp-back-navigation {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  z-index: 20;
+  margin: 0;
+  min-height: 36px;
+}
+.content > .page-section,
+.content > section:not(.page-section) {
+  min-width: 0;
+}
+.platform-toolbar,
+.page-heading,
+.page-header,
+.purchasing-page-header,
+.purchasing-detail-header,
+.inventory-page-header,
+.sales-page-heading,
+.sales-invoices-heading,
+.sales-payments-heading,
+.sales-returns-heading,
+.sales-reports-header,
+.hr-page-header,
+.accounting-page-header,
+.operations-toolbar,
+.optional-header {
+  padding-left: 96px;
+}
+.platform-overview-toolbar .platform-overview-header-actions,
+.platform-toolbar .platform-actions,
+.page-heading-actions,
+.purchasing-page-actions,
+.sales-page-actions,
+.hr-header-actions,
+.accounting-actions {
+  margin-left: auto;
+}
+@media (max-width: 680px) {
+  .content > .erp-back-navigation { left: 16px; }
+  .platform-toolbar,
+  .page-heading,
+  .page-header,
+  .purchasing-page-header,
+  .purchasing-detail-header,
+  .inventory-page-header,
+  .sales-page-heading,
+  .sales-invoices-heading,
+  .sales-payments-heading,
+  .sales-returns-heading,
+  .sales-reports-header,
+  .hr-page-header,
+  .accounting-page-header,
+  .operations-toolbar,
+  .optional-header { padding-left: 92px; }
+}
+
+/* Page-specific headers that do not use the shared page-heading class. */
+.monitoring-center-header,
+.inventory-operations-header,
+.warehouse-management-header,
+.catalog-reference-header,
+.customer-directory-header,
+.fixed-asset-header,
+.product-catalog-header,
+.project-header,
+.pos-header {
+  align-items: center;
+  min-height: 36px;
+  margin-top: 0;
+  margin-bottom: 8px;
+  padding: 4px 0 4px 96px;
+}
+.monitoring-center-title > .eyebrow,
+.monitoring-center-title > h1,
+.monitoring-center-meta,
+.inventory-operations-header h1,
+.inventory-operations-header p,
+.warehouse-management-header h1,
+.warehouse-management-header p,
+.catalog-reference-header h1,
+.catalog-reference-header p,
+.customer-directory-header h1,
+.customer-directory-header p,
+.fixed-asset-header h1,
+.fixed-asset-header p,
+.product-catalog-header h1,
+.product-catalog-header p,
+.project-header h1,
+.project-header p,
+.pos-header h1,
+.pos-header p {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.monitoring-center-header > .monitoring-center-actions,
+.inventory-operations-header > button,
+.warehouse-management-header > button,
+.catalog-reference-header > :last-child,
+.customer-directory-header > :last-child,
+.fixed-asset-header > :last-child,
+.product-catalog-header > :last-child,
+.project-header > .project-header-actions,
+.pos-header > :last-child {
+  margin-left: auto;
+}
+.monitoring-center-header + .monitoring-tabs { margin-top: 0; margin-bottom: 8px; }
+@media (max-width: 680px) {
+  .monitoring-center-header,
+  .inventory-operations-header,
+  .warehouse-management-header,
+  .catalog-reference-header,
+  .customer-directory-header,
+  .fixed-asset-header,
+  .product-catalog-header,
+  .project-header,
+  .pos-header { padding-left: 92px; }
 }
