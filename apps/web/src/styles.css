@@ -33,11 +33,11 @@
 }
 :root.dark {
   color-scheme: dark;
-  --background: #0b1220;
+  --background: #020617;
   --surface: #111827;
   --surface-muted: #1e293b;
   --surface-hover: #1e293b;
-  --border: #475569;
+  --border: #334155;
   --border-subtle: #334155;
   --border-strong: #64748b;
   --text: #f8fafc;
@@ -6279,4 +6279,257 @@ table tbody tr:hover { background: var(--surface-hover); }
   .product-catalog-header,
   .project-header,
   .pos-header { padding-left: 92px; }
+}
+
+/* Final shared theme and tab-navigation contract. */
+.app-shell,
+.app-viewport,
+.content,
+.platform-page,
+.page-section,
+.sales-workspace-layout,
+.purchasing-workspace-layout,
+.organization-layout,
+.supplier-portal-shell,
+.workspace-page {
+  background: var(--background);
+}
+.app-header,
+.sales-nav,
+.purchasing-nav,
+.organization-nav,
+.monitoring-tabs,
+.operations-tabs,
+.security-center-tabs {
+  background: var(--background);
+  box-shadow: none;
+}
+.app-header { backdrop-filter: none; }
+
+.monitoring-tabs,
+.operations-tabs,
+.security-center-tabs,
+.platform-detail-tabs,
+.settings-tabs,
+.company-profile-tabs,
+.purchase-detail-tabs,
+.pos-tabs,
+.optional-tabs,
+.project-tabs,
+.staff-tabs,
+.sales-settings-tabs,
+.supplier-monitoring-tabs,
+.fixed-asset-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 8px 0 12px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.monitoring-tabs::-webkit-scrollbar,
+.operations-tabs::-webkit-scrollbar,
+.security-center-tabs::-webkit-scrollbar,
+.platform-detail-tabs::-webkit-scrollbar,
+.settings-tabs::-webkit-scrollbar,
+.company-profile-tabs::-webkit-scrollbar,
+.purchase-detail-tabs::-webkit-scrollbar,
+.pos-tabs::-webkit-scrollbar,
+.optional-tabs::-webkit-scrollbar,
+.project-tabs::-webkit-scrollbar,
+.staff-tabs::-webkit-scrollbar,
+.sales-settings-tabs::-webkit-scrollbar,
+.supplier-monitoring-tabs::-webkit-scrollbar,
+.fixed-asset-tabs::-webkit-scrollbar { display: none; }
+
+.monitoring-tabs a,
+.operations-tabs a,
+.security-center-tabs a,
+.organization-nav-link,
+.sales-nav-link,
+.purchasing-nav-link,
+.platform-detail-tabs button,
+.settings-tabs button,
+.company-profile-tabs button,
+.purchase-detail-tabs button,
+.pos-tabs button,
+.optional-tabs a,
+.optional-tabs span,
+.project-tabs button,
+.staff-tabs button,
+.sales-settings-tabs button,
+.supplier-monitoring-tabs button,
+.fixed-asset-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  min-height: 39px;
+  padding: 0 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+.monitoring-tabs a:hover,
+.monitoring-tabs a:focus-visible,
+.operations-tabs a:hover,
+.operations-tabs a:focus-visible,
+.security-center-tabs a:hover,
+.security-center-tabs a:focus-visible,
+.organization-nav-link:hover,
+.sales-nav-link:hover,
+.purchasing-nav-link:hover,
+.platform-detail-tabs button:hover,
+.settings-tabs button:hover,
+.company-profile-tabs button:hover,
+.purchase-detail-tabs button:hover,
+.pos-tabs button:hover,
+.optional-tabs a:hover,
+.project-tabs button:hover,
+.staff-tabs button:hover,
+.sales-settings-tabs button:hover,
+.supplier-monitoring-tabs button:hover,
+.fixed-asset-tabs button:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+  outline: none;
+}
+.monitoring-tabs a.active,
+.operations-tabs a.active,
+.security-center-tabs a.active,
+.organization-nav-link.active,
+.sales-nav-link.active,
+.purchasing-nav-link.active,
+.platform-detail-tabs button.active,
+.settings-tabs button.active,
+.company-profile-tabs button.active,
+.purchase-detail-tabs button.active,
+.pos-tabs button.active,
+.optional-tabs a.active,
+.project-tabs button.active,
+.staff-tabs button.active,
+.sales-settings-tabs button.active,
+.supplier-monitoring-tabs button.is-active,
+.fixed-asset-tabs button.active {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  box-shadow: inset 0 -2px 0 var(--blue);
+  font-weight: 700;
+}
+.monitoring-tabs a:focus-visible,
+.operations-tabs a:focus-visible,
+.security-center-tabs a:focus-visible,
+.organization-nav-link:focus-visible,
+.sales-nav-link:focus-visible,
+.purchasing-nav-link:focus-visible,
+.platform-detail-tabs button:focus-visible,
+.settings-tabs button:focus-visible,
+.company-profile-tabs button:focus-visible,
+.purchase-detail-tabs button:focus-visible,
+.pos-tabs button:focus-visible,
+.optional-tabs a:focus-visible,
+.project-tabs button:focus-visible,
+.staff-tabs button:focus-visible,
+.sales-settings-tabs button:focus-visible,
+.supplier-monitoring-tabs button:focus-visible,
+.fixed-asset-tabs button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.sales-nav-link.disabled,
+.purchasing-nav-link.disabled,
+.optional-tabs span { cursor: not-allowed; opacity: .58; }
+.monitoring-tabs a svg,
+.operations-tabs a svg,
+.security-center-tabs a svg,
+.organization-nav-link svg,
+.sales-nav-link svg,
+.purchasing-nav-link svg,
+.platform-detail-tabs button svg,
+.pos-tabs button svg { flex: 0 0 auto; }
+
+:root.dark .monitoring-tabs a,
+:root.dark .operations-tabs a,
+:root.dark .security-center-tabs a,
+:root.dark .organization-nav-link,
+:root.dark .sales-nav-link,
+:root.dark .purchasing-nav-link,
+:root.dark .platform-detail-tabs button,
+:root.dark .settings-tabs button,
+:root.dark .company-profile-tabs button,
+:root.dark .purchase-detail-tabs button,
+:root.dark .pos-tabs button,
+:root.dark .optional-tabs a,
+:root.dark .optional-tabs span,
+:root.dark .project-tabs button,
+:root.dark .staff-tabs button,
+:root.dark .sales-settings-tabs button,
+:root.dark .supplier-monitoring-tabs button,
+:root.dark .fixed-asset-tabs button { color: #cbd5e1; background: #111827; border-color: #334155; }
+:root.dark .monitoring-tabs a:hover,
+:root.dark .monitoring-tabs a:focus-visible,
+:root.dark .operations-tabs a:hover,
+:root.dark .operations-tabs a:focus-visible,
+:root.dark .security-center-tabs a:hover,
+:root.dark .security-center-tabs a:focus-visible,
+:root.dark .organization-nav-link:hover,
+:root.dark .sales-nav-link:hover,
+:root.dark .purchasing-nav-link:hover,
+:root.dark .platform-detail-tabs button:hover,
+:root.dark .settings-tabs button:hover,
+:root.dark .company-profile-tabs button:hover,
+:root.dark .purchase-detail-tabs button:hover,
+:root.dark .pos-tabs button:hover,
+:root.dark .optional-tabs a:hover,
+:root.dark .project-tabs button:hover,
+:root.dark .staff-tabs button:hover,
+:root.dark .sales-settings-tabs button:hover,
+:root.dark .supplier-monitoring-tabs button:hover,
+:root.dark .fixed-asset-tabs button:hover { color: #f8fafc; background: #1e293b; border-color: #475569; }
+:root.dark .monitoring-tabs a.active,
+:root.dark .operations-tabs a.active,
+:root.dark .security-center-tabs a.active,
+:root.dark .organization-nav-link.active,
+:root.dark .sales-nav-link.active,
+:root.dark .purchasing-nav-link.active,
+:root.dark .platform-detail-tabs button.active,
+:root.dark .settings-tabs button.active,
+:root.dark .company-profile-tabs button.active,
+:root.dark .purchase-detail-tabs button.active,
+:root.dark .pos-tabs button.active,
+:root.dark .optional-tabs a.active,
+:root.dark .project-tabs button.active,
+:root.dark .staff-tabs button.active,
+:root.dark .sales-settings-tabs button.active,
+:root.dark .supplier-monitoring-tabs button.is-active,
+:root.dark .fixed-asset-tabs button.active { color: #fff; background: #1e3a8a; border-color: #3b82f6; }
+
+@media (max-width: 680px) {
+  .monitoring-tabs,
+  .operations-tabs,
+  .security-center-tabs,
+  .platform-detail-tabs,
+  .settings-tabs,
+  .company-profile-tabs,
+  .purchase-detail-tabs,
+  .pos-tabs,
+  .optional-tabs,
+  .project-tabs,
+  .staff-tabs,
+  .sales-settings-tabs,
+  .supplier-monitoring-tabs,
+  .fixed-asset-tabs { margin-top: 8px; margin-bottom: 12px; }
 }

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, Clock3, Database, HardDriveDownload, RefreshCw, ShieldAlert, Wallet, XCircle } from 'lucide-react';
+import { AlertTriangle, BarChart3, CheckCircle2, Clock3, Database, HardDriveDownload, RefreshCw, ShieldAlert, Wallet, Wrench, XCircle, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createMaintenanceWindow, getBackupsStatus, getCostRecords, getMaintenanceWindows, getOperationsDatabase, getOperationsOverview, getOperationsQueues, recordOperationalCost, registerBackup_verification, transitionMaintenanceWindow, type MaintenanceWindow, type OperationalCostRecordType, type OperationsOverview } from '../lib/api';
@@ -8,7 +8,7 @@ type Translate = ReturnType<typeof useI18n>['t'];
 type TranslateDate = ReturnType<typeof useI18n>['formatDate'];
 
 export type OperationsMode = 'overview' | 'database' | 'queues' | 'maintenance' | 'backups' | 'costs';
-const navItems: Array<[OperationsMode, string]> = [['overview', 'ops.overview'], ['database', 'ops.database'], ['queues', 'nav.queues'], ['maintenance', 'ops.maintenance'], ['backups', 'ops.backups'], ['costs', 'ops.costs']];
+const navItems: Array<[OperationsMode, string, LucideIcon]> = [['overview', 'ops.overview', BarChart3], ['database', 'ops.database', Database], ['queues', 'nav.queues', Clock3], ['maintenance', 'ops.maintenance', Wrench], ['backups', 'ops.backups', HardDriveDownload], ['costs', 'ops.costs', Wallet]];
 
 export function PlatformOperationsCenterPage({ mode }: { mode: OperationsMode }) {
   const { t, formatDate, formatNumber } = useI18n();
@@ -18,7 +18,7 @@ export function PlatformOperationsCenterPage({ mode }: { mode: OperationsMode })
   const statusBadge = (status: string) => <span className={`ops-status-badge ops-status-${status === 'reported' || status === 'met' || status === 'on_track' || status === 'healthy' ? 'healthy' : status === 'maintenance' ? 'maintenance' : status === 'stale' || status === 'at_risk' || status === 'degraded' ? 'warning' : status === 'down' || status === 'breached' || status === 'failed' || status === 'critical' ? 'critical' : 'unknown'}`} role="status"><span aria-hidden="true" />{t(`ops.state.${status}` as never, status)}</span>;
   return <section className="platform-page page-section">
     <div className="platform-toolbar operations-toolbar"><div><p className="eyebrow">{t('nav.operations')}</p><h1>{t('ops.center')}</h1></div><div className="platform-actions"><span className="operations-updated">{t('platform.lastUpdated', 'Last updated')}: {mode === 'overview' && query.data && (query.data as OperationsOverview).production_health.last_successful_check ? formatDate((query.data as OperationsOverview).production_health.last_successful_check, { dateStyle: 'short', timeStyle: 'short' }) : t('platform.notObserved', 'Not observed')}</span><button className="button button-secondary" type="button" onClick={() => void query.refetch()} disabled={query.isFetching}><RefreshCw size={15} /> {t('common.refresh')}</button></div></div>
-    <nav className="operations-tabs" aria-label={t('ops.center')}>{navItems.map(([key, label]) => <Link className={mode === key ? 'active' : ''} key={key} to={`/platform/operations${key === 'overview' ? '' : `/${key}`}`} aria-current={mode === key ? 'page' : undefined}>{t(label as never)}</Link>)}</nav>
+    <nav className="operations-tabs" aria-label={t('ops.center')}>{navItems.map(([key, label, Icon]) => <Link className={mode === key ? 'active' : ''} key={key} to={`/platform/operations${key === 'overview' ? '' : `/${key}`}`} aria-current={mode === key ? 'page' : undefined}><Icon size={16} aria-hidden="true" /><span>{t(label as never)}</span></Link>)}</nav>
     {query.isError && <div className="alert alert-danger" role="alert">{t('ops.loadError')}<button className="table-action" type="button" onClick={() => void query.refetch()}>{t('common.retry')}</button></div>}
     {query.isLoading && <div className="panel" role="status">{t('ops.loading')}</div>}
     {!query.isLoading && !query.isError && mode === 'overview' && query.data as OperationsOverview && <OverviewPanel value={query.data as OperationsOverview} formatDate={formatDate} formatNumber={formatNumber} statusBadge={statusBadge} />}
