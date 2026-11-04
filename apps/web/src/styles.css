@@ -7217,3 +7217,86 @@ table tbody tr:hover { background: var(--surface-hover); }
 :root.dark .sales-nav::before,
 :root.dark .purchasing-nav::before,
 :root.dark .organization-nav::before { background: var(--background) !important; }
+
+/* Dark-mode controls use the shared forest-green tokens. Keep search and
+   filter controls readable without reintroducing the old slate-blue palette. */
+:root.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:root.dark select,
+:root.dark textarea,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.dark select,
+.dark textarea {
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  background: var(--surface-muted) !important;
+}
+:root.dark input::placeholder,
+:root.dark textarea::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--placeholder) !important;
+}
+:root.dark input:focus,
+:root.dark select:focus,
+:root.dark textarea:focus,
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: var(--blue) !important;
+  box-shadow: 0 0 0 3px var(--focus-ring) !important;
+  outline: 0;
+}
+:root.dark .purchasing-search,
+.dark .purchasing-search {
+  color: var(--muted) !important;
+  background: var(--surface-muted) !important;
+  border-color: var(--border) !important;
+}
+:root.dark .purchasing-search > svg,
+:root.dark .purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search > svg,
+.dark .purchasing-search > svg,
+.dark .purchasing-orders-page .purchasing-filter-toolbar > label.purchasing-search > svg {
+  color: var(--muted) !important;
+}
+:root.dark .button-secondary,
+:root.dark .secondary,
+:root.dark .purchasing-refresh,
+:root.dark .purchasing-clear,
+:root.dark .table-action,
+.dark .button-secondary,
+.dark .secondary,
+.dark .purchasing-refresh,
+.dark .purchasing-clear,
+.dark .table-action {
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  background: var(--surface) !important;
+}
+:root.dark .button-secondary:hover:not(:disabled),
+:root.dark .secondary:hover:not(:disabled),
+:root.dark .purchasing-refresh:hover:not(:disabled),
+:root.dark .purchasing-clear:hover:not(:disabled),
+:root.dark .table-action:hover:not(:disabled),
+.dark .button-secondary:hover:not(:disabled),
+.dark .secondary:hover:not(:disabled),
+.dark .purchasing-refresh:hover:not(:disabled),
+.dark .purchasing-clear:hover:not(:disabled),
+.dark .table-action:hover:not(:disabled) {
+  border-color: var(--blue) !important;
+  color: var(--blue) !important;
+  background: var(--surface-hover) !important;
+}
+:root.dark .primary,
+:root.dark .button-primary,
+.dark .primary,
+.dark .button-primary {
+  border-color: var(--blue-hover) !important;
+  color: #fff !important;
+  background: var(--blue) !important;
+}
+:root.dark .primary:hover:not(:disabled),
+:root.dark .button-primary:hover:not(:disabled),
+.dark .primary:hover:not(:disabled),
+.dark .button-primary:hover:not(:disabled) {
+  background: var(--blue-hover) !important;
+}
