@@ -6050,7 +6050,7 @@ table tbody tr:hover { background: var(--surface-hover); }
 .content { padding-top: 24px; }
 .content > .erp-back-navigation { margin: 0 16px; }
 .page-section { padding-top: 0; }
-.platform-page.page-section { padding-top: 0; }
+.platform-page.page-section { padding-top: 10px; }
 .platform-toolbar,
 .page-heading,
 .purchasing-page-header,
