@@ -7,7 +7,7 @@ export function PlatformAuditLogsPage() {
   const { t, formatDate } = useI18n();
   const [filters, setFilters] = useState({ search: '', action: '', category: '', result: '', resource_type: '', actor: '', tenant_id: '', from: '', to: '', page: 1 });
   const [expanded, setExpanded] = useState<string | null>(null);
-  const logs = useQuery({ queryKey: ['platform-audit-logs', filters], queryFn: () => getPlatformAuditLogs({ ...filters, page: filters.page, per_page: 25 }) });
+  const logs = useQuery({ queryKey: ['platform-audit-logs', filters], queryFn: () => getPlatformAuditLogs({ ...filters, page: filters.page, per_page: 10 }) });
   const rows = logs.data?.data.data ?? [];
   const update = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value, page: 1 }));
   return <section className="platform-page page-section">

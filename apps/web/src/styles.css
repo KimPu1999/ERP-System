@@ -3754,6 +3754,7 @@ table { min-width: 0; }
 .security-event-details > div { position: absolute; z-index: 3; right: 0; width: 260px; margin-top: 5px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface); box-shadow: var(--shadow-soft); }
 .security-event-details > div span { display: block; overflow: hidden; margin: 3px 0; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
 .security-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 9px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.security-alert-actions { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .security-pagination label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
 .security-pagination select { height: 30px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--surface); font-size: 11px; }
 .security-page-number { min-width: 44px; color: var(--muted); font-size: 11px; text-align: center; }

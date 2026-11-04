@@ -26,7 +26,7 @@ final class PlatformAuditController
         if ($tenant = trim((string) $request->query('tenant_id'))) $query->where('tenant_id', $tenant);
         if ($from = $request->query('from')) $query->where('created_at', '>=', Carbon::createFromFormat('Y-m-d', $from)->startOfDay());
         if ($to = $request->query('to')) $query->where('created_at', '<=', Carbon::createFromFormat('Y-m-d', $to)->endOfDay());
-        $logs = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
+        $logs = $query->paginate(min(100, max(10, (int) $request->query('per_page', 10))));
         $logs->through(fn (PlatformAuditLog $log): array => [
             'id' => $log->id,
             'action' => $log->action,
@@ -58,7 +58,7 @@ final class PlatformAuditController
         foreach (['category', 'result', 'user_id'] as $filter) if ($value = trim((string) $request->query($filter))) $query->where($filter, $value);
         if ($from = $request->query('from')) $query->where('created_at', '>=', Carbon::createFromFormat('Y-m-d', $from)->startOfDay());
         if ($to = $request->query('to')) $query->where('created_at', '<=', Carbon::createFromFormat('Y-m-d', $to)->endOfDay());
-        $events = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
+        $events = $query->paginate(min(100, max(10, (int) $request->query('per_page', 10))));
         $events->through(fn (SecurityEvent $event): array => [
             'id' => $event->id,
             'event' => $event->event,
@@ -78,11 +78,11 @@ final class PlatformAuditController
     public function overview(): JsonResponse
     {
         $since = now()->subDay();
-        $platformUsers = User::where('is_platform_super_admin', true);
+        $platformUsers = User::where('is_platform_super_admin', true)->where('status', 'active')->whereNull('suspended_at');
         $totalAdmins = (clone $platformUsers)->count();
         $mfaAdmins = (clone $platformUsers)->whereNotNull('mfa_enabled_at')->count();
-        $activeSessions = DB::table('sessions')->whereNotNull('user_id')->where('last_activity', '>=', now()->subMinutes((int) config('session.lifetime'))->timestamp)->count();
-        $failed = SecurityEvent::where('category', 'authentication')->where('result', 'failure')->where('created_at', '>=', $since)->count();
+        $activeSessions = DB::table('sessions')->whereIn('user_id', (clone $platformUsers)->select('id'))->where('last_activity', '>=', now()->subMinutes((int) config('session.lifetime'))->timestamp)->count();
+        $failed = SecurityEvent::whereIn('event', ['auth.login_failed', 'auth.login_blocked'])->where('created_at', '>=', $since)->count();
         $permissionChanges = PlatformAuditLog::where('category', 'authorization')->where('created_at', '>=', $since)->count();
         $openAlerts = MonitoringAlert::whereIn('status', ['open', 'acknowledged'])->count();
         $recent = SecurityEvent::with('user:id,name,email')->latest()->limit(10)->get()->map(fn (SecurityEvent $event): array => ['id' => $event->id, 'event' => $event->event, 'result' => $event->result, 'user' => $event->user?->only(['id', 'name', 'email']), 'created_at' => $event->created_at?->toISOString()]);
@@ -103,7 +103,7 @@ final class PlatformAuditController
 
     public function mfa(Request $request): JsonResponse
     {
-        $users = User::where('is_platform_super_admin', true)->get(['id', 'name', 'email', 'mfa_enabled_at', 'last_login_at']);
+        $users = User::where('is_platform_super_admin', true)->where('status', 'active')->whereNull('suspended_at')->get(['id', 'name', 'email', 'mfa_enabled_at', 'last_login_at']);
         return response()->json(['data' => ['totp_available' => true, 'policy' => 'Platform Super Admin MFA is required for protected platform operations; enrollment is confirmed per account.', 'admins' => $users->map(fn (User $user): array => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'enrolled' => (bool) $user->mfa_enabled_at, 'enabled_at' => $user->mfa_enabled_at?->toISOString(), 'last_login_at' => $user->last_login_at?->toISOString()])]]);
     }
 
@@ -118,7 +118,7 @@ final class PlatformAuditController
         $query = MonitoringAlert::query()->latest('last_observed_at');
         if ($status = $request->query('status')) $query->where('status', $status);
         if ($severity = $request->query('severity')) $query->where('severity', $severity);
-        $page = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
+        $page = $query->paginate(min(100, max(10, (int) $request->query('per_page', 10))));
         return response()->json(['data' => $page]);
     }
 
