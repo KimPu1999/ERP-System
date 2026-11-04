@@ -7,6 +7,7 @@ use App\Support\TenantContext;
 use Illuminate\Support\Facades\{DB, Queue, Storage};
 use Illuminate\Http\Request;
 use App\Jobs\GeneratePlatformReportExport;
+use Carbon\Carbon;
 
 it('exposes real security overview only to platform administrators', function (): void {
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
@@ -55,6 +56,24 @@ it('requires a valid TOTP confirmation before enabling MFA', function (): void {
     $code = app(MfaService::class)->totp($secret, (int) floor(time() / 30));
     $this->postJson('/api/v1/auth/mfa/confirm', ['code' => $code])->assertOk()->assertJsonStructure(['recovery_codes']);
     expect($platform->fresh()->mfa_enabled_at)->not->toBeNull();
+});
+
+it('accepts leading-zero TOTP codes and rejects expired windows and another secret', function (): void {
+    $mfa = app(MfaService::class);
+    $secret = 'JBSWY3DPEHPK3PXP';
+    Carbon::setTestNow(Carbon::createFromTimestamp(1700000000));
+    $counter = intdiv(1700000000, 30);
+    $code = $mfa->totp($secret, $counter);
+    expect($mfa->verify($secret, $code))->toBeTrue()
+        ->and($mfa->verify('KRUGS4ZANFZSAYJA', $code))->toBeFalse();
+    Carbon::setTestNow(Carbon::createFromTimestamp(1700000121));
+    expect($mfa->verify($secret, $code))->toBeFalse();
+    Carbon::setTestNow();
+});
+
+it('does not decrypt malformed MFA storage into a usable secret', function (): void {
+    $user = User::factory()->make(['mfa_secret_encrypted' => 'malformed-ciphertext']);
+    expect(app(MfaService::class)->decrypt($user))->toBeNull();
 });
 
 it('returns security settings with secure defaults and validates updates', function (): void {

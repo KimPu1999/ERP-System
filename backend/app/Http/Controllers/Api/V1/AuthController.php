@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\User;
 use App\Services\{EmailVerificationDeliveryService, SecurityEventLogger, SettingsService};
-use App\Services\SecurityPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,22 +32,22 @@ final class AuthController
         return response()->json(['data' => $user->only(['id', 'name', 'email', 'status']), 'email_verification_required' => true, 'verification_delivery' => $verificationDelivery], 201);
     }
 
-    public function login(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse
+    public function login(Request $request, SecurityEventLogger $events, SettingsService $settings): JsonResponse
     {
-        return $this->authenticate($request, $events, 'business', $policy, $settings);
+        return $this->authenticate($request, $events, 'business', $settings);
     }
 
-    public function businessLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse
+    public function businessLogin(Request $request, SecurityEventLogger $events, SettingsService $settings): JsonResponse
     {
-        return $this->authenticate($request, $events, 'business', $policy, $settings);
+        return $this->authenticate($request, $events, 'business', $settings);
     }
 
-    public function platformLogin(Request $request, SecurityEventLogger $events, SecurityPolicy $policy, SettingsService $settings): JsonResponse
+    public function platformLogin(Request $request, SecurityEventLogger $events, SettingsService $settings): JsonResponse
     {
-        return $this->authenticate($request, $events, 'platform', $policy, $settings);
+        return $this->authenticate($request, $events, 'platform', $settings);
     }
 
-    private function authenticate(Request $request, SecurityEventLogger $events, string $mode, SecurityPolicy $policy, SettingsService $settings): JsonResponse
+    private function authenticate(Request $request, SecurityEventLogger $events, string $mode, SettingsService $settings): JsonResponse
     {
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string'], 'remember' => ['sometimes', 'boolean']]);
         $user = User::where('email', $data['email'])->first();
@@ -71,31 +70,6 @@ final class AuthController
                 ->exists();
 
             abort_unless($hasActiveMembership || $hasPendingInvitation, 403, 'An active business workspace membership is required.');
-        }
-
-        if ($user->mfa_enabled_at) {
-            $request->session()->put([
-                'auth.mfa_user_id' => $user->id,
-                'auth.mfa_remember' => (bool) ($data['remember'] ?? false),
-                'auth.mfa_mode' => $mode,
-                'auth.login_pending' => true,
-                'auth.new_device' => $this->isNewDevice($user, $request),
-            ]);
-            return response()->json(['mfa_required' => true], 202);
-        }
-
-        $mfaRequired = $mode === 'platform'
-            ? $policy->platformMfaRequired()
-            : $policy->businessAdminMfaRequired() && $policy->isBusinessAdministrator($user);
-
-        if ($mfaRequired) {
-            $newDevice = $this->isNewDevice($user, $request);
-            Auth::guard('web')->login($user, (bool) ($data['remember'] ?? false));
-            $request->session()->regenerate();
-            $request->session()->regenerateToken();
-            $request->session()->put(['auth.login_pending' => true, 'auth.new_device' => $newDevice, 'auth.mfa_mode' => $mode]);
-            $events->record($request, 'auth.mfa_enrollment_required', $user->id, null, ['mode' => $mode]);
-            return response()->json(['mfa_enrollment_required' => true, 'mfa_mode' => $mode], 202);
         }
 
         $newDevice = $this->isNewDevice($user, $request);

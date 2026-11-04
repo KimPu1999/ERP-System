@@ -29,7 +29,9 @@ final class SecurityPolicy
 
     public function platformMfaRequired(): bool
     {
-        return $this->enabled('platform_mfa_required', (bool) config('security.platform_mfa_required'));
+        // Platform MFA is an environment-controlled security boundary. Do not
+        // allow a database setting to weaken it outside the approved local mode.
+        return (bool) config('security.platform_mfa_required', true);
     }
 
     public function businessAdminMfaRequired(): bool

@@ -13,7 +13,6 @@ use App\Http\Controllers\Api\V1\BusinessOnboardingController;
 use App\Http\Controllers\Api\V1\BusinessSelfServiceController;
 use App\Http\Controllers\Api\V1\TenantMemberController;
 use App\Http\Controllers\Api\V1\AuthController;
-use App\Http\Controllers\Api\V1\MfaController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\SessionController;
@@ -97,7 +96,6 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/platform/invitations/accept', [PlatformAdminInvitationController::class, 'accept'])->middleware('throttle:10,1');
         Route::post('/password/email', [PasswordResetController::class, 'requestLink'])->middleware('throttle:10,1');
         Route::post('/password/reset', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
-        Route::post('/mfa/verify', [MfaController::class, 'verifyLogin'])->middleware('throttle:10,1');
         Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('throttle:30,10')->name('verification.verify');
     });
     // Stateful Sanctum requests must start the Laravel session before the
@@ -105,13 +103,9 @@ Route::prefix('v1')->group(function (): void {
     // important after login regenerates the session for MFA enrollment.
     Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
-        Route::middleware(['active.user', 'mfa.completed'])->group(function (): void {
+        Route::middleware(['active.user'])->group(function (): void {
             Route::get('/auth/me', [AuthController::class, 'me']);
             Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
-            Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll'])->middleware(['web', 'throttle:5,10']);
-            Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm'])->middleware(['web', 'throttle:5,10']);
-            Route::post('/auth/mfa/recovery-codes', [MfaController::class, 'regenerateRecoveryCodes'])->middleware(['web', 'recent.stepup', 'throttle:3,10']);
-            Route::post('/auth/mfa/disable', [MfaController::class, 'disable'])->middleware(['web', 'recent.stepup', 'throttle:5,10']);
             Route::post('/auth/step-up', [SecurityController::class, 'stepUp'])->middleware(['web', 'throttle:5,10']);
             Route::get('/auth/tokens', [SecurityController::class, 'tokens']);
             Route::delete('/auth/tokens/{token}', [SecurityController::class, 'revokeToken'])->middleware(['web', 'recent.stepup']);

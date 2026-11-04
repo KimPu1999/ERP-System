@@ -7,7 +7,6 @@ use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureRecentStepUp;
-use App\Http\Middleware\EnsureMfaCompleted;
 use App\Http\Middleware\ValidateProductionConfiguration;
 use App\Support\TenantContext;
 use App\Services\MonitoringService;
@@ -28,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(ValidateProductionConfiguration::class);
         $middleware->statefulApi();
         $middleware->redirectGuestsTo(fn (Request $request): ?string => $request->is('api/*') ? null : route('login'));
-        $middleware->alias(['active.user' => EnsureActiveUser::class, 'recent.stepup' => EnsureRecentStepUp::class, 'mfa.completed' => EnsureMfaCompleted::class, 'tenant' => ResolveTenant::class, 'supplier.portal' => ResolveSupplierPortalTenant::class, 'platform.admin' => RequirePlatformSuperAdmin::class]);
+        $middleware->alias(['active.user' => EnsureActiveUser::class, 'recent.stepup' => EnsureRecentStepUp::class, 'tenant' => ResolveTenant::class, 'supplier.portal' => ResolveSupplierPortalTenant::class, 'platform.admin' => RequirePlatformSuperAdmin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->report(function (\Throwable $exception): void {

@@ -10,7 +10,7 @@ export function PlatformSecurityPage() {
   const metrics = data?.metrics;
   const links = [
     [t('platform.auditLogs'), '/platform/security/audit-logs'], [t('security.mode.loginActivity'), '/platform/security/login-activity'],
-    [t('security.browserSessions'), '/platform/security/sessions'], [t('security.mode.mfa'), '/platform/security/mfa'],
+    [t('security.browserSessions'), '/platform/security/sessions'],
     [t('security.mode.permissions'), '/platform/security/permissions'], [t('security.mode.alerts'), '/platform/security/alerts'],
     [t('security.mode.accessHistory'), '/platform/security/access-history'], [t('platform.report'), '/platform/security/reports'],
     [t('security.mode.settings'), '/platform/security/settings'],
