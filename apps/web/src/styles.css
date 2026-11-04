@@ -7179,3 +7179,41 @@ table tbody tr:hover { background: var(--surface-hover); }
 @media (max-width: 680px) {
   .scrollable-tabs-arrow { flex-basis: 26px; width: 26px; height: 32px; }
 }
+
+/* Sticky tab shells need an opaque canvas so content below cannot show
+   through while the tab row is pinned. Individual tab buttons remain
+   transparent in dark mode. */
+.monitoring-tabs,
+.operations-tabs,
+.security-center-tabs,
+.platform-detail-tabs,
+.settings-tabs,
+.company-profile-tabs,
+.purchase-detail-tabs,
+.pos-tabs,
+.optional-tabs,
+.project-tabs,
+.staff-tabs,
+.sales-settings-tabs,
+.supplier-monitoring-tabs,
+.fixed-asset-tabs,
+.sales-nav,
+.purchasing-nav,
+.organization-nav { background: var(--background) !important; }
+:root.dark .monitoring-tabs::before,
+:root.dark .operations-tabs::before,
+:root.dark .security-center-tabs::before,
+:root.dark .platform-detail-tabs::before,
+:root.dark .settings-tabs::before,
+:root.dark .company-profile-tabs::before,
+:root.dark .purchase-detail-tabs::before,
+:root.dark .pos-tabs::before,
+:root.dark .optional-tabs::before,
+:root.dark .project-tabs::before,
+:root.dark .staff-tabs::before,
+:root.dark .sales-settings-tabs::before,
+:root.dark .supplier-monitoring-tabs::before,
+:root.dark .fixed-asset-tabs::before,
+:root.dark .sales-nav::before,
+:root.dark .purchasing-nav::before,
+:root.dark .organization-nav::before { background: var(--background) !important; }
