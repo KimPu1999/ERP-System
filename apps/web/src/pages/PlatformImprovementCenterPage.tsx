@@ -89,7 +89,7 @@ export function PlatformImprovementCenterPage({ mode }: { mode: ImprovementMode 
   const description = t(`improvement.${mode === 'quality' ? 'qualityDescription' : mode === 'rollouts' ? 'rolloutsDescription' : mode === 'reliability' ? 'reliabilityDescription' : mode === 'reviews' ? 'reviewsDescription' : `${mode}Description`}`);
   const data = listQuery.data as ImprovementListPayload | undefined;
 
-  return <section className="platform-page page-section">
+  return <section className={`platform-page page-section improvement-page improvement-page-${mode}`}>
     <div className="platform-toolbar"><div><p className="eyebrow">{t('nav.improvement')}</p><h1>{title}</h1><p className="muted">{description}</p></div><button className="button button-secondary" type="button" onClick={() => void listQuery.refetch()} disabled={listQuery.isFetching}><RefreshCw size={15} /> {t('common.refresh')}</button></div>
 
     {(mode === 'feedback' || mode === 'requests' || mode === 'quality') && <div className="platform-overview-filter-bar">
@@ -161,6 +161,7 @@ function ListRows({ title, rows }: { title: string; rows: Array<{ label: string;
 
 function Pagination({ page, perPage, total, setPage, setPerPage }: { page: number; perPage: number; total: number; setPage: (value: number) => void; setPerPage: (value: number) => void }) {
   const { t } = useI18n();
+  if (total <= 0) return null;
   const lastPage = Math.max(1, Math.ceil(total / perPage));
   return <div className="platform-actions">
     <select value={perPage} onChange={(event) => setPerPage(Number(event.target.value))} aria-label={t('common.rows')}>{PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}</select>
@@ -172,7 +173,7 @@ function Pagination({ page, perPage, total, setPage, setPerPage }: { page: numbe
 
 function FeedbackList({ data, onSelect, page, perPage, setPage, setPerPage }: { data: { data: Array<{ id: string; feedback_number: string; tenant?: { name: string } | null; subject: string; category: string; status: string; created_at: string }>; meta: { total: number } }; onSelect: (id: string) => void; page: number; perPage: number; setPage: (value: number) => void; setPerPage: (value: number) => void }) {
   const { t, formatDate } = useI18n();
-  return <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.subject')}</th><th>{t('improvement.tenant')}</th><th>{t('improvement.category')}</th><th>{t('improvement.status')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{data.data.length ? data.data.map((row) => <tr key={row.id} onClick={() => onSelect(row.id)} className="cursor-pointer"><td>{row.feedback_number} — {row.subject}</td><td>{row.tenant?.name ?? '—'}</td><td>{t(`improvement.category.${row.category}`)}</td><td><StatusPill value={t(`improvement.status.${row.status}`)} /></td><td>{formatDate(row.created_at)}</td></tr>) : <tr><td colSpan={5} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div><Pagination page={page} perPage={perPage} total={data.meta.total} setPage={setPage} setPerPage={setPerPage} /></article>;
+  return <><div className="feedback-governance-note"><div><p className="eyebrow">{t('improvement.feedbackTitle')}</p><span className="muted">Authorized feedback is retained with tenant context and an auditable workflow.</span></div><span className="feedback-count-badge">{data.meta.total} {t('improvement.feedback', 'records')}</span></div><article className="platform-table-card feedback-table-card"><div className="feedback-table-heading"><div><h2>{t('improvement.feedbackTitle')}</h2><p className="muted">Select a record to review its workflow history.</p></div></div><div className="table-scroll"><table><thead><tr><th>{t('improvement.subject')}</th><th>{t('improvement.tenant')}</th><th>{t('improvement.category')}</th><th>{t('improvement.status')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{data.data.length ? data.data.map((row) => <tr key={row.id} onClick={() => onSelect(row.id)} className="cursor-pointer"><td><strong>{row.feedback_number}</strong><small>{row.subject}</small></td><td>{row.tenant?.name ?? '—'}</td><td>{t(`improvement.category.${row.category}`)}</td><td><StatusPill value={t(`improvement.status.${row.status}`)} /></td><td>{formatDate(row.created_at)}</td></tr>) : <tr><td colSpan={5} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div><Pagination page={page} perPage={perPage} total={data.meta.total} setPage={setPage} setPerPage={setPerPage} /></article></>;
 }
 
 function FeedbackDetail({ value, onClose, onAction, onNote, onConvert }: { value: ImprovementFeedbackDetail; onClose: () => void; onAction: (payload: Record<string, unknown>) => void; onNote: (visibility: 'public' | 'internal', body: string) => void; onConvert: (type: 'feature_request' | 'defect', title: string, module?: string) => void }) {
@@ -224,7 +225,7 @@ function RequestsList({ data, onSelect, page, perPage, setPage, setPerPage, onCr
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', module: '', priority: 'medium', effort_estimate: '', effort_estimated: false, business_impact: '' });
   return <>
-    <div className="platform-actions"><button className="button button-primary" type="button" onClick={() => setCreating((previous) => !previous)}><Plus size={14} /> {t('improvement.newRequest')}</button></div>
+    <div className="request-action-bar"><div><p className="eyebrow">{t('improvement.requestsTitle')}</p><span className="muted">Prioritized requests with audited transitions and evidence-based effort estimates.</span></div><button className="button button-primary" type="button" onClick={() => setCreating((previous) => !previous)}><Plus size={14} /> {t('improvement.newRequest')}</button></div>
     {creating && <article className="panel">
       <div className="platform-actions">
         <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder={t('improvement.subject')} />
@@ -238,8 +239,8 @@ function RequestsList({ data, onSelect, page, perPage, setPage, setPerPage, onCr
       </div>
       <button className="button button-primary" type="button" disabled={!form.title || !form.description} onClick={() => { onCreate({ ...form, module: form.module || undefined, effort_estimate: form.effort_estimated ? form.effort_estimate : undefined }); setCreating(false); }}>{t('common.save')}</button>
     </article>}
-    <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.requestKey')}</th><th>{t('improvement.subject')}</th><th>{t('improvement.priority')}</th><th>{t('improvement.effort')}</th><th>{t('improvement.owner')}</th><th>{t('improvement.status')}</th></tr></thead><tbody>{data.data.length ? data.data.map((row) => <tr key={row.id} onClick={() => onSelect(row.id)} className="cursor-pointer"><td>{row.request_key}</td><td>{row.title}</td><td>{row.priority}</td><td>{row.effort_estimate === 'not_estimated' ? t('improvement.notEstimated') : row.effort_estimate}</td><td>{row.owner?.name ?? '—'}</td><td><StatusPill value={t(`improvement.status.${row.status}`)} /></td></tr>) : <tr><td colSpan={6} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div><Pagination page={page} perPage={perPage} total={data.meta.total} setPage={setPage} setPerPage={setPerPage} /></article>
-    <p className="muted">{formatNumber(data.meta.total)} · {t('improvement.notEstimated')} = {t('improvement.notEstimated')}</p>
+    <article className="platform-table-card request-table-card"><div className="request-table-heading"><div><h2>{t('improvement.requestsTitle')}</h2><p className="muted">{formatNumber(data.meta.total)} {t('improvement.requests', 'requests')}</p></div></div><div className="table-scroll"><table><thead><tr><th>{t('improvement.requestKey')}</th><th>{t('improvement.subject')}</th><th>{t('improvement.priority')}</th><th>{t('improvement.effort')}</th><th>{t('improvement.owner')}</th><th>{t('improvement.status')}</th></tr></thead><tbody>{data.data.length ? data.data.map((row) => <tr key={row.id} onClick={() => onSelect(row.id)} className="cursor-pointer"><td>{row.request_key}</td><td>{row.title}</td><td>{row.priority}</td><td>{row.effort_estimate === 'not_estimated' ? t('improvement.notEstimated') : row.effort_estimate}</td><td>{row.owner?.name ?? '—'}</td><td><StatusPill value={t(`improvement.status.${row.status}`)} /></td></tr>) : <tr><td colSpan={6} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div><Pagination page={page} perPage={perPage} total={data.meta.total} setPage={setPage} setPerPage={setPerPage} /></article>
+    <p className="request-policy-note muted">{t('improvement.notEstimated')} = {t('improvement.notEstimated')}</p>
   </>;
 }
 
@@ -286,17 +287,18 @@ function DefectsList({ data, onSelect, page, perPage, setPage, setPerPage, onCre
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: '', module: '', environment: 'staging', severity: 'P2', reproduction_steps: '', expected_result: '', actual_result: '' });
   return <>
-    <div className="platform-actions"><button className="button button-primary" type="button" onClick={() => setCreating((previous) => !previous)}><Plus size={14} /> {t('improvement.newDefect')}</button></div>
-    {creating && <article className="panel">
-      <div className="platform-actions">
-        <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder={t('improvement.subject')} />
-        <select value={form.severity} onChange={(event) => setForm({ ...form, severity: event.target.value })}>{['P0', 'P1', 'P2', 'P3'].map((s) => <option key={s} value={s}>{s}</option>)}</select>
-        <select value={form.environment} onChange={(event) => setForm({ ...form, environment: event.target.value })}>{['local', 'staging', 'production'].map((e) => <option key={e} value={e}>{e}</option>)}</select>
+    <div className="defect-action-bar"><div><p className="eyebrow">{t('improvement.qualityTitle')}</p><span className="muted">Track severity, verification, root cause, and release impact in one workflow.</span></div><button className="button button-primary" type="button" onClick={() => setCreating((previous) => !previous)}><Plus size={14} /> {t('improvement.newDefect')}</button></div>
+    {creating && <article className="panel improvement-form-card defect-create-card">
+      <div className="improvement-form-heading"><div><p className="eyebrow">{t('improvement.newDefect')}</p><h2>{t('improvement.newDefect')}</h2></div></div>
+      <div className="improvement-form-grid defect-create-grid">
+        <label><span>{t('improvement.subject')}</span><input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder={t('improvement.subject')} /></label>
+        <label><span>{t('improvement.severity')}</span><select value={form.severity} onChange={(event) => setForm({ ...form, severity: event.target.value })}>{['P0', 'P1', 'P2', 'P3'].map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
+        <label><span>{t('improvement.environment')}</span><select value={form.environment} onChange={(event) => setForm({ ...form, environment: event.target.value })}>{['local', 'staging', 'production'].map((e) => <option key={e} value={e}>{e}</option>)}</select></label>
       </div>
-      <textarea value={form.reproduction_steps} onChange={(event) => setForm({ ...form, reproduction_steps: event.target.value })} placeholder={t('improvement.reproduction')} rows={2} />
-      <button className="button button-primary" type="button" disabled={!form.title} onClick={() => { onCreate({ ...form, module: form.module || undefined }); setCreating(false); }}>{t('common.save')}</button>
+      <label className="improvement-evidence-field"><span>{t('improvement.reproduction')}</span><textarea value={form.reproduction_steps} onChange={(event) => setForm({ ...form, reproduction_steps: event.target.value })} placeholder={t('improvement.reproduction')} rows={3} /></label>
+      <div className="improvement-form-footer"><span className="muted">Required fields are validated before saving.</span><button className="button button-primary" type="button" disabled={!form.title} onClick={() => { onCreate({ ...form, module: form.module || undefined }); setCreating(false); }}>{t('common.save')}</button></div>
     </article>}
-    <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.defectNumber')}</th><th>{t('improvement.subject')}</th><th>{t('improvement.severity')}</th><th>{t('improvement.environment')}</th><th>{t('improvement.status')}</th><th>{t('improvement.retestResult')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{data.data.length ? data.data.map((row) => <tr key={row.id} onClick={() => onSelect(row.id)} className="cursor-pointer"><td>{row.defect_number}</td><td>{row.title}</td><td>{row.severity}</td><td>{row.environment}</td><td><StatusPill value={t(`improvement.status.${row.status}`)} /></td><td>{row.retest_result ?? '—'}</td><td>{formatDate(row.created_at)}</td></tr>) : <tr><td colSpan={7} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div><Pagination page={page} perPage={perPage} total={data.meta.total} setPage={setPage} setPerPage={setPerPage} /></article>
+    <article className="platform-table-card defect-table-card"><div className="defect-table-heading"><div><h2>{t('improvement.qualityTitle')}</h2><p className="muted">{data.meta.total} {t('improvement.defects', 'defects')}</p></div></div><div className="table-scroll"><table><thead><tr><th>{t('improvement.defectNumber')}</th><th>{t('improvement.subject')}</th><th>{t('improvement.severity')}</th><th>{t('improvement.environment')}</th><th>{t('improvement.status')}</th><th>{t('improvement.retestResult')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{data.data.length ? data.data.map((row) => <tr key={row.id} onClick={() => onSelect(row.id)} className="cursor-pointer"><td>{row.defect_number}</td><td>{row.title}</td><td>{row.severity}</td><td>{row.environment}</td><td><StatusPill value={t(`improvement.status.${row.status}`)} /></td><td>{row.retest_result ?? '—'}</td><td>{formatDate(row.created_at)}</td></tr>) : <tr><td colSpan={7} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div><Pagination page={page} perPage={perPage} total={data.meta.total} setPage={setPage} setPerPage={setPerPage} /></article>
   </>;
 }
 
@@ -330,14 +332,13 @@ function RolloutsList({ value, onUpdate, onKillSwitch }: { value: { rollouts: Ar
   const { t } = useI18n();
   const [killReason, setKillReason] = useState('');
   return <>
-    <p className="muted">{value.flag_authority_note}</p>
-    <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.flag')}</th><th>{t('improvement.stage')}</th><th>{t('improvement.scope')}</th><th>{t('improvement.approvalStatus')}</th><th>{t('improvement.reviewAt')}</th><th>{t('improvement.actions')}</th></tr></thead><tbody>{value.rollouts.length ? value.rollouts.map((rollout) => <tr key={rollout.id}><td>{rollout.flag?.key ?? '—'}</td><td><StatusPill value={t(`improvement.stage.${rollout.stage}`)} /></td><td>{rollout.scope}</td><td>{rollout.approval_status}</td><td>{rollout.review_at ?? '—'}</td><td className="platform-actions">
+    <div className="rollout-governance-note"><span className="eyebrow">{t('improvement.rolloutsTitle', 'Feature rollouts')}</span><p>{value.flag_authority_note}</p></div>
+    <div className="rollout-control-card"><label><span>{t('improvement.killSwitchReason')}</span><input value={killReason} onChange={(event) => setKillReason(event.target.value)} placeholder={t('improvement.killSwitchReason')} /></label><p className="muted">{t('improvement.killSwitchNote')} · {t('improvement.approvalRequired')}</p></div>
+    <article className="platform-table-card rollout-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.flag')}</th><th>{t('improvement.stage')}</th><th>{t('improvement.scope')}</th><th>{t('improvement.approvalStatus')}</th><th>{t('improvement.reviewAt')}</th><th>{t('improvement.actions', 'Actions')}</th></tr></thead><tbody>{value.rollouts.length ? value.rollouts.map((rollout) => <tr key={rollout.id}><td><strong>{rollout.flag?.key ?? '—'}</strong>{rollout.flag?.description && <small>{rollout.flag.description}</small>}</td><td><StatusPill value={t(`improvement.stage.${rollout.stage}`)} /></td><td>{rollout.scope}</td><td>{rollout.approval_status}</td><td>{rollout.review_at ?? '—'}</td><td className="platform-actions">
       <button className="table-action" type="button" onClick={() => onUpdate(rollout.id, { stage: 'internal_cohort' })}>→ {t('improvement.stage.internal_cohort')}</button>
       <button className="table-action" type="button" onClick={() => onUpdate(rollout.id, { stage: 'pilot', approval: true, approval_note: 'approved from rollout console' })}>→ {t('improvement.stage.pilot')}</button>
       <button className="table-action" type="button" onClick={() => onKillSwitch(rollout.id, killReason || 'manual kill switch')}>{t('improvement.killSwitch')}</button>
     </td></tr>) : <tr><td colSpan={6} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div></article>
-    <input value={killReason} onChange={(event) => setKillReason(event.target.value)} placeholder={t('improvement.killSwitchReason')} />
-    <p className="muted">{t('improvement.killSwitchNote')} · {t('improvement.approvalRequired')}</p>
   </>;
 }
 
@@ -373,17 +374,17 @@ function ReliabilityPanel({ value, onCreate }: { value: { slos: ImprovementSlo[]
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', sli_type: 'availability', metric_source: '', target: '99.9', window_days: 30 });
   return <>
-    <div className="platform-actions"><button className="button button-primary" type="button" onClick={() => setCreating((previous) => !previous)}><Plus size={14} /> {t('improvement.newSlo')}</button></div>
-    {creating && <article className="panel"><div className="platform-actions">
-      <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder={t('improvement.sloName')} />
-      <select value={form.sli_type} onChange={(event) => setForm({ ...form, sli_type: event.target.value })}>{['availability', 'success_ratio', 'latency', 'queue_completion'].map((s) => <option key={s} value={s}>{s}</option>)}</select>
-      <input value={form.metric_source} onChange={(event) => setForm({ ...form, metric_source: event.target.value })} placeholder={t('improvement.metricSource')} />
-      <input type="number" step="0.001" value={form.target} onChange={(event) => setForm({ ...form, target: event.target.value })} />
-      <input type="number" value={form.window_days} onChange={(event) => setForm({ ...form, window_days: Number(event.target.value) })} />
+    <div className="reliability-action-bar"><div><p className="eyebrow">{t('improvement.reliability')}</p><span className="muted">Define measurable objectives for monitored platform services.</span></div><button className="button button-primary" type="button" onClick={() => setCreating((previous) => !previous)}><Plus size={14} /> {t('improvement.newSlo')}</button></div>
+    {creating && <article className="panel improvement-form-card"><div className="improvement-form-heading"><div><p className="eyebrow">{t('improvement.newSlo')}</p><h2>{t('improvement.newSlo')}</h2></div></div><div className="improvement-form-grid">
+      <label><span>{t('improvement.sloName')}</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder={t('improvement.sloName')} /></label>
+      <label><span>{t('improvement.sliType')}</span><select value={form.sli_type} onChange={(event) => setForm({ ...form, sli_type: event.target.value })}>{['availability', 'success_ratio', 'latency', 'queue_completion'].map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
+      <label><span>{t('improvement.metricSource')}</span><input value={form.metric_source} onChange={(event) => setForm({ ...form, metric_source: event.target.value })} placeholder={t('improvement.metricSource')} /></label>
+      <label><span>{t('improvement.target')}</span><input type="number" step="0.001" value={form.target} onChange={(event) => setForm({ ...form, target: event.target.value })} /></label>
+      <label><span>{t('improvement.windowDays')}</span><input type="number" value={form.window_days} onChange={(event) => setForm({ ...form, window_days: Number(event.target.value) })} /></label>
       <button className="button button-primary" type="button" disabled={!form.name || !form.metric_source} onClick={() => { onCreate(form); setCreating(false); }}>{t('common.save')}</button>
     </div></article>}
     <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.sloName')}</th><th>{t('improvement.sliType')}</th><th>{t('improvement.target')}</th><th>{t('improvement.observed')}</th><th>{t('improvement.status')}</th><th>{t('improvement.errorBudget')}</th></tr></thead><tbody>{value.slos.length ? value.slos.map((slo) => <tr key={slo.id}><td>{slo.name}</td><td>{slo.sli_type}</td><td>{formatNumber(slo.target)}%</td><td>{slo.observed !== null ? `${formatNumber(slo.observed)}% (${formatNumber(slo.observations_in_window)} ${t('improvement.observations')})` : t('improvement.sloStatus.unknown')}</td><td><StatusPill value={t(`improvement.sloStatus.${slo.status}`)} /></td><td>{slo.error_budget ? `${formatNumber(slo.error_budget.used_seconds ?? 0)}s / ${formatNumber(slo.error_budget.seconds)}s (${slo.error_budget.used_percent !== null ? `${formatNumber(slo.error_budget.used_percent)}% ${t('improvement.budgetUsed')}` : t('improvement.sloStatus.unknown')})` : '—'}</td></tr>) : <tr><td colSpan={6} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div></article>
-    <details><summary className="muted">{t('improvement.measurementModel')}</summary><ul>{Object.entries(value.measurement_model).map(([key, text]) => <li key={key}><strong>{key}</strong>: {text}</li>)}</ul></details>
+    <details className="reliability-model-card" open><summary>{t('improvement.measurementModel')}</summary><div className="reliability-model-grid">{Object.entries(value.measurement_model).map(([key, text]) => <div className="reliability-model-row" key={key}><strong>{key.replaceAll('_', ' ')}</strong><span>{text}</span></div>)}</div></details>
     <ListRows title={t('improvement.incidents')} rows={value.incidents.map((incident) => ({ label: `${incident.severity} · ${incident.status}`, value: `${incident.title} · ${formatDate(incident.started_at)}` }))} />
   </>;
 }
@@ -394,15 +395,17 @@ function SatisfactionPanel({ value }: { value: Record<string, unknown> }) {
   const byContext = (value.by_context as Array<{ context: string; responses: number; avg_score: number | null }>) ?? [];
   const byScore = (value.by_score as Array<{ score: number; responses: number }>) ?? [];
   return <>
-    <div className="platform-kpi-grid">
-      <article className="platform-kpi"><span>{t('improvement.responses')}</span><strong>{summary ? formatNumber(summary.response_count) : '—'}</strong></article>
-      <article className="platform-kpi"><span>{t('improvement.avgScore')}</span><strong>{summary?.avg_score !== null && summary?.avg_score !== undefined ? formatNumber(summary.avg_score) : t('improvement.satisfactionUnknown')}</strong></article>
+    <div className="satisfaction-summary-heading"><div><p className="eyebrow">{t('improvement.satisfactionMeasured')}</p><h2>{t('improvement.responses')}</h2></div><span className="satisfaction-data-badge">{summary?.state === 'measured' ? t('improvement.satisfactionMeasured') : t('common.noData')}</span></div>
+    <div className="platform-kpi-grid satisfaction-stat-grid">
+      <article className="platform-kpi satisfaction-stat-card"><span>{t('improvement.responses')}</span><strong className="satisfaction-stat-value">{summary ? formatNumber(summary.response_count) : '—'}</strong><small className="muted">{t('improvement.satisfactionMeasured')}</small></article>
+      <article className="platform-kpi satisfaction-stat-card"><span>{t('improvement.avgScore')}</span>{summary?.avg_score !== null && summary?.avg_score !== undefined ? <strong className="satisfaction-stat-value">{formatNumber(summary.avg_score)}</strong> : <strong className="satisfaction-stat-empty">{t('improvement.satisfactionUnknown')}</strong>}<small className="muted">{t('improvement.denominatorPolicy')}</small></article>
     </div>
-    <div className="platform-dashboard-grid">
+    <div className="satisfaction-section-heading"><div><h2>{t('improvement.satisfactionTitle')}</h2><p className="muted">{t('improvement.denominatorPolicy')}</p></div></div>
+    <div className="platform-dashboard-grid satisfaction-insight-grid">
       <ListRows title={t('improvement.byContext')} rows={byContext.map((row) => ({ label: row.context, value: `${row.responses} · ${row.avg_score ?? '—'}` }))} />
       <ListRows title={t('improvement.byScore')} rows={byScore.map((row) => ({ label: `${row.score}★`, value: String(row.responses) }))} />
     </div>
-    <p className="muted">{String(value.denominator_policy ?? '')}</p>
+    <p className="satisfaction-policy-note muted">{String(value.denominator_policy ?? '')}</p>
   </>;
 }
 
@@ -412,14 +415,15 @@ function MaturityPanel({ value, onCreate }: { value: { assessments: Array<{ id: 
   return <>
     <article className="platform-table-card"><div className="table-scroll"><table><thead><tr><th>{t('improvement.dimension')}</th><th>{t('improvement.period')}</th><th>{t('improvement.level')}</th><th>{t('platform.actor')}</th><th>{t('platform.created')}</th></tr></thead><tbody>{value.assessments.length ? value.assessments.map((assessment) => <tr key={assessment.id}><td>{t(`improvement.dimension.${assessment.dimension}`)}</td><td>{assessment.period}</td><td><StatusPill value={t(`improvement.level.${assessment.level}`)} /></td><td>{assessment.reviewer?.name ?? '—'}</td><td>{formatDate(assessment.assessed_at)}</td></tr>) : <tr><td colSpan={5} className="muted">{t('common.noData')}</td></tr>}</tbody></table></div></article>
     {value.missing_dimensions.length > 0 && <p className="muted">{t('improvement.missingDimensions')}: {value.missing_dimensions.map((dimension) => t(`improvement.dimension.${dimension}`)).join(', ')}</p>}
-    <article className="panel">
-      <div className="platform-actions">
-        <select value={form.dimension} onChange={(event) => setForm({ ...form, dimension: event.target.value })}>{['functional_reliability', 'security', 'data_integrity', 'tenant_isolation', 'test_coverage', 'accessibility', 'localization', 'documentation', 'operational_readiness', 'performance', 'release_quality', 'customer_support'].map((d) => <option key={d} value={d}>{t(`improvement.dimension.${d}`)}</option>)}</select>
-        <input value={form.period} onChange={(event) => setForm({ ...form, period: event.target.value })} placeholder={t('improvement.period')} />
-        <select value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })}>{value.rubric.map((level) => <option key={level} value={level}>{t(`improvement.level.${level}`)}</option>)}</select>
+    <article className="panel improvement-form-card">
+      <div className="improvement-form-heading"><div><p className="eyebrow">{t('improvement.assess')}</p><h2>{t('improvement.assess')}</h2></div><span className="improvement-required-note">{t('improvement.evidence')}</span></div>
+      <div className="improvement-form-grid improvement-maturity-grid">
+        <label><span>{t('improvement.dimension')}</span><select value={form.dimension} onChange={(event) => setForm({ ...form, dimension: event.target.value })}>{['functional_reliability', 'security', 'data_integrity', 'tenant_isolation', 'test_coverage', 'accessibility', 'localization', 'documentation', 'operational_readiness', 'performance', 'release_quality', 'customer_support'].map((d) => <option key={d} value={d}>{t(`improvement.dimension.${d}`)}</option>)}</select></label>
+        <label><span>{t('improvement.period')}</span><input value={form.period} onChange={(event) => setForm({ ...form, period: event.target.value })} placeholder={t('improvement.period')} /></label>
+        <label><span>{t('improvement.level')}</span><select value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })}>{value.rubric.map((level) => <option key={level} value={level}>{t(`improvement.level.${level}`)}</option>)}</select></label>
       </div>
-      <textarea value={form.evidence} onChange={(event) => setForm({ ...form, evidence: event.target.value })} placeholder={t('improvement.evidence')} rows={2} />
-      <button className="button button-primary" type="button" disabled={form.evidence.trim().length < 20} onClick={() => onCreate(form)}>{t('improvement.assess')}</button>
+      <label className="improvement-evidence-field"><span>{t('improvement.evidence')}</span><textarea value={form.evidence} onChange={(event) => setForm({ ...form, evidence: event.target.value })} placeholder={t('improvement.evidence')} rows={3} /></label>
+      <div className="improvement-form-footer"><span className="muted">{form.evidence.trim().length}/20 characters minimum</span><button className="button button-primary" type="button" disabled={form.evidence.trim().length < 20} onClick={() => onCreate(form)}>{t('improvement.assess')}</button></div>
     </article>
   </>;
 }
