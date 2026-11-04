@@ -2,7 +2,7 @@
 
 use App\Models\{AuditLogArchive, MonitoringAlert, Permission, PlatformAuditLog, ReportExport, Role, RoleAssignment, SecurityEvent, Tenant, TenantMembership, User};
 use App\Models\SecuritySetting;
-use App\Services\{AuditLogger, MfaService, PlatformAnalyticsService, SecurityEventLogger};
+use App\Services\{AuditLogger, MfaService, PlatformAnalyticsService, SecurityEventLogger, SecurityPolicy};
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\{DB, Queue, Storage};
 use Illuminate\Http\Request;
@@ -10,6 +10,7 @@ use App\Jobs\GeneratePlatformReportExport;
 use Carbon\Carbon;
 
 it('exposes real security overview only to platform administrators', function (): void {
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $this->actingAs($platform)->getJson('/api/v1/platform/security/overview')->assertOk()->assertJsonStructure(['data' => ['metrics', 'posture', 'posture_basis', 'recent_events']]);
     $this->actingAs(User::factory()->create())->getJson('/api/v1/platform/security/overview')->assertForbidden();
@@ -25,6 +26,7 @@ it('records successful login and new-device activity without storing a device fi
 });
 
 it('keeps audit events immutable and redacts sensitive logger metadata', function (): void {
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $log = PlatformAuditLog::create(['actor_user_id' => $platform->id, 'action' => 'security.test', 'metadata' => ['safe' => true]]);
     expect(fn () => $log->update(['action' => 'changed']))->toThrow(\LogicException::class);
@@ -43,6 +45,7 @@ it('redacts nested sensitive metadata and rejects direct database audit mutation
 });
 
 it('does not expose raw database session identifiers', function (): void {
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $this->actingAs($platform)->withSession(['_token' => 'test'])->getJson('/api/v1/platform/security/sessions')->assertOk()->assertJsonStructure(['data']);
 });
@@ -77,12 +80,20 @@ it('does not decrypt malformed MFA storage into a usable secret', function (): v
 });
 
 it('returns security settings with secure defaults and validates updates', function (): void {
+    config(['security.platform_mfa_required' => true]);
+    expect(app(SecurityPolicy::class)->platformMfaRequired())->toBeTrue();
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
-    $this->actingAs($platform)->getJson('/api/v1/platform/security/settings')->assertOk()->assertJsonPath('data.platform_mfa_required', true);
+    $this->actingAs($platform)->getJson('/api/v1/platform/security/settings')->assertOk()->assertJsonPath('data.platform_mfa_required', false);
     $this->actingAs($platform)->patchJson('/api/v1/platform/security/settings', ['step_up_validity_minutes' => 0])->assertUnprocessable();
+    // The environment-controlled policy key is not persisted and cannot weaken enforcement.
+    $this->postJson('/api/v1/auth/step-up', ['password' => 'password', 'code' => null])->assertOk();
+    $this->patchJson('/api/v1/platform/security/settings', ['platform_mfa_required' => false])->assertOk()->assertJsonPath('data.platform_mfa_required', false);
+    expect(SecuritySetting::whereKey('platform_mfa_required')->exists())->toBeFalse();
 });
 
 it('requires recent authentication for valid security setting changes', function (): void {
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $this->actingAs($platform)->patchJson('/api/v1/platform/security/settings', ['step_up_validity_minutes' => 15])->assertStatus(428);
     $this->actingAs($platform)->postJson('/api/v1/auth/step-up', ['password' => 'password'])->assertOk();
@@ -90,6 +101,7 @@ it('requires recent authentication for valid security setting changes', function
 });
 
 it('lists and revokes personal access tokens without exposing token material', function (): void {
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $token = $platform->createToken('integration', ['read'])->accessToken;
     $this->actingAs($platform)->getJson('/api/v1/auth/tokens')->assertOk()->assertJsonPath('data.0.name', 'integration')->assertJsonMissing(['token' => $token]);
@@ -115,6 +127,7 @@ it('archives expired audit records before pruning them', function (): void {
 
 it('requires step-up before queueing a security export', function (): void {
     Queue::fake();
+    config(['security.platform_mfa_required' => false]);
     $platform = User::factory()->create(['is_platform_super_admin' => true]);
     $this->actingAs($platform)->postJson('/api/v1/platform/security/reports', ['report_key' => 'failed_logins', 'format' => 'csv'])->assertStatus(428);
     $this->postJson('/api/v1/auth/step-up', ['password' => 'password'])->assertOk();

@@ -24,6 +24,8 @@
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
+        <!-- Keep mail state deterministic for tests; local .env mail transports must not influence delivery-state assertions. -->
+        <env name="MAIL_MAILER" value="log" force="true"/>
         <!-- Test fixtures intentionally exercise pre-enrollment legacy accounts. Production/local defaults remain enforced. -->
         <env name="PLATFORM_MFA_REQUIRED" value="false" force="true"/>
     </php>

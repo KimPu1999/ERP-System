@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\BusinessOnboardingController;
 use App\Http\Controllers\Api\V1\BusinessSelfServiceController;
 use App\Http\Controllers\Api\V1\TenantMemberController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\MfaController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\SessionController;
@@ -72,6 +73,7 @@ use App\Http\Controllers\Api\V1\PlatformUserController;
 use App\Http\Controllers\Api\V1\PlatformConfigurationController;
 use App\Http\Controllers\Api\V1\SecurityController;
 use App\Http\Controllers\Api\V1\PlatformAnalyticsController;
+use App\Http\Controllers\Api\V1\PlatformGrowthController;
 use App\Http\Controllers\Api\V1\PlatformHealthController;
 use App\Http\Controllers\Api\V1\PlatformMonitoringController;
 use App\Http\Controllers\Api\V1\TenantSubscriptionController;
@@ -96,6 +98,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/platform/invitations/accept', [PlatformAdminInvitationController::class, 'accept'])->middleware('throttle:10,1');
         Route::post('/password/email', [PasswordResetController::class, 'requestLink'])->middleware('throttle:10,1');
         Route::post('/password/reset', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
+        Route::post('/mfa/verify', [MfaController::class, 'verifyLogin'])->middleware('throttle:10,1');
         Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('throttle:30,10')->name('verification.verify');
     });
     // Stateful Sanctum requests must start the Laravel session before the
@@ -103,9 +106,13 @@ Route::prefix('v1')->group(function (): void {
     // important after login regenerates the session for MFA enrollment.
     Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
-        Route::middleware(['active.user'])->group(function (): void {
+        Route::middleware(['active.user', 'mfa.completed'])->group(function (): void {
             Route::get('/auth/me', [AuthController::class, 'me']);
             Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:3,10');
+            Route::post('/auth/mfa/enroll', [MfaController::class, 'enroll'])->middleware(['web', 'throttle:5,10']);
+            Route::post('/auth/mfa/confirm', [MfaController::class, 'confirm'])->middleware(['web', 'throttle:5,10']);
+            Route::post('/auth/mfa/recovery-codes', [MfaController::class, 'regenerateRecoveryCodes'])->middleware(['web', 'recent.stepup', 'throttle:3,10']);
+            Route::post('/auth/mfa/disable', [MfaController::class, 'disable'])->middleware(['web', 'recent.stepup', 'throttle:5,10']);
             Route::post('/auth/step-up', [SecurityController::class, 'stepUp'])->middleware(['web', 'throttle:5,10']);
             Route::get('/auth/tokens', [SecurityController::class, 'tokens']);
             Route::delete('/auth/tokens/{token}', [SecurityController::class, 'revokeToken'])->middleware(['web', 'recent.stepup']);
@@ -238,6 +245,13 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/billing/revenue', [PlatformBillingController::class, 'revenue']);
             Route::post('/support/access-grants', [SupportController::class, 'grant']);
             Route::post('/support/access-grants/{grant}/approve', [SupportController::class, 'approve']);
+            Route::prefix('growth')->group(function (): void {
+                Route::get('/overview', [PlatformGrowthController::class, 'overview']);
+                Route::get('/onboarding', [PlatformGrowthController::class, 'onboarding']);
+                Route::get('/adoption', [PlatformGrowthController::class, 'adoption']);
+                Route::get('/customer-success', [PlatformGrowthController::class, 'customerSuccess']);
+                Route::get('/retention', [PlatformGrowthController::class, 'retention']);
+            });
             Route::prefix('operations')->group(function (): void {
                 Route::get('/overview', [OperationsController::class, 'overview']);
                 Route::get('/incidents', [OperationsController::class, 'incidents']);

@@ -120,14 +120,15 @@ final class PlatformAuditController
 
     public function settings(Request $request): JsonResponse
     {
-        $defaults = ['platform_mfa_required' => true, 'business_admin_mfa_required' => false, 'session_timeout_minutes' => (int) config('session.lifetime'), 'step_up_validity_minutes' => 10, 'audit_retention_days' => 365];
-        $stored = SecuritySetting::query()->get()->mapWithKeys(fn (SecuritySetting $setting): array => [$setting->key => $setting->value['value'] ?? $setting->value])->all();
+        $defaults = ['platform_mfa_required' => app(\App\Services\SecurityPolicy::class)->platformMfaRequired(), 'business_admin_mfa_required' => false, 'session_timeout_minutes' => (int) config('session.lifetime'), 'step_up_validity_minutes' => 10, 'audit_retention_days' => 365];
+        $stored = SecuritySetting::query()->whereIn('key', ['business_admin_mfa_required', 'session_timeout_minutes', 'step_up_validity_minutes', 'audit_retention_days'])->get()->mapWithKeys(fn (SecuritySetting $setting): array => [$setting->key => $setting->value['value'] ?? $setting->value])->all();
         return response()->json(['data' => array_replace($defaults, $stored)]);
     }
 
     public function updateSettings(Request $request, \App\Services\AuditLogger $audit): JsonResponse
     {
-        $data = $request->validate(['platform_mfa_required' => ['sometimes', 'boolean'], 'business_admin_mfa_required' => ['sometimes', 'boolean'], 'session_timeout_minutes' => ['sometimes', 'integer', 'min:15', 'max:10080'], 'step_up_validity_minutes' => ['sometimes', 'integer', 'min:1', 'max:60'], 'audit_retention_days' => ['sometimes', 'integer', 'min:30', 'max:3650']]);
+        $data = $request->validate(['business_admin_mfa_required' => ['sometimes', 'boolean'], 'session_timeout_minutes' => ['sometimes', 'integer', 'min:15', 'max:10080'], 'step_up_validity_minutes' => ['sometimes', 'integer', 'min:1', 'max:60'], 'audit_retention_days' => ['sometimes', 'integer', 'min:30', 'max:3650']]);
+        if ($request->filled('platform_mfa_required')) abort_unless((bool) $request->boolean('platform_mfa_required') === app(\App\Services\SecurityPolicy::class)->platformMfaRequired(), 422, 'Platform MFA enforcement is environment-controlled and cannot be changed from the application.');
         abort_unless((int) $request->session()->get('security.step_up_until', 0) > now()->timestamp, 428, 'Recent authentication is required for this action.');
         foreach ($data as $key => $value) SecuritySetting::updateOrCreate(['key' => $key], ['value' => ['value' => $value], 'updated_by' => $request->user()->id]);
         $audit->record($request, 'security.settings.changed', null, null, ['keys' => array_keys($data)]);
