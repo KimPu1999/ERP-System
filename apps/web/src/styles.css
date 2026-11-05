@@ -7433,3 +7433,31 @@ table tbody tr:hover { background: var(--surface-hover); }
 @media (max-width: 560px) {
   .platform-growth-metric { min-height: 0; }
 }
+
+/* Purchase order detail: preserve the document identity and keep monetary
+   values aligned on narrow desktop/tablet widths. */
+.purchasing-detail-header { min-width: 0; }
+.purchasing-detail-header > div:first-child { min-width: 0; }
+.purchasing-detail-header .breadcrumb-line { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; color: var(--muted); font-size: 11px; }
+.purchasing-detail-header .breadcrumb-line a { display: inline-flex; align-items: center; gap: 4px; color: var(--blue); text-decoration: none; }
+.purchasing-detail-header .eyebrow,
+.purchasing-detail-header h1 { position: static; width: auto; height: auto; overflow: visible; margin: 0; clip: auto; white-space: normal; }
+.purchasing-detail-header .eyebrow { display: block; margin-top: 4px; }
+.purchasing-detail-header h1 { font-size: clamp(20px, 2vw, 28px); line-height: 1.1; }
+.purchasing-detail-header .muted { max-width: 70ch; margin: 5px 0 0; overflow-wrap: anywhere; }
+.purchasing-detail-header .purchasing-page-actions { flex-wrap: wrap; min-width: 0; }
+.purchase-detail-summary strong { min-width: 0; overflow: visible; text-overflow: clip; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.purchase-detail-summary > div:last-child strong { font-size: clamp(15px, 1.6vw, 19px); }
+.purchase-detail-columns > .card,
+.purchase-detail-grid > .card { min-width: 0; }
+.purchase-detail-columns .detail-list dd { min-width: 0; overflow-wrap: anywhere; }
+.money-cell { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.purchase-detail-notes { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.purchase-detail-notes strong { color: var(--text); font-size: 12px; }
+.purchase-detail-notes p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.purchase-overview-receiving { display: grid; gap: 3px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+.purchase-overview-receiving strong { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+.purchase-overview-receiving small { color: var(--muted); }
+.purchase-detail-tabs button { min-width: max-content; }
+@media (max-width: 900px) { .purchasing-detail-header { align-items: flex-start; flex-direction: column; } .purchasing-detail-header .purchasing-page-actions { width: 100%; } }
+@media (max-width: 680px) { .purchasing-detail-header .purchasing-page-actions { width: 100%; } .purchase-detail-summary > div:last-child strong { font-size: 15px; } }

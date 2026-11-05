@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct, SupplierPurchasingHold, Warehouse};
+use App\Models\{AccountingCurrency, Branch, Company, GoodsReceipt, PlatformAuditLog, ProductVariant, ProcurementDocumentHistory, PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct, SupplierPurchasingHold, Warehouse};
 use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService, PurchaseOrderApprovalService, PurchaseOrderResolver};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
@@ -45,7 +45,26 @@ final class PurchaseOrderController
     {
         $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
-        return response()->json(['data' => $purchaseOrder->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product', 'approvalRequest.definition', 'approvalRequest.actions.approver', 'approvalRequests.actions.approver'])]);
+        return response()->json(['data' => $purchaseOrder->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'creator:id,name,email', 'items.variant.product', 'approvalRequest.definition', 'approvalRequest.actions.approver', 'approvalRequests.actions.approver'])]);
+    }
+
+    public function activity(Request $request, string $purchaseOrder, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
+    {
+        $order = $resolver->resolve($purchaseOrder);
+        $this->assertOrderAccess($request, $order, $authorization);
+        $tenantId = (string) $order->tenant_id;
+        $history = ProcurementDocumentHistory::query()->where('tenant_id', $tenantId)->where('document_type', 'PurchaseOrder')->where('document_id', $order->id)->with('actor:id,name,email')->get()->map(fn (ProcurementDocumentHistory $item): array => [
+            'id' => $item->id, 'action' => 'purchase_order.status_changed', 'actor' => $item->actor?->only(['id', 'name', 'email']), 'timestamp' => $item->created_at?->toISOString(),
+            'details' => ['from_state' => $item->from_state, 'to_state' => $item->to_state, 'comment' => $item->comment],
+        ]);
+        $audit = PlatformAuditLog::query()->where('tenant_id', $tenantId)->where('auditable_id', $order->id)->with('actor:id,name,email')->get()->map(fn (PlatformAuditLog $item): array => [
+            'id' => $item->id, 'action' => $item->action, 'actor' => $item->actor?->only(['id', 'name', 'email']), 'timestamp' => $item->created_at?->toISOString(), 'details' => $item->metadata ?? [],
+        ]);
+        $items = $history->concat($audit)->sortByDesc('timestamp')->values();
+        $perPage = min(max($request->integer('per_page', 10), 10), 100);
+        $page = max($request->integer('page', 1), 1);
+        $filtered = $items->when($request->filled('search'), fn ($rows) => $rows->filter(fn (array $item): bool => str_contains(strtolower($item['action'].' '.json_encode($item['details'])), strtolower($request->string('search')->toString())))->values());
+        return response()->json(['data' => $filtered->forPage($page, $perPage)->values(), 'meta' => ['current_page' => $page, 'per_page' => $perPage, 'total' => $filtered->count(), 'last_page' => max((int) ceil($filtered->count() / $perPage), 1)]]);
     }
 
     public function store(Request $request, ProcurementNumberService $numbers, AuditLogger $audit, AuthorizationService $authorization): JsonResponse

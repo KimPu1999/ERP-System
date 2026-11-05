@@ -540,6 +540,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/purchase-orders/{purchaseOrder}/revise', [PurchaseOrderController::class, 'revise']);
         Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
         Route::get('/purchase-orders/{purchaseOrder}/approvals', [PurchaseApprovalController::class, 'show']);
+        Route::get('/purchase-orders/{purchaseOrder}/activity', [PurchaseOrderController::class, 'activity']);
         Route::get('/purchase-orders/{purchaseOrder}/print', [PurchaseOrderDocumentController::class, 'show']);
         Route::get('/goods-receipts', [GoodsReceiptController::class, 'index']);
         Route::post('/goods-receipts', [GoodsReceiptController::class, 'store']);
