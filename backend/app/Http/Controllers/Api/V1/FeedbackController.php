@@ -142,7 +142,7 @@ final class FeedbackController
         return response()->json(['data' => $records->map(fn (ReleaseRecord $r) => [
             'id' => $r->id, 'version' => $r->version, 'release_notes' => $r->release_notes,
             'release_notes_my' => $r->release_notes_my, 'sections' => $r->release_notes_sections,
-            'known_limitations' => $r->known_issues, 'deployed_at' => $r->deployed_at?->toIso8601String(),
+            'known_limitations' => $r->known_issues, 'deployed_at' => $r->deployed_at?->toIso8601String(), 'published_at' => $r->published_at?->toIso8601String(),
         ])->all(), 'meta' => ['available' => $records->isNotEmpty()]]);
     }
 

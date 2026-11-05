@@ -1048,7 +1048,7 @@ export type BusinessFeedbackDetail = BusinessFeedback & {
   status_history: Array<{ from_status: string | null; to_status: string; created_at: string }>;
   has_satisfaction_response: boolean;
 };
-export type BusinessReleaseNote = { id: string; version: string; release_notes: string | null; release_notes_my: string | null; sections: Record<string, unknown> | null; known_limitations: string | null; deployed_at: string | null };
+export type BusinessReleaseNote = { id: string; version: string; release_notes: string | null; release_notes_my: string | null; sections: Record<string, unknown> | null; known_limitations: string | null; deployed_at: string | null; published_at: string | null };
 export type BusinessRoadmapEntry = { id: string; title: string; summary: string | null; module: string | null; status: string; target_quarter: string | null };
 
 export const getBusinessFeedback = (params: Record<string, string | number | undefined> = {}) => api<{ data: BusinessFeedback[]; meta: { current_page: number; last_page: number; total: number } }>(`/business/feedback${improvementQuery(params)}`);

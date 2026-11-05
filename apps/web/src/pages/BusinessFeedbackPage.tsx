@@ -1,4 +1,4 @@
-import { Plus, Star } from 'lucide-react';
+import { Plus, RefreshCw, Star } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -105,15 +105,18 @@ function ReleaseNotesView() {
   const { t, formatDate } = useI18n();
   const query = useQuery({ queryKey: ['business-release-notes'], queryFn: () => getBusinessReleaseNotes() });
   if (query.isLoading) return <div className="panel" role="status">{t('common.loading')}</div>;
-  if (query.isError) return <div className="alert alert-danger" role="alert">{t('improvement.loadError')}</div>;
+  if (query.isError) return <div className="panel"><div className="alert alert-danger" role="alert">{t('improvement.loadError')}</div><button className="table-action" type="button" onClick={() => void query.refetch()} disabled={query.isFetching}><RefreshCw size={14} /> {query.isFetching ? t('common.loading') : t('common.retry')}</button></div>;
   const notes = query.data?.data ?? [];
   if (!notes.length) return <div className="panel"><p className="muted">{t('improvement.noReleases')}</p></div>;
-  return <>{notes.map((note) => <article className="panel" key={note.id}>
-    <div className="table-card-heading"><h2>{note.version}</h2><span className="muted">{formatDate(note.deployed_at)}</span></div>
-    <p>{note.release_notes}</p>
-    {note.release_notes_my && <p className="muted">{note.release_notes_my}</p>}
-    {note.known_limitations && <p className="muted"><strong>{t('improvement.knownLimitations')}:</strong> {note.known_limitations}</p>}
-  </article>)}</>;
+  const sectionLabels: Record<string, string> = { new_features: t('improvement.newFeatures'), improvements: t('improvement.improvements'), bug_fixes: t('improvement.bugFixes'), security_notices: t('improvement.securityNotices'), required_actions: t('improvement.requiredActions') };
+  const sectionItems = (value: unknown): string[] => Array.isArray(value) ? value.map((item) => typeof item === 'string' ? item : typeof item === 'object' && item !== null ? String((item as { title?: unknown; description?: unknown }).title ?? (item as { description?: unknown }).description ?? '') : String(item)).filter(Boolean) : typeof value === 'string' && value.trim() ? [value] : [];
+  return <div className="business-release-list">{notes.map((note) => <article className="panel business-release-card" key={note.id}>
+    <div className="table-card-heading"><div><p className="eyebrow">{t('improvement.released')}</p><h2>{note.version}</h2></div><div className="muted release-note-dates"><span>{t('improvement.deployedAt')}: {formatDate(note.deployed_at)}</span>{note.published_at && <span>{t('improvement.publishedAt')}: {formatDate(note.published_at)}</span>}</div></div>
+    {note.release_notes && <p className="release-note-summary">{note.release_notes}</p>}
+    {note.release_notes_my && <p className="muted release-note-burmese">{note.release_notes_my}</p>}
+    {Object.entries(note.sections ?? {}).map(([key, value]) => { const items = sectionItems(value); return items.length ? <section className="release-note-section" key={key}><h3>{sectionLabels[key] ?? key.replaceAll('_', ' ')}</h3><ul>{items.map((item, index) => <li key={`${key}-${index}`}>{item}</li>)}</ul></section> : null; })}
+    {note.known_limitations && <section className="release-note-section"><h3>{t('improvement.knownLimitations')}</h3><p className="muted">{note.known_limitations}</p></section>}
+  </article>)}</div>;
 }
 
 function RoadmapView() {
