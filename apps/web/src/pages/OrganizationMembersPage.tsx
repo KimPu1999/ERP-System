@@ -11,7 +11,9 @@ import { StaffSummaryCards } from '../components/StaffSummaryCards';
 export function OrganizationMembersPage() {
   const [searchParams] = useSearchParams(); const client = useQueryClient();
   const companies = useQuery({ queryKey: ['companies', 'staff'], queryFn: getCompanies });
-  const companyId = searchParams.get('company_id') ?? companies.data?.data.data[0]?.id ?? '';
+  const requestedCompanyId = searchParams.get('company_id');
+  const companyList = companies.data?.data.data ?? [];
+  const companyId = (requestedCompanyId && companyList.some((company) => company.id === requestedCompanyId)) ? requestedCompanyId : companyList[0]?.id ?? '';
   const [tab, setTab] = useState<'members' | 'invitations'>('members'); const [inviteOpen, setInviteOpen] = useState(() => searchParams.get('invite') === '1'); const [filters, setFilters] = useState<MemberListParams>({ per_page: 25 });
   const roles = useQuery({ queryKey: ['roles', 'staff'], queryFn: () => getRoles(), enabled: Boolean(companyId) });
   const branches = useQuery({ queryKey: ['branches', 'staff', companyId], queryFn: () => getBranches(companyId, { per_page: 100 }), enabled: Boolean(companyId) });

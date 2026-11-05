@@ -34,7 +34,8 @@ export function RoleManagementPage() {
   const [search, setSearch] = useState(params.get('search') ?? '');
   const companies = useQuery({ queryKey: ['dashboard-companies', 'roles'], queryFn: getDashboardCompanies });
   const companyList = companies.data?.data.data ?? [];
-  const companyId = params.get('company_id') ?? companyList[0]?.id ?? '';
+  const requestedCompanyId = params.get('company_id');
+  const companyId = (requestedCompanyId && companyList.some((company) => company.id === requestedCompanyId)) ? requestedCompanyId : companyList[0]?.id ?? '';
   const assignments = useQuery({ queryKey: ['role-assignments', companyId], queryFn: () => getRoleAssignments({ company_id: companyId }), enabled: Boolean(companyId) });
   const roles = useQuery({ queryKey: ['roles', search], queryFn: () => getRoles({ search: search || undefined, per_page: 50 }), enabled: Boolean(companyId) });
   const permissions = useQuery({ queryKey: ['permissions'], queryFn: getPermissions, enabled: Boolean(companyId) });
@@ -44,7 +45,7 @@ export function RoleManagementPage() {
   const assignment = useMutation({ mutationFn: createRoleAssignment, onSuccess: () => client.invalidateQueries({ queryKey: ['role-assignments', companyId] }) });
   const removeAssignment = useMutation({ mutationFn: deleteRoleAssignment, onSuccess: () => client.invalidateQueries({ queryKey: ['role-assignments', companyId] }) });
   const canManage = Boolean(roles.data && !roles.isError);
-  useEffect(() => { if (!params.get('company_id') && companyId) { const next = new URLSearchParams(params); next.set('company_id', companyId); setParams(next, { replace: true }); } }, [params, companyId, setParams]);
+  useEffect(() => { if (companyId && params.get('company_id') !== companyId) { const next = new URLSearchParams(params); next.set('company_id', companyId); setParams(next, { replace: true }); } }, [params, companyId, setParams]);
   useEffect(() => { if (!selectedRoleId && roles.data?.data[0]) setSelectedRoleId(roles.data.data[0].id); }, [selectedRoleId, roles.data]);
   const error = roleCreate.error?.message || roleUpdate.error?.message || assignment.error?.message || removeAssignment.error?.message;
   const roleMetrics: Array<[string, string | number | undefined, LucideIcon]> = [['Total roles', roles.data?.summary.total_roles, ShieldCheck], ['Custom roles', roles.data?.summary.custom_roles, Pencil], ['Active assignments', roles.data?.summary.active_assignments, Users], ['Pending access reviews', roles.data?.summary.pending_access_reviews.available ? roles.data.summary.pending_access_reviews.reason : '—', Eye]];
