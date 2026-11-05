@@ -5,26 +5,27 @@ namespace App\Http\Controllers\Api\V1;
 use App\Services\PlatformGrowthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 final class PlatformGrowthController
 {
     public function overview(Request $request, PlatformGrowthService $growth): JsonResponse
     {
         $this->validateFilters($request);
-        return response()->json(['data' => $growth->overview($request)]);
+        return response()->json(['data' => $this->remember($request, 'overview', fn (): array => $growth->overview($request))]);
     }
 
     public function onboarding(Request $request, PlatformGrowthService $growth): JsonResponse
     {
         $this->validateFilters($request, cohort: true);
         $this->validatePagination($request);
-        return response()->json(['data' => $growth->onboarding($request)]);
+        return response()->json(['data' => $this->remember($request, 'onboarding', fn (): array => $growth->onboarding($request))]);
     }
 
     public function adoption(Request $request, PlatformGrowthService $growth): JsonResponse
     {
         $this->validateFilters($request);
-        return response()->json(['data' => $growth->adoption($request)]);
+        return response()->json(['data' => $this->remember($request, 'adoption', fn (): array => $growth->adoption($request))]);
     }
 
     public function customerSuccess(Request $request, PlatformGrowthService $growth): JsonResponse
@@ -32,13 +33,13 @@ final class PlatformGrowthController
         $this->validateFilters($request);
         $this->validatePagination($request);
         $request->validate(['search' => ['nullable', 'string', 'max:120'], 'sort' => ['nullable', 'in:name,created_at,status'], 'direction' => ['nullable', 'in:asc,desc']]);
-        return response()->json(['data' => $growth->customerSuccess($request)]);
+        return response()->json(['data' => $this->remember($request, 'customer-success', fn (): array => $growth->customerSuccess($request))]);
     }
 
     public function retention(Request $request, PlatformGrowthService $growth): JsonResponse
     {
         $this->validateFilters($request);
-        return response()->json(['data' => $growth->retention($request)]);
+        return response()->json(['data' => $this->remember($request, 'retention', fn (): array => $growth->retention($request))]);
     }
 
     private function validateFilters(Request $request, bool $cohort = false): void
@@ -57,5 +58,14 @@ final class PlatformGrowthController
     private function validatePagination(Request $request): void
     {
         if ($request->filled('per_page')) $request->validate(['per_page' => ['integer', 'min:10', 'max:100']]);
+    }
+
+    private function remember(Request $request, string $report, \Closure $callback): array
+    {
+        $filters = $request->query();
+        ksort($filters);
+        $key = 'platform-growth:' . $report . ':' . sha1(http_build_query($filters));
+
+        return Cache::remember($key, now()->addSeconds(30), $callback);
     }
 }

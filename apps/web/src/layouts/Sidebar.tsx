@@ -30,6 +30,8 @@ const platformGroups: Group[] = [
   { key: 'nav.platformSettings', items: [{ key: 'nav.platformSettings', to: '/platform/settings', icon: Settings }] },
 ];
 
+// A parent route such as `/platform` must not win over a more specific
+// destination such as `/platform/analytics` or `/platform/operations`.
 const routeMatches = (pathname: string, to: string) => to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`);
 
 export function Sidebar({ platform = false, collapsed, mobileOpen, onCollapse, onClose }: { platform?: boolean; collapsed: boolean; mobileOpen: boolean; onCollapse: () => void; onClose: () => void }) {
@@ -40,7 +42,10 @@ export function Sidebar({ platform = false, collapsed, mobileOpen, onCollapse, o
   const groups = platform ? platformGroups : companyGroups;
 
   useEffect(() => {
-    const activeGroup = groups.find((group) => group.items.some((item) => routeMatches(location.pathname, item.to)));
+    const activeGroup = groups
+      .map((group) => ({ group, matchLength: Math.max(...group.items.filter((item) => routeMatches(location.pathname, item.to)).map((item) => item.to.length), -1) }))
+      .filter(({ matchLength }) => matchLength >= 0)
+      .sort((left, right) => right.matchLength - left.matchLength)[0]?.group;
     if (activeGroup) setOpenGroups((current) => ({ ...current, [activeGroup.key]: true }));
   }, [groups, location.pathname]);
 
@@ -55,7 +60,7 @@ export function Sidebar({ platform = false, collapsed, mobileOpen, onCollapse, o
   return <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''} ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
     <div className="sidebar-top"><Brand compact={collapsed} /><button ref={closeButtonRef} className="icon-button sidebar-close" aria-label={t('app.closeNavigation')} onClick={onClose}><X size={18} /></button><button className="icon-button sidebar-collapse" aria-label={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')} onClick={onCollapse}>{collapsed ? <ChevronRight size={18} /> : <PanelLeftClose size={18} />}</button></div>
     <div className="workspace-badge"><span className="workspace-dot" />{!collapsed && <span>{platform ? t('app.platform') : t('app.workspace')}</span>}</div>
-    <nav className="side-nav" aria-label={platform ? t('app.platform') : t('nav.workspace')}>{groups.map((group) => { const groupLabel = t(group.key); return <div className="nav-group" key={group.key}>{!collapsed && <button className="nav-group-toggle" onClick={() => setOpenGroups((current) => ({ ...current, [group.key]: !current[group.key] }))} aria-label={groupLabel} aria-expanded={openGroups[group.key]}><span className="nav-group-label">{groupLabel}</span><span aria-hidden="true">{openGroups[group.key] ? '−' : '+'}</span></button>}{(collapsed || openGroups[group.key]) && group.items.map(({ key, to, icon: Icon }) => { const label = t(key); return <NavLink end={to === '/'} key={`${group.key}-${to}-${key}`} to={to} onClick={onClose} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={({ isActive }) => `side-link ${isActive ? 'active' : ''}`}><Icon size={18} /><span>{!collapsed && label}</span></NavLink>; })}</div>; })}</nav>
+    <nav className="side-nav" aria-label={platform ? t('app.platform') : t('nav.workspace')}>{groups.map((group) => { const groupLabel = t(group.key); return <div className="nav-group" key={group.key}>{!collapsed && <button className="nav-group-toggle" onClick={() => setOpenGroups((current) => ({ ...current, [group.key]: !current[group.key] }))} aria-label={groupLabel} aria-expanded={openGroups[group.key]}><span className="nav-group-label">{groupLabel}</span><span aria-hidden="true">{openGroups[group.key] ? '−' : '+'}</span></button>}{(collapsed || openGroups[group.key]) && group.items.map(({ key, to, icon: Icon }) => { const label = t(key); return <NavLink end={to === '/' || to === '/platform'} key={`${group.key}-${to}-${key}`} to={to} onClick={onClose} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} className={({ isActive }) => `side-link ${isActive ? 'active' : ''}`}><Icon size={18} /><span>{!collapsed && label}</span></NavLink>; })}</div>; })}</nav>
     <div className="sidebar-bottom"><div className="sidebar-version">{!collapsed && 'ERP Cloud · v1.0'}</div></div>
   </aside>;
 }

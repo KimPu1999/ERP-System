@@ -26,7 +26,7 @@ export function PlatformAnalyticsCenterPage({ mode }: { mode: PlatformAnalyticsM
   const isSecurityExports = mode === 'security-exports';
   const period = searchParams.get('period') ?? 'monthly';
   const filters: PlatformAnalyticsFilters = { period: period as PlatformAnalyticsFilters['period'], granularity: (searchParams.get('granularity') ?? undefined) as PlatformAnalyticsFilters['granularity'], from: searchParams.get('from') ?? undefined, to: searchParams.get('to') ?? undefined, search: searchParams.get('search') ?? undefined, status: searchParams.get('status') ?? undefined, tenant_id: searchParams.get('tenant_id') ?? undefined, actor_user_id: searchParams.get('actor_user_id') ?? undefined, category: searchParams.get('category') ?? undefined, result: searchParams.get('result') ?? undefined, currency_code: searchParams.get('currency_code') ?? undefined, report: mode === 'financial' ? (searchParams.get('report') ?? 'invoices') as 'invoices' | 'outstanding' | 'payments' | 'refunds' : undefined, page: Number(searchParams.get('page') ?? '1'), per_page: 25 };
-  const query = useQuery({ queryKey: ['platform-analytics-center', mode, filters], queryFn: async (): Promise<CenterPayload> => {
+  const query = useQuery({ queryKey: ['platform-analytics-center', mode, filters], staleTime: 60_000, refetchOnWindowFocus: false, queryFn: async (): Promise<CenterPayload> => {
     if (mode === 'overview') return (await getPlatformAnalyticsOverview(filters)).data;
     if (mode === 'businesses') return (await getPlatformBusinessAnalytics(filters)).data;
     if (mode === 'users') return (await getPlatformUserAnalytics(filters)).data;
@@ -35,7 +35,7 @@ export function PlatformAnalyticsCenterPage({ mode }: { mode: PlatformAnalyticsM
     if (mode === 'usage') return (await getPlatformUsageAnalytics(filters)).data;
     if (mode === 'financial') return (await getPlatformFinancialReport(filters)).data;
     return (await getPlatformReportExports({ page: filters.page, per_page: filters.per_page, security: mode === 'security-exports' })).data;
-  }, staleTime: 30_000, placeholderData: (previous) => previous });
+  }, placeholderData: (previous) => previous });
   const update = (key: string, value: string) => { const next = new URLSearchParams(searchParams); if (value) next.set(key, value); else next.delete(key); next.set('page', '1'); setSearchParams(next); };
   const title = mode === 'overview' ? t('platform.analyticsTitle') : isSecurityExports ? t('security.reportExportsTitle', 'Security report exports') : `Platform ${mode}`;
   const eyebrow = isSecurityExports ? t('security.center', 'Security Center') : t('platform.analytics');

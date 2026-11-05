@@ -27,7 +27,7 @@ export function PlatformGrowthCenterPage({ mode }: { mode: PlatformGrowthMode })
   };
   const queryKey = ['platform-growth-center', mode, filters];
   const query = useQuery({
-    queryKey, staleTime: 30_000, placeholderData: (previous) => previous,
+    queryKey, staleTime: 60_000, refetchOnWindowFocus: false, placeholderData: (previous) => previous,
     queryFn: async (): Promise<GrowthPayload> => {
       if (mode === 'onboarding') return (await getPlatformGrowthOnboarding(filters)).data;
       if (mode === 'adoption') return (await getPlatformGrowthAdoption(filters)).data;
