@@ -510,7 +510,15 @@ export const getSupplierFinancialSummary = (companyId?: string) => api<{ data: S
 export const getSupplierFinancialDirectory = (params: Record<string, string | number | undefined> = {}) => { const q = queryString(params); return api<{ data: { data: SupplierFinancialRow[]; current_page: number; last_page: number; total: number }; summary: SupplierFinancialSummary }>('/purchasing/suppliers/financial' + (q ? '?' + q : '')); };
 export const getSupplierFinancialProfile = (id: string, companyId?: string) => api<{ data: { supplier: Supplier; profile: SupplierFinancialRow | null; bank_accounts: Array<{ id: string; bank_name: string; masked_reference: string; verification_status: string; is_default: boolean }>; payment_holds: Array<{ id: string; hold_type: string; reason: string; status: string }>; ap: { available: boolean; outstanding?: string; overdue?: number; currency_code?: string | null } } }>('/purchasing/suppliers/' + id + '/financial-profile' + (companyId ? '?company_id=' + encodeURIComponent(companyId) : ''));
 const purchaseOrderQuery = (params: PurchaseOrderListParams = {}) => queryString(params);
-export const getPurchaseOrders = (params: PurchaseOrderListParams = {}) => api<PurchaseOrderPage>(`/purchase-orders${purchaseOrderQuery(params) ? `?${purchaseOrderQuery(params)}` : ''}`);
+const trimDisplayDecimal = (value?: string | null): string | null | undefined => {
+  if (value === null || value === undefined) return value;
+  const [rawInteger, rawFraction] = value.split('.');
+  const sign = rawInteger.startsWith('-') ? '-' : '';
+  const integer = rawInteger.replace('-', '').replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const fraction = (rawFraction ?? '').replace(/0+$/, '');
+  return `${sign}${integer}${fraction ? `.${fraction}` : ''}`;
+};
+export const getPurchaseOrders = (params: PurchaseOrderListParams = {}) => api<PurchaseOrderPage>(`/purchase-orders${purchaseOrderQuery(params) ? `?${purchaseOrderQuery(params)}` : ''}`).then((response) => ({ ...response, data: { ...response.data, data: response.data.data.map((order) => ({ ...order, base_total: trimDisplayDecimal(order.base_total), grand_total: trimDisplayDecimal(order.grand_total) })) } }));
 export const getPurchaseOrder = (id: string) => api<{ data: PurchaseOrder }>(`/purchase-orders/${id}`);
 export const getWarehouses = (companyId: string, branchId?: string) => api<{ data: { data: Warehouse[] } }>(`/warehouses?company_id=${encodeURIComponent(companyId)}${branchId ? `&branch_id=${encodeURIComponent(branchId)}` : ''}`);
 export type WarehouseLocation = { id: string; warehouse_id: string; name: string; code: string; is_active: boolean };
