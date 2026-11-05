@@ -6674,7 +6674,7 @@ table tbody tr:hover { background: var(--surface-hover); }
 /* Shared compact primitives used by dashboard, forms, filters, tables, and tabs. */
 .app-header { background: var(--surface); border-bottom-color: var(--border); box-shadow: none; backdrop-filter: none; }
 .content { background: var(--background); }
-.page-section { max-width: 1480px; padding: 24px 28px 36px; }
+.page-section { max-width: none; padding: 24px 28px 36px; }
 .page-heading { margin-bottom: 20px; }
 .metric, .card, .panel, .table-card, .empty { border-radius: 8px; box-shadow: none; }
 .metric, .card { padding: 16px; }
