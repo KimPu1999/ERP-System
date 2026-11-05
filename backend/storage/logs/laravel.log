@@ -37984,3 +37984,61 @@ LINE 1: select count(*) as \"aggregate\" from \"product_feedback\"
 #83 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/kimpu/De...')
 #84 {main}
 "} 
+[2026-11-05 03:00:31] local.ERROR: SQLSTATE[08006] [7] connection to server at "127.0.0.1", port 5432 failed: Operation not permitted
+	Is the server running on that host and accepting TCP/IP connections? (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: erp, SQL: select c.relname as name, n.nspname as schema, pg_total_relation_size(c.oid) as size, obj_description(c.oid, 'pg_class') as comment from pg_class c, pg_namespace n where c.relkind in ('r', 'p') and n.oid = c.relnamespace and n.nspname <> 'information_schema' and n.nspname not like 'pg\_%' order by n.nspname, c.relname) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 7): SQLSTATE[08006] [7] connection to server at \"127.0.0.1\", port 5432 failed: Operation not permitted
+\tIs the server running on that host and accepting TCP/IP connections? (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: erp, SQL: select c.relname as name, n.nspname as schema, pg_total_relation_size(c.oid) as size, obj_description(c.oid, 'pg_class') as comment from pg_class c, pg_namespace n where c.relkind in ('r', 'p') and n.oid = c.relnamespace and n.nspname <> 'information_schema' and n.nspname not like 'pg\\_%' order by n.nspname, c.relname) at /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:864)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(820): Illuminate\\Database\\Connection->runQueryCallback('select c.relnam...', Array, Object(Closure))
+#1 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(433): Illuminate\\Database\\Connection->run('select c.relnam...', Array, Object(Closure))
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(419): Illuminate\\Database\\Connection->select('select c.relnam...', Array, false)
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Builder.php(218): Illuminate\\Database\\Connection->selectFromWriteConnection('select c.relnam...')
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/TableCommand.php(45): Illuminate\\Database\\Schema\\Builder->getTables()
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\TableCommand->handle(Object(Illuminate\\Database\\DatabaseManager))
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#10 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call(Array)
+#11 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(285): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(1154): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(380): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\TableCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(219): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(205): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#19 {main}
+
+[previous exception] [object] (PDOException(code: 7): SQLSTATE[08006] [7] connection to server at \"127.0.0.1\", port 5432 failed: Operation not permitted
+\tIs the server running on that host and accepting TCP/IP connections? at /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:67)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(67): PDO::connect('pgsql:host=127....', 'erp', Object(SensitiveParameterValue), Array)
+#1 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('pgsql:host=127....', 'erp', Object(SensitiveParameterValue), Array)
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/PostgresConnector.php(35): Illuminate\\Database\\Connectors\\Connector->createConnection('pgsql:host=127....', Array, Array)
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(220): Illuminate\\Database\\Connectors\\PostgresConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->{closure:Illuminate\\Database\\Connectors\\ConnectionFactory::createPdoResolverWithHosts():213}()
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1333): call_user_func(Object(Closure))
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(549): Illuminate\\Database\\Connection->getPdo()
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(442): Illuminate\\Database\\Connection->getPdoForSelect(false)
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(853): Illuminate\\Database\\Connection->{closure:Illuminate\\Database\\Connection::select():433}('select c.relnam...', Array)
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(820): Illuminate\\Database\\Connection->runQueryCallback('select c.relnam...', Array, Object(Closure))
+#10 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(433): Illuminate\\Database\\Connection->run('select c.relnam...', Array, Object(Closure))
+#11 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(419): Illuminate\\Database\\Connection->select('select c.relnam...', Array, false)
+#12 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Schema/Builder.php(218): Illuminate\\Database\\Connection->selectFromWriteConnection('select c.relnam...')
+#13 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Database/Console/TableCommand.php(45): Illuminate\\Database\\Schema\\Builder->getTables()
+#14 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\TableCommand->handle(Object(Illuminate\\Database\\DatabaseManager))
+#15 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()
+#16 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#17 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#18 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#19 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call(Array)
+#20 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Command/Command.php(285): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#21 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#22 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(1154): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#23 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(380): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\TableCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#24 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/console/Application.php(219): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#25 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(205): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#26 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#27 /Users/kimpu/Desktop/ERP-System/backend/artisan(7): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#28 {main}
+"} 
