@@ -154,8 +154,8 @@ Route::prefix('v1')->group(function (): void {
                 Route::patch('/settings', [PlatformAuditController::class, 'updateSettings'])->middleware('web');
             });
             Route::get('/settings', [PlatformConfigurationController::class, 'index']);
-            Route::get('/settings/{category}', [PlatformConfigurationController::class, 'show'])->where('category', 'general|branding|email|localization|business|subscriptions|notifications|maintenance');
-            Route::patch('/settings/{category}', [PlatformConfigurationController::class, 'update'])->middleware('web')->where('category', 'general|branding|email|localization|business|subscriptions|notifications|maintenance');
+            Route::get('/settings/{category}', [PlatformConfigurationController::class, 'show'])->where('category', 'general|branding|appearance|email|localization|business|subscriptions|notifications|maintenance');
+            Route::patch('/settings/{category}', [PlatformConfigurationController::class, 'update'])->middleware('web')->where('category', 'general|branding|appearance|email|localization|business|subscriptions|notifications|maintenance');
             Route::post('/settings/branding/assets', [PlatformConfigurationController::class, 'uploadBranding'])->middleware('web')->middleware('throttle:10,1');
             Route::delete('/settings/branding/assets/{assetKey}', [PlatformConfigurationController::class, 'removeBranding'])->middleware('web')->where('assetKey', 'logo|dark_logo|favicon');
             Route::post('/settings/email/test', [PlatformConfigurationController::class, 'emailTest'])->middleware(['web', 'throttle:3,10']);

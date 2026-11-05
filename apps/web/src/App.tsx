@@ -113,11 +113,12 @@ import { ModernCustomerDirectoryPage } from './pages/CustomerDirectoryPage';
 import { ModernLeadDirectoryPage, ModernOpportunityPage } from './pages/CrmLeadsOpportunitiesPage';
 import { ModernActivitiesPage, ModernPipelinePage, ModernQuotationsPage } from './pages/CrmOperationsPages';
 import { I18nProvider } from './lib/i18n';
+import { AppearanceThemeSync } from './components/AppearanceThemeSync';
 
 const client = new QueryClient();
 
 export default function App() {
-  return <QueryClientProvider client={client}><BrowserRouter><I18nProvider><AuthProvider><Routes>
+  return <QueryClientProvider client={client}><BrowserRouter><I18nProvider><AuthProvider><AppearanceThemeSync /><Routes>
     <Route element={<AuthLayout />}>
       <Route path="/platform/login" element={<PlatformLoginPage />} />
       <Route path="/platform/accept-invite" element={<PlatformAcceptInvitePage />} />
