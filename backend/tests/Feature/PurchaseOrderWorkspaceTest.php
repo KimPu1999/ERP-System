@@ -61,6 +61,44 @@ it('rejects zero quantity purchase order lines', function (): void {
         ->assertJsonValidationErrors('items');
 });
 
+it('rejects invalid supplier, product, and negative unit price input', function (): void {
+    [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
+    $headers = ['X-Tenant-Id' => $tenant->id];
+
+    $this->actingAs($user)->postJson('/api/v1/purchase-orders', [
+        'company_id' => $company->id,
+        'supplier_id' => fake()->uuid(),
+        'items' => [['variant_id' => $variant->id, 'ordered_quantity' => '1', 'unit_price' => '10']],
+    ], $headers)->assertNotFound();
+
+    $this->actingAs($user)->postJson('/api/v1/purchase-orders', [
+        'company_id' => $company->id,
+        'supplier_id' => $supplier->id,
+        'items' => [['variant_id' => fake()->uuid(), 'ordered_quantity' => '1', 'unit_price' => '10']],
+    ], $headers)->assertNotFound();
+
+    $this->actingAs($user)->postJson('/api/v1/purchase-orders', [
+        'company_id' => $company->id,
+        'supplier_id' => $supplier->id,
+        'items' => [['variant_id' => $variant->id, 'ordered_quantity' => '1', 'unit_price' => '-1']],
+    ], $headers)->assertUnprocessable()->assertJsonValidationErrors('items.0.unit_price');
+});
+
+it('generates unique purchase order numbers for consecutive drafts', function (): void {
+    [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
+    $headers = ['X-Tenant-Id' => $tenant->id];
+    $payload = [
+        'company_id' => $company->id,
+        'supplier_id' => $supplier->id,
+        'items' => [['variant_id' => $variant->id, 'ordered_quantity' => '1', 'unit_price' => '10']],
+    ];
+
+    $first = $this->actingAs($user)->postJson('/api/v1/purchase-orders', $payload, $headers)->assertCreated();
+    $second = $this->actingAs($user)->postJson('/api/v1/purchase-orders', $payload, $headers)->assertCreated();
+
+    expect($first->json('data.number'))->not->toBe($second->json('data.number'));
+});
+
 it('enforces an active supplier purchasing hold before draft creation', function (): void {
     [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
     SupplierPurchasingHold::create([

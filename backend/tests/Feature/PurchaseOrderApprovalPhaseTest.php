@@ -116,3 +116,21 @@ it('requires a reason for revision, preserves the prior cycle, and allows resubm
     expect(ApprovalRequest::where('document_id', $order->id)->count())->toBe(2);
     expect(ApprovalRequest::where('document_id', $order->id)->orderBy('approval_cycle')->first()->actions()->count())->toBe(1);
 });
+
+it('persists the configured self-approval policy instead of forcing a hidden default', function (): void {
+    [$requester, , , $tenant, $company] = purchaseApprovalFixture();
+    $definition = ApprovalDefinition::where('tenant_id', $tenant->id)->where('company_id', $company->id)->firstOrFail();
+
+    $this->actingAs($requester)->patchJson('/api/v1/purchasing/approval-policies/'.$definition->id, [
+        'company_id' => $company->id,
+        'name' => $definition->name,
+        'currency_code' => 'MMK',
+        'allow_self_approval' => true,
+        'is_active' => true,
+        'steps' => [
+            ['level' => 1, 'permission' => 'procurement.approve.level1', 'minimum_amount' => '0', 'maximum_amount' => null],
+        ],
+    ], approvalHeaders($tenant->id))->assertOk()->assertJsonPath('data.allow_self_approval', true);
+
+    expect($definition->fresh()->allow_self_approval)->toBeTrue();
+});
