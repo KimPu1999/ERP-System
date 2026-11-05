@@ -16,12 +16,12 @@ final class PlatformTenantController
     public function index(Request $request, PlatformOverviewService $overview): JsonResponse
     {
         $query = Tenant::query()
-            ->withCount(['users', 'companies', 'memberships'])
+            ->withCount(['users', 'companies', 'memberships', 'memberships as active_members_count' => fn ($builder) => $builder->where('status', 'active')])
             ->with(['modules', 'subscription.plan', 'companies' => fn ($q) => $q->withCount('branches'), 'memberships.user.roleAssignments.role.permissions'])
             ->orderBy('name');
 
         if ($search = trim((string) $request->query('search'))) {
-            $query->where(fn ($builder) => $builder->where('name', 'ilike', "%{$search}%")->orWhere('slug', 'ilike', "%{$search}%"));
+            $query->where(fn ($builder) => $builder->where('name', 'ilike', "%{$search}%")->orWhere('slug', 'ilike', "%{$search}%")->orWhereHas('companies', fn ($companyQuery) => $companyQuery->where('email', 'ilike', "%{$search}%")->orWhere('phone', 'ilike', "%{$search}%")));
         }
         if ($ownerEmail = trim((string) $request->query('owner_email'))) {
             $query->whereHas('memberships.user', fn ($builder) => $builder->whereRaw('LOWER(email) LIKE ?', ['%'.strtolower($ownerEmail).'%']));
@@ -35,7 +35,7 @@ final class PlatformTenantController
         $direction = $request->query('direction', 'asc') === 'desc' ? 'desc' : 'asc';
         $query->reorder()->orderBy(in_array($sort, ['name', 'created_at', 'status'], true) ? $sort : 'name', $direction)->orderBy('id', $direction);
 
-        $tenants = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
+        $tenants = $query->paginate(min(100, max(10, (int) $request->query('per_page', 10))));
         $tenants->through(fn (Tenant $tenant) => $this->tenantListPayload($tenant));
         return response()->json(['data' => $tenants, 'summary' => $overview->summary($request)]);
     }
@@ -43,9 +43,10 @@ final class PlatformTenantController
     public function export(Request $request)
     {
         $query = Tenant::query()->with(['companies:id,tenant_id,name', 'memberships.user:id,name,email'])->orderBy('name');
-        if ($search = trim((string) $request->query('search'))) $query->where(fn ($builder) => $builder->where('name', 'ilike', "%{$search}%")->orWhere('slug', 'ilike', "%{$search}%"));
+        if ($search = trim((string) $request->query('search'))) $query->where(fn ($builder) => $builder->where('name', 'ilike', "%{$search}%")->orWhere('slug', 'ilike', "%{$search}%")->orWhereHas('companies', fn ($companyQuery) => $companyQuery->where('email', 'ilike', "%{$search}%")->orWhere('phone', 'ilike', "%{$search}%")));
         if ($ownerEmail = trim((string) $request->query('owner_email'))) $query->whereHas('memberships.user', fn ($builder) => $builder->whereRaw('LOWER(email) LIKE ?', ['%'.strtolower($ownerEmail).'%']));
         if ($status = $request->query('status')) $query->where('status', $status);
+        if ($planId = $request->query('plan_id')) $query->whereHas('subscription', fn ($builder) => $builder->where('plan_id', $planId));
         if ($from = $request->query('created_from')) $query->whereDate('created_at', '>=', $from);
         if ($to = $request->query('created_to')) $query->whereDate('created_at', '<=', $to);
         $tenants = $query->get();
@@ -191,7 +192,7 @@ final class PlatformTenantController
     {
         $subscription = TenantSubscription::where('tenant_id', $tenant->id)->with('plan')->first();
         $roles = Role::where('tenant_id', $tenant->id)->with('permissions:id,name')->orderBy('name')->get(['id', 'tenant_id', 'name', 'slug']);
-        $payload = ['id' => $tenant->id, 'name' => $tenant->name, 'slug' => $tenant->slug, 'status' => $tenant->status, 'created_at' => $tenant->created_at?->toISOString(), 'users_count' => $tenant->users_count ?? $tenant->memberships()->count(), 'companies_count' => $tenant->companies_count ?? $tenant->companies()->count(), 'companies' => $tenant->relationLoaded('companies') ? $tenant->companies->map(fn (Company $company) => $company->only(['id', 'name', 'code', 'is_active', 'email', 'phone', 'country_code', 'timezone', 'base_currency', 'business_type', 'registration_number', 'tax_identifier', 'tax_registration_details']) + ['branches_count' => $company->branches_count ?? $company->branches()->count()])->values() : [], 'modules' => $tenant->relationLoaded('modules') ? $tenant->modules->map->only(['id', 'module_key', 'enabled', 'settings'])->values() : [], 'subscription' => $subscription ? $subscription->only(['id', 'state', 'billing_cycle', 'trial_ends_at', 'current_period_ends_at', 'seat_count']) + ['plan' => $subscription->plan?->only(['id', 'code', 'name'])] : null, 'roles' => $roles->map(fn (Role $role) => $role->only(['id', 'name', 'slug']) + ['permissions' => $role->permissions->pluck('name')->values()])->values()];
+        $payload = ['id' => $tenant->id, 'name' => $tenant->name, 'slug' => $tenant->slug, 'status' => $tenant->status, 'created_at' => $tenant->created_at?->toISOString(), 'users_count' => $tenant->users_count ?? $tenant->memberships()->count(), 'active_members_count' => $tenant->active_members_count ?? $tenant->memberships()->where('status', 'active')->count(), 'companies_count' => $tenant->companies_count ?? $tenant->companies()->count(), 'companies' => $tenant->relationLoaded('companies') ? $tenant->companies->map(fn (Company $company) => $company->only(['id', 'name', 'code', 'is_active', 'email', 'phone', 'country_code', 'timezone', 'base_currency', 'business_type', 'registration_number', 'tax_identifier', 'tax_registration_details']) + ['branches_count' => $company->branches_count ?? $company->branches()->count()])->values() : [], 'modules' => $tenant->relationLoaded('modules') ? $tenant->modules->map->only(['id', 'module_key', 'enabled', 'settings'])->values() : [], 'subscription' => $subscription ? $subscription->only(['id', 'state', 'billing_cycle', 'trial_ends_at', 'current_period_ends_at', 'seat_count']) + ['plan' => $subscription->plan?->only(['id', 'code', 'name'])] : null, 'roles' => $roles->map(fn (Role $role) => $role->only(['id', 'name', 'slug']) + ['permissions' => $role->permissions->pluck('name')->values()])->values()];
         if ($tenant->relationLoaded('memberships')) {
             $owner = $tenant->memberships->first(fn (TenantMembership $membership) => $membership->status === 'active' && $membership->user && $membership->user->roleAssignments->contains(fn (RoleAssignment $assignment) => $assignment->tenant_id === $tenant->id && !$assignment->company_id && !$assignment->branch_id && !$assignment->department_id && $assignment->role?->permissions?->pluck('name')->intersect(['organization.manage', 'members.invite'])->isNotEmpty()));
             $payload['owner_admin'] = $owner?->user?->only(['id', 'name', 'email']);

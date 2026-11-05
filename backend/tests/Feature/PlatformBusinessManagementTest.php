@@ -267,3 +267,14 @@ it('exports only authorized business directory fields', function (): void {
     $this->actingAs($f['platform'])->get('/api/v1/platform/tenants/export')->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
     $this->actingAs($f['owner'])->get('/api/v1/platform/tenants/export')->assertForbidden();
 });
+
+it('searches business contact data and reports active member counts in the tenant directory', function (): void {
+    $f = platformBusinessFixture();
+    $secondUser = User::factory()->create();
+    TenantMembership::create(['tenant_id' => $f['tenant']->id, 'user_id' => $secondUser->id, 'status' => 'suspended']);
+    $f['company']->update(['email' => 'contact@platform-business.test']);
+
+    $response = $this->actingAs($f['platform'])->getJson('/api/v1/platform/tenants?search=contact%40platform-business.test&per_page=10', ['Accept' => 'application/json'])->assertOk();
+
+    $response->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.id', $f['tenant']->id)->assertJsonPath('data.data.0.active_members_count', 1);
+});
