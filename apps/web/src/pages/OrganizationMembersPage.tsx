@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createCompanyInvitation, getBranches, getCompanyInvitations, getCompanyMembers, getCompanyTeams, getCompanies, getDepartments, getRoles, resendCompanyInvitation, revokeCompanyInvitation, updateCompanyMemberStatus, type CompanyInvitation, type MemberListParams, type StaffMember } from '../lib/api';
 import { InviteMemberForm } from '../components/InviteMemberForm';
@@ -9,18 +9,26 @@ import { MembersTable } from '../components/MembersTable';
 import { StaffSummaryCards } from '../components/StaffSummaryCards';
 
 export function OrganizationMembersPage() {
-  const [searchParams] = useSearchParams(); const client = useQueryClient();
-  const companies = useQuery({ queryKey: ['companies', 'staff'], queryFn: getCompanies });
+  const [searchParams, setSearchParams] = useSearchParams(); const client = useQueryClient();
+  const companies = useQuery({ queryKey: ['companies', 'staff'], queryFn: getCompanies, staleTime: 0, refetchOnMount: 'always' });
   const requestedCompanyId = searchParams.get('company_id');
   const companyList = companies.data?.data.data ?? [];
   const companyId = (requestedCompanyId && companyList.some((company) => company.id === requestedCompanyId)) ? requestedCompanyId : companyList[0]?.id ?? '';
+  const companyContextReady = !companies.isLoading && !companies.isFetching && Boolean(companyId);
   const [tab, setTab] = useState<'members' | 'invitations'>('members'); const [inviteOpen, setInviteOpen] = useState(() => searchParams.get('invite') === '1'); const [filters, setFilters] = useState<MemberListParams>({ per_page: 25 });
-  const roles = useQuery({ queryKey: ['roles', 'staff'], queryFn: () => getRoles(), enabled: Boolean(companyId) });
-  const branches = useQuery({ queryKey: ['branches', 'staff', companyId], queryFn: () => getBranches(companyId, { per_page: 100 }), enabled: Boolean(companyId) });
-  const departments = useQuery({ queryKey: ['departments', 'staff'], queryFn: () => getDepartments({ company_id: companyId }), enabled: Boolean(companyId) });
-  const teams = useQuery({ queryKey: ['teams', companyId], queryFn: () => getCompanyTeams(companyId), enabled: Boolean(companyId) });
-  const members = useQuery({ queryKey: ['company-members', companyId, filters], queryFn: () => getCompanyMembers(companyId, filters), enabled: Boolean(companyId) });
-  const invitations = useQuery({ queryKey: ['company-invitations', companyId], queryFn: () => getCompanyInvitations(companyId, { per_page: 100 }), enabled: Boolean(companyId) });
+  const roles = useQuery({ queryKey: ['roles', 'staff'], queryFn: () => getRoles(), enabled: companyContextReady });
+  const branches = useQuery({ queryKey: ['branches', 'staff', companyId], queryFn: () => getBranches(companyId, { per_page: 100 }), enabled: companyContextReady });
+  const departments = useQuery({ queryKey: ['departments', 'staff'], queryFn: () => getDepartments({ company_id: companyId }), enabled: companyContextReady });
+  const teams = useQuery({ queryKey: ['teams', companyId], queryFn: () => getCompanyTeams(companyId), enabled: companyContextReady });
+  const members = useQuery({ queryKey: ['company-members', companyId, filters], queryFn: () => getCompanyMembers(companyId, filters), enabled: companyContextReady });
+  const invitations = useQuery({ queryKey: ['company-invitations', companyId], queryFn: () => getCompanyInvitations(companyId, { per_page: 100 }), enabled: companyContextReady });
+  useEffect(() => {
+    if (companyId && searchParams.get('company_id') !== companyId) {
+      const next = new URLSearchParams(searchParams);
+      next.set('company_id', companyId);
+      setSearchParams(next, { replace: true });
+    }
+  }, [companyId, searchParams, setSearchParams]);
   const invite = useMutation({ mutationFn: (data: Parameters<typeof createCompanyInvitation>[1]) => createCompanyInvitation(companyId, data), onSuccess: () => { setInviteOpen(false); void client.invalidateQueries({ queryKey: ['company-invitations', companyId] }); } });
   const status = useMutation({ mutationFn: ({ member, next }: { member: StaffMember; next: 'active' | 'suspended' | 'revoked' }) => updateCompanyMemberStatus(companyId, member.id, next), onSuccess: () => void client.invalidateQueries({ queryKey: ['company-members', companyId] }) });
   const resend = useMutation({ mutationFn: (invitation: CompanyInvitation) => resendCompanyInvitation(companyId, invitation.id), onSuccess: () => void client.invalidateQueries({ queryKey: ['company-invitations', companyId] }) });
