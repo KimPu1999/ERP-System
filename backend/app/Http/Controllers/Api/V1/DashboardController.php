@@ -70,8 +70,8 @@ final class DashboardController
                 'low_stock_products' => $this->metric((string) $lowStock),
             ],
             'charts' => [
-                'revenue_expenses' => $this->dailySeries($tenantId, $companyId, $branchId, $from, $to),
-                'sales_trend' => $this->monthlySeries($tenantId, $companyId, $branchId, $from, $to),
+                'revenue_expenses' => $this->dailySeries($tenantId, $companyId, $branchId, $from, $to, $timezone),
+                'sales_trend' => $this->monthlySeries($tenantId, $companyId, $branchId, $from, $to, $timezone),
                 'sales_by_category' => $this->salesByCategory($tenantId, $companyId, $branchId, $from, $to),
             ],
             'recent_sales' => $this->recentSales($tenantId, $companyId, $branchId),
@@ -379,7 +379,7 @@ final class DashboardController
     {
         $tenantId = (string) $request->header('X-Tenant-Id');
         $filters = $request->validate([
-            'period' => ['nullable', 'in:today,last_7_days,last_30_days,this_month,this_year,custom'],
+            'period' => ['nullable', 'in:today,yesterday,last_7_days,last_30_days,this_month,last_month,this_quarter,this_year,custom'],
             'from' => ['nullable', 'date'], 'to' => ['nullable', 'date'],
             'date_from' => ['nullable', 'date'], 'date_to' => ['nullable', 'date'],
             'company_id' => ['nullable', 'uuid'], 'branch_id' => ['nullable', 'uuid'],
@@ -546,20 +546,22 @@ final class DashboardController
         return DB::table('inventory_alerts as ia')->join('warehouse_locations as wl', 'wl.id', '=', 'ia.location_id')->join('warehouses as w', 'w.id', '=', 'wl.warehouse_id')->where('ia.tenant_id', $tenantId)->whereNull('ia.resolved_at')->when($companyId, fn ($q) => $q->where('w.company_id', $companyId))->when($branchId, fn ($q) => $q->where('w.branch_id', $branchId))->distinct('ia.variant_id')->count('ia.variant_id');
     }
 
-    private function dailySeries(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function dailySeries(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to, string $timezone): array
     {
-        $revenue = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw('DATE(created_at) as day, SUM(COALESCE(base_total, total)) as value')->groupBy('day')->pluck('value', 'day');
-        $expenses = $this->scope(DB::table('purchase_orders as po')->where('po.tenant_id', $tenantId)->whereNotIn('po.state', ['draft', 'cancelled', 'rejected'])->whereBetween('po.created_at', [$from, $to]), $companyId, $branchId, 'po')->selectRaw('DATE(po.created_at) as day, SUM(COALESCE(po.base_total, (SELECT COALESCE(SUM(poi.ordered_quantity * poi.unit_price), 0) FROM purchase_order_items poi WHERE poi.purchase_order_id = po.id))) as value')->groupBy('day')->pluck('value', 'day');
+        $revenue = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw("TO_CHAR(sales_invoices.created_at AT TIME ZONE ?, 'YYYY-MM-DD') as day, SUM(COALESCE(base_total, total)) as value", [$timezone])->groupBy('day')->pluck('value', 'day');
+        $creditNotes = DB::table('credit_notes as cn')->join('sales_invoices as si', 'si.id', '=', 'cn.invoice_id')->where('cn.tenant_id', $tenantId)->whereNotIn('cn.state', ['draft', 'cancelled', 'void'])->whereBetween('cn.created_at', [$from, $to])->when($companyId, fn ($q) => $q->where('si.company_id', $companyId))->when($branchId, fn ($q) => $q->where('si.branch_id', $branchId))->selectRaw("TO_CHAR(cn.created_at AT TIME ZONE ?, 'YYYY-MM-DD') as day, SUM(cn.total * COALESCE(si.exchange_rate, 1)) as value", [$timezone])->groupBy('day')->pluck('value', 'day');
+        $expenses = $this->scope(DB::table('purchase_orders as po')->where('po.tenant_id', $tenantId)->whereNotIn('po.state', ['draft', 'cancelled', 'rejected'])->whereBetween('po.created_at', [$from, $to]), $companyId, $branchId, 'po')->selectRaw("TO_CHAR(po.created_at AT TIME ZONE ?, 'YYYY-MM-DD') as day, SUM(COALESCE(po.base_total, (SELECT COALESCE(SUM(poi.ordered_quantity * poi.unit_price), 0) FROM purchase_order_items poi WHERE poi.purchase_order_id = po.id))) as value", [$timezone])->groupBy('day')->pluck('value', 'day');
         $result = [];
-        for ($date = $from->startOfDay(); $date->lte($to); $date = $date->addDay()) $result[] = ['label' => $date->format('M j'), 'revenue' => (string) ($revenue[$date->toDateString()] ?? '0'), 'expenses' => (string) ($expenses[$date->toDateString()] ?? '0')];
+        for ($date = $from->startOfDay(); $date->lte($to); $date = $date->addDay()) { $key = $date->toDateString(); $result[] = ['label' => $date->format('M j'), 'revenue' => Decimal::sub((string) ($revenue[$key] ?? '0'), (string) ($creditNotes[$key] ?? '0')), 'expenses' => (string) ($expenses[$key] ?? '0')]; }
         return $this->sampleSeries($result, 14);
     }
 
-    private function monthlySeries(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function monthlySeries(string $tenantId, ?string $companyId, ?string $branchId, CarbonImmutable $from, CarbonImmutable $to, string $timezone): array
     {
-        $rows = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month, SUM(COALESCE(base_total, total)) as value")->groupBy('month')->pluck('value', 'month');
+        $rows = $this->scope(SalesInvoice::where('tenant_id', $tenantId)->whereNotIn('state', ['draft', 'cancelled', 'void'])->whereBetween('created_at', [$from, $to]), $companyId, $branchId)->selectRaw("TO_CHAR(sales_invoices.created_at AT TIME ZONE ?, 'YYYY-MM') as month, SUM(COALESCE(base_total, total)) as value", [$timezone])->groupBy('month')->pluck('value', 'month');
+        $creditNotes = DB::table('credit_notes as cn')->join('sales_invoices as si', 'si.id', '=', 'cn.invoice_id')->where('cn.tenant_id', $tenantId)->whereNotIn('cn.state', ['draft', 'cancelled', 'void'])->whereBetween('cn.created_at', [$from, $to])->when($companyId, fn ($q) => $q->where('si.company_id', $companyId))->when($branchId, fn ($q) => $q->where('si.branch_id', $branchId))->selectRaw("TO_CHAR(cn.created_at AT TIME ZONE ?, 'YYYY-MM') as month, SUM(cn.total * COALESCE(si.exchange_rate, 1)) as value", [$timezone])->groupBy('month')->pluck('value', 'month');
         $result = [];
-        for ($date = $from->startOfMonth(); $date->lte($to); $date = $date->addMonth()) { $key = $date->format('Y-m'); $result[] = ['label' => $date->format('M Y'), 'value' => (string) ($rows[$key] ?? '0')]; }
+        for ($date = $from->startOfMonth(); $date->lte($to); $date = $date->addMonth()) { $key = $date->format('Y-m'); $result[] = ['label' => $date->format('M Y'), 'value' => Decimal::sub((string) ($rows[$key] ?? '0'), (string) ($creditNotes[$key] ?? '0'))]; }
         return $this->sampleSeries($result, 12);
     }
 

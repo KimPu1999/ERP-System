@@ -7,7 +7,7 @@ import { clearActiveTenantId, getActiveTenantId, getDashboardBranches, getDashbo
 import { WorkspaceAccessPage } from './WorkspaceAccessPage';
 import { useI18n } from '../lib/i18n';
 
-const validPeriods: DashboardPeriod[] = ['today', 'last_7_days', 'last_30_days', 'this_month', 'this_year', 'custom'];
+const validPeriods: DashboardPeriod[] = ['today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month', 'last_month', 'this_quarter', 'this_year', 'custom'];
 const readPeriod = (value: string | null): DashboardPeriod => value && validPeriods.includes(value as DashboardPeriod) ? value as DashboardPeriod : 'last_30_days';
 
 export function CompanyDashboard() {

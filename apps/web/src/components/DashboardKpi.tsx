@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, CircleDollarSign, FileText, Package, ShoppingCart, Truck, Warehouse, type LucideIcon } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, CircleDollarSign, FileText, Package, ShoppingCart, TrendingUp, Truck, Warehouse, type LucideIcon } from 'lucide-react';
 import type { DashboardKpi as DashboardKpiValue, DashboardOverview } from '../lib/api';
 import { formatMoney, formatNumber } from '../lib/dashboardFormatting';
 import { useI18n, type TranslationKey } from '../lib/i18n';
@@ -9,6 +9,8 @@ type KpiDefinition = { key: keyof DashboardOverview['kpis']; label: TranslationK
 const definitions: KpiDefinition[] = [
   { key: 'revenue', label: 'dashboard.revenue', icon: CircleDollarSign, accent: 'blue', money: true },
   { key: 'sales_orders', label: 'dashboard.orders', icon: ShoppingCart, accent: 'indigo' },
+  { key: 'purchases', label: 'dashboard.purchases', icon: Truck, accent: 'orange', money: true },
+  { key: 'gross_profit', label: 'dashboard.grossProfit', icon: TrendingUp, accent: 'emerald', money: true },
   { key: 'pending_invoices', label: 'dashboard.invoices', icon: FileText, accent: 'purple' },
   { key: 'pending_deliveries', label: 'dashboard.deliveries', icon: Truck, accent: 'emerald' },
   { key: 'inventory_value', label: 'dashboard.inventoryValue', icon: Warehouse, accent: 'cyan', money: true },
