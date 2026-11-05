@@ -39628,3 +39628,92 @@ Stack trace:
 [stacktrace]
 #0 {main}
 "} 
+[2026-11-05 03:59:46] local.ERROR: syntax error, unexpected identifier "email", expecting "]" {"exception":"[object] (ParseError(code: 0): syntax error, unexpected identifier \"email\", expecting \"]\" at /Users/kimpu/Desktop/ERP-System/backend/app/Http/Controllers/Api/V1/PlatformConfigurationController.php:166)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/composer/ClassLoader.php(427): {closure:Composer\\Autoload\\ClassLoader::initializeIncludeClosure():575}('/Users/kimpu/De...')
+#1 [internal function]: Composer\\Autoload\\ClassLoader->loadClass('App\\\\Http\\\\Contro...')
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1182): ReflectionClass->__construct('App\\\\Http\\\\Contro...')
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1132): Illuminate\\Routing\\Route->attributeProvidedControllerMiddleware('App\\\\Http\\\\Contro...', 'show')
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1069): Illuminate\\Routing\\Route->controllerMiddleware()
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(847): Illuminate\\Routing\\Route->gatherMiddleware()
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(829): Illuminate\\Routing\\Router->gatherRouteMiddleware(Object(Illuminate\\Routing\\Route))
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(813): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(777): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(766): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#10 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#11 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Foundation\\Http\\Kernel->{closure:Illuminate\\Foundation\\Http\\Kernel::dispatchToRouter():197}(Object(Illuminate\\Http\\Request))
+#12 /Users/kimpu/Desktop/ERP-System/backend/app/Http/Middleware/ValidateProductionConfiguration.php(27): Illuminate\\Pipeline\\Pipeline->{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():178}(Object(Illuminate\\Http\\Request))
+#13 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\ValidateProductionConfiguration->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/kimpu/Desktop/ERP-System/backend/app/Http/Middleware/SetLocale.php(15): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#15 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\SetLocale->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#16 /Users/kimpu/Desktop/ERP-System/backend/app/Http/Middleware/SecurityHeaders.php(13): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#17 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\\Http\\Middleware\\SecurityHeaders->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#18 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(38): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#19 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#20 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#21 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(38): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#22 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#24 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#25 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#27 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(74): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#29 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#30 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#31 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#33 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#34 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(28): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#35 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\\Http\\Middleware\\ValidatePathEncoding->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#36 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(Object(Illuminate\\Http\\Request))
+#37 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#38 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#39 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1228): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#40 /Users/kimpu/Desktop/ERP-System/backend/public/index.php(10): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#41 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/kimpu/De...')
+#42 {main}
+"} 
+[2026-11-05 03:59:46] local.ERROR: syntax error, unexpected identifier "email", expecting "]" {"exception":"[object] (ParseError(code: 0): syntax error, unexpected identifier \"email\", expecting \"]\" at /Users/kimpu/Desktop/ERP-System/backend/app/Http/Controllers/Api/V1/PlatformConfigurationController.php:166)
+[stacktrace]
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/composer/ClassLoader.php(427): {closure:Composer\\Autoload\\ClassLoader::initializeIncludeClosure():575}('/Users/kimpu/De...')
+#1 [internal function]: Composer\\Autoload\\ClassLoader->loadClass('App\\\\Http\\\\Contro...')
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1247): ReflectionClass->__construct('App\\\\Http\\\\Contro...')
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1234): Illuminate\\Routing\\Route->attributeProvidedControllerMiddlewareExclusions('App\\\\Http\\\\Contro...', 'show')
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1307): Illuminate\\Routing\\Route->excludedControllerMiddleware()
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(847): Illuminate\\Routing\\Route->excludedMiddleware()
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(307): Illuminate\\Routing\\Router->gatherRouteMiddleware(Object(Illuminate\\Routing\\Route))
+#7 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(246): Illuminate\\Foundation\\Http\\Kernel->gatherRouteMiddleware(Object(Illuminate\\Http\\Request))
+#8 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(215): Illuminate\\Foundation\\Http\\Kernel->terminateMiddleware(Object(Illuminate\\Http\\Request), Object(Illuminate\\Http\\JsonResponse))
+#9 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1230): Illuminate\\Foundation\\Http\\Kernel->terminate(Object(Illuminate\\Http\\Request), Object(Illuminate\\Http\\JsonResponse))
+#10 /Users/kimpu/Desktop/ERP-System/backend/public/index.php(10): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#11 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/kimpu/De...')
+#12 {main}
+"} 
+[2026-11-05 03:59:46] local.ERROR: Uncaught ErrorException: Cannot modify header information - headers already sent by (output started at /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php:1284) in /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php:328
+Stack trace:
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(265): Illuminate\Foundation\Bootstrap\HandleExceptions->handleError(2, 'Cannot modify h...', '/Users/kimpu/De...', 328)
+#1 [internal function]: Illuminate\Foundation\Bootstrap\HandleExceptions->{closure:Illuminate\Foundation\Bootstrap\HandleExceptions::forwardsTo():264}(2, 'Cannot modify h...', '/Users/kimpu/De...', 328)
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php(328): header('HTTP/1.0 500 In...', true, 500)
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php(407): Symfony\Component\HttpFoundation\Response->sendHeaders()
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(228): Symfony\Component\HttpFoundation\Response->send()
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(205): Illuminate\Foundation\Bootstrap\HandleExceptions->renderHttpResponse(Object(ParseError))
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(265): Illuminate\Foundation\Bootstrap\HandleExceptions->handleException(Object(ParseError))
+#7 [internal function]: Illuminate\Foundation\Bootstrap\HandleExceptions->{closure:Illuminate\Foundation\Bootstrap\HandleExceptions::forwardsTo():264}(Object(ParseError))
+#8 {main}
+  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ErrorException: Cannot modify header information - headers already sent by (output started at /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php:1284) in /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php:328
+Stack trace:
+#0 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(265): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(2, 'Cannot modify h...', '/Users/kimpu/De...', 328)
+#1 [internal function]: Illuminate\\Foundation\\Bootstrap\\HandleExceptions->{closure:Illuminate\\Foundation\\Bootstrap\\HandleExceptions::forwardsTo():264}(2, 'Cannot modify h...', '/Users/kimpu/De...', 328)
+#2 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php(328): header('HTTP/1.0 500 In...', true, 500)
+#3 /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php(407): Symfony\\Component\\HttpFoundation\\Response->sendHeaders()
+#4 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(228): Symfony\\Component\\HttpFoundation\\Response->send()
+#5 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(205): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->renderHttpResponse(Object(ParseError))
+#6 /Users/kimpu/Desktop/ERP-System/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(265): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleException(Object(ParseError))
+#7 [internal function]: Illuminate\\Foundation\\Bootstrap\\HandleExceptions->{closure:Illuminate\\Foundation\\Bootstrap\\HandleExceptions::forwardsTo():264}(Object(ParseError))
+#8 {main}
+  thrown at /Users/kimpu/Desktop/ERP-System/backend/vendor/symfony/http-foundation/Response.php:328)
+[stacktrace]
+#0 {main}
+"} 
+[2026-11-05 04:09:11] testing.NOTICE: Row level security enforcement enabled on tenant-scoped tables. {"tables":166} 

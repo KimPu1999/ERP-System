@@ -7517,3 +7517,87 @@ table tbody tr:hover { background: var(--surface-hover); }
 .purchase-products-table tbody tr:hover { background: var(--surface-hover); }
 @media (max-width: 900px) { .purchasing-detail-header { align-items: flex-start; flex-direction: column; } .purchasing-detail-header .purchasing-page-actions { width: 100%; } }
 @media (max-width: 680px) { .purchasing-detail-header .purchasing-page-actions { width: 100%; } .purchase-detail-summary > div:last-child strong { font-size: 15px; } .purchase-products-card .table-card-heading { grid-template-columns: 1fr; align-items: stretch; } .purchase-products-card .table-card-heading .purchasing-search, .purchase-products-card .table-card-heading > a { width: 100%; } }
+
+/* Global Premium Emerald light-mode compatibility layer. This is deliberately
+   scoped away from `.dark` so existing dark tokens and component overrides are
+   left untouched. */
+:root:not(.dark) {
+  --status-neutral-bg: #f1f4f1;
+  --status-neutral-text: #61716a;
+  --status-pending-bg: #fff7db;
+  --status-pending-text: #8a5a00;
+  --status-info-bg: #e8f1ff;
+  --status-info-text: #245aa8;
+  --status-success-bg: #e3f3eb;
+  --status-success-text: #087f5b;
+  --status-danger-bg: #fef0ef;
+  --status-danger-text: #a33a32;
+}
+:root:not(.dark) .brand-mark { background: linear-gradient(145deg, var(--blue), var(--blue-hover)); box-shadow: 0 5px 14px rgba(8,127,91,.18); }
+:root:not(.dark) .avatar { background: var(--blue); }
+:root:not(.dark) .organization-nav-link:hover,
+:root:not(.dark) .organization-nav-link.active,
+:root:not(.dark) .sales-nav-link:hover,
+:root:not(.dark) .sales-nav-link.active,
+:root:not(.dark) .purchasing-nav-link:hover,
+:root:not(.dark) .purchasing-nav-link.active,
+:root:not(.dark) .optional-tabs a.active,
+:root:not(.dark) .project-tabs button:hover,
+:root:not(.dark) .project-tabs button.active,
+:root:not(.dark) .fixed-asset-tabs button:hover,
+:root:not(.dark) .fixed-asset-tabs button.active { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+:root:not(.dark) .logo-upload-body,
+:root:not(.dark) .setup-side-note,
+:root:not(.dark) .company-profile-logo,
+:root:not(.dark) .profile-info-note,
+:root:not(.dark) .profile-brand-preview > img,
+:root:not(.dark) .profile-brand-preview > span,
+:root:not(.dark) .structure-preview-root,
+:root:not(.dark) .supplier-detail-avatar { border-color: color-mix(in srgb, var(--blue) 30%, var(--border)); }
+:root:not(.dark) .inventory-refresh:hover,
+:root:not(.dark) .accounting-refresh:hover,
+:root:not(.dark) .accounting-primary-button:hover,
+:root:not(.dark) .accounting-link-button:hover,
+:root:not(.dark) .sales-workspace-layout > .page-section .button-primary:hover { background: var(--blue-hover); }
+:root:not(.dark) .inventory-kpi-icon.blue,
+:root:not(.dark) .accounting-setup-icon.blue,
+:root:not(.dark) .org-accent-blue .organization-metric-icon,
+:root:not(.dark) .kpi-accent-blue .kpi-icon,
+:root:not(.dark) .sales-kpi-blue .sales-kpi-icon,
+:root:not(.dark) .optional-module-icon,
+:root:not(.dark) .optional-title-icon { color: var(--blue); background: var(--blue-soft); }
+:root:not(.dark) .status-badge.active,
+:root:not(.dark) .inventory-status.available,
+:root:not(.dark) .accounting-status.active,
+:root:not(.dark) .accounting-status.open,
+:root:not(.dark) .monitoring-status-badge.healthy,
+:root:not(.dark) .monitoring-state-badge.resolved,
+:root:not(.dark) .optional-status.status-enabled { color: var(--status-success-text); background: var(--status-success-bg); }
+:root:not(.dark) .inventory-status.low_stock,
+:root:not(.dark) .monitoring-status-badge.degraded,
+:root:not(.dark) .monitoring-status-badge.maintenance,
+:root:not(.dark) .monitoring-severity-badge.warning,
+:root:not(.dark) .journal-page .accounting-status.submitted { color: var(--status-pending-text); background: var(--status-pending-bg); }
+:root:not(.dark) .inventory-status.out_of_stock,
+:root:not(.dark) .monitoring-status-badge.down,
+:root:not(.dark) .monitoring-severity-badge.critical,
+:root:not(.dark) .monitoring-severity-badge.error,
+:root:not(.dark) .optional-status.status-error,
+:root:not(.dark) .journal-page .accounting-status.rejected { color: var(--status-danger-text); background: var(--status-danger-bg); }
+:root:not(.dark) .status-accepted { color: var(--status-success-text); background: var(--status-success-bg); }
+:root:not(.dark) .appearance-color-field input[type='color'] { accent-color: var(--blue); }
+@media (max-width: 680px) { .appearance-color-grid { grid-template-columns: 1fr; } .appearance-preview-sidebar { width: 54px; } .appearance-preview-card { margin: 16px; width: auto; } }
+:root:not(.dark) .branch-status-active { color: var(--status-success-text); background: var(--status-success-bg); }
+:root:not(.dark) .branch-status-inactive { color: var(--status-pending-text); background: var(--status-pending-bg); }
+:root:not(.dark) .branch-status-archived,
+:root:not(.dark) .monitoring-status-badge.unknown,
+:root:not(.dark) .monitoring-severity-badge.info,
+:root:not(.dark) .monitoring-state-badge.open,
+:root:not(.dark) .monitoring-state-badge.acknowledged,
+:root:not(.dark) .optional-status.status-loading { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
+:root:not(.dark) .journal-page .accounting-status.approved,
+:root:not(.dark) .ops-status-maintenance { color: var(--status-info-text); background: var(--status-info-bg); }
+:root:not(.dark) .metric-bar i { background: var(--blue); }
+:root:not(.dark) .crm-skeleton { background: linear-gradient(90deg, var(--surface-muted), var(--border), var(--surface-muted)); }
+:root:not(.dark) .metric-bar,
+:root:not(.dark) .notification-row { border-color: var(--border); }

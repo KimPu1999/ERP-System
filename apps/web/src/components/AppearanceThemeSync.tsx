@@ -34,7 +34,7 @@ function applyAppearance(value: Record<string, unknown> | undefined) {
 
 export function AppearanceThemeSync() {
   const { user } = useAuth();
-  const query = useQuery({ queryKey: ['platform-setting', 'appearance', 'runtime'], queryFn: () => getPlatformSetting<Record<string, unknown>>('appearance'), enabled: Boolean(user?.is_platform_super_admin), staleTime: 300_000, retry: false });
+  const query = useQuery({ queryKey: ['platform-setting', 'appearance'], queryFn: () => getPlatformSetting<Record<string, unknown>>('appearance'), enabled: Boolean(user?.is_platform_super_admin), staleTime: 300_000, retry: false });
   useEffect(() => {
     const sync = () => applyAppearance(query.data?.data.value);
     sync();

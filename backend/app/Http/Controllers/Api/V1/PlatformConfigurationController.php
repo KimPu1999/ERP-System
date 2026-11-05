@@ -162,7 +162,14 @@ final class PlatformConfigurationController
         $rules = match ($category) {
             'general' => ['display_name' => ['required', 'string', 'max:150'], 'description' => ['nullable', 'string', 'max:500'], 'support_email' => ['nullable', 'email', 'max:255'], 'support_phone' => ['nullable', 'string', 'max:40'], 'organization_contact' => ['nullable', 'string', 'max:500'], 'default_locale' => ['required', Rule::in(['en', 'my'])], 'default_timezone' => ['required', 'timezone'], 'date_format' => ['required', 'string', 'max:40'], 'time_format' => ['required', 'string', 'max:40'], 'application_url_display' => ['nullable', 'url', 'max:255']],
             'branding' => ['primary_color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'secondary_color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'accent_color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'default_theme' => ['required', Rule::in(['light', 'dark', 'system'])], 'sidebar_branding' => ['required', 'boolean'], 'login_branding' => ['required', 'boolean'], 'browser_title' => ['required', 'string', 'max:150']],
-            'appearance' => array_fill_keys(['primary', 'primary_hover', 'page_background', 'card_background', 'header_background', 'sidebar_background', 'text', 'muted_text', 'border', 'active_background', 'hover_background'], ['required', 'regex:/^#[0-9a-fA-F]{6}$/]),
+            'appearance' => [
+                'primary' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'primary_hover' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'page_background' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'card_background' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'header_background' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'sidebar_background' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'text' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'muted_text' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'border' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'active_background' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'hover_background' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            ],
             'email' => ['sender_name' => ['required', 'string', 'max:150'], 'sender_email' => ['required', 'email', 'max:255'], 'reply_to' => ['nullable', 'email', 'max:255']],
             'localization' => ['default_locale' => ['required', Rule::in(['en', 'my'])], 'default_timezone' => ['required', 'timezone'], 'date_format' => ['required', 'string', 'max:40'], 'time_format' => ['required', 'string', 'max:40']],
             'business' => ['public_registration_enabled' => ['required', 'boolean'], 'require_email_verification' => ['required', 'boolean'], 'require_platform_approval' => ['required', 'boolean'], 'default_initial_status' => [Rule::in(['pending', 'active'])], 'default_owner_role' => ['required', 'string', 'max:80'], 'invitation_expiration_days' => ['required', 'integer', 'min:1', 'max:90'], 'business_logo_required' => ['required', 'boolean']],
