@@ -67,6 +67,9 @@ it('persists company profile preferences and exposes an authorized activity time
         'legal_name' => 'Preferences Legal',
         'industry' => 'Manufacturing',
         'alternative_phone' => '+959111111111',
+        'primary_contact_name' => 'May Thu',
+        'primary_contact_email' => 'may@example.com',
+        'primary_contact_phone' => '+959222222222',
         'township' => 'Dagon',
         'number_format' => '1.234,56',
         'invoice_prefix' => 'INV',
@@ -77,6 +80,8 @@ it('persists company profile preferences and exposes an authorized activity time
         'date_format' => 'YYYY-MM-DD',
     ], ['X-Tenant-Id' => $tenant->id])->assertOk()
         ->assertJsonPath('data.industry', 'Manufacturing')
+        ->assertJsonPath('data.primary_contact_name', 'May Thu')
+        ->assertJsonPath('data.primary_contact_email', 'may@example.com')
         ->assertJsonPath('data.number_format', '1.234,56')
         ->assertJsonPath('data.brand_color', '#1D4ED8');
 
@@ -163,8 +168,9 @@ it('validates branding and keeps company documents private', function (): void {
 
     $this->actingAs($user)->postJson('/api/v1/companies/'.$company->id.'/logo', ['file' => UploadedFile::fake()->create('logo.txt', 10, 'text/plain')], ['X-Tenant-Id' => $tenant->id])->assertUnprocessable();
     $this->actingAs($user)->post('/api/v1/companies/'.$company->id.'/logo', ['file' => UploadedFile::fake()->image('logo.png')], ['X-Tenant-Id' => $tenant->id])->assertOk();
-    $this->actingAs($user)->post('/api/v1/companies/'.$company->id.'/documents', ['category' => 'tax_document', 'file' => UploadedFile::fake()->create('tax.pdf', 20, 'application/pdf')], ['X-Tenant-Id' => $tenant->id])->assertCreated();
+    $this->actingAs($user)->post('/api/v1/companies/'.$company->id.'/documents', ['category' => 'tax_document', 'expires_at' => now()->addYear()->toDateString(), 'file' => UploadedFile::fake()->create('tax.pdf', 20, 'application/pdf')], ['X-Tenant-Id' => $tenant->id])->assertCreated();
     expect(CompanyDocument::where('company_id', $company->id)->count())->toBe(1);
+    expect(CompanyDocument::where('company_id', $company->id)->firstOrFail()->expires_at->toDateString())->toBe(now()->addYear()->toDateString());
 });
 
 it('supports company-scoped department hierarchy and rejects invalid relationships', function (): void {

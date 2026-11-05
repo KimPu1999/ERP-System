@@ -9,7 +9,9 @@ class CompanyDocument extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['tenant_id', 'company_id', 'uploaded_by', 'name', 'category', 'path', 'mime_type', 'size'];
+    protected $fillable = ['tenant_id', 'company_id', 'uploaded_by', 'name', 'category', 'path', 'mime_type', 'size', 'expires_at'];
+
+    protected function casts(): array { return ['expires_at' => 'date']; }
 
     public function company() { return $this->belongsTo(Company::class); }
     public function uploader() { return $this->belongsTo(User::class, 'uploaded_by'); }

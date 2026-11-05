@@ -6,6 +6,7 @@ use App\Models\AccountingCurrency;
 use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\CompanyDocument;
+use App\Models\Department;
 use App\Models\JournalEntry;
 use App\Models\PlatformAuditLog;
 use App\Models\User;
@@ -126,7 +127,7 @@ final class CompanyController
     {
         $this->assertCompany($company);
         abort_unless($this->allowed($authorization, $request, $company, ['organization.manage', 'company.manage', 'reports.view']), 403);
-        $documents = $company->documents()->with('uploader:id,name')->latest()->get(['id', 'name', 'category', 'mime_type', 'size', 'uploaded_by', 'created_at']);
+        $documents = $company->documents()->with('uploader:id,name')->latest()->get(['id', 'name', 'category', 'mime_type', 'size', 'expires_at', 'uploaded_by', 'created_at']);
         return response()->json(['data' => $documents->map(fn (CompanyDocument $document) => [...$document->toArray(), 'uploaded_by_name' => $document->uploader?->name, 'download_path' => "/companies/{$company->id}/documents/{$document->id}"]) ]);
     }
 
@@ -145,10 +146,10 @@ final class CompanyController
     {
         $this->assertCompany($company);
         abort_unless($this->allowed($authorization, $request, $company, ['company.manage', 'organization.manage']), 403);
-        $data = $request->validate(['file' => ['required', 'file', 'max:20480', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx'], 'category' => ['required', Rule::in(['registration_certificate', 'tax_document', 'other'])]]);
+        $data = $request->validate(['file' => ['required', 'file', 'max:20480', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx'], 'category' => ['required', Rule::in(['registration_certificate', 'tax_document', 'other'])], 'expires_at' => ['nullable', 'date', 'after:today']]);
         $file = $data['file'];
         $path = $file->store("private/tenant/{$company->tenant_id}/companies/{$company->id}", 'local');
-        $document = CompanyDocument::create(['tenant_id' => $company->tenant_id, 'company_id' => $company->id, 'uploaded_by' => $request->user()->id, 'name' => $file->getClientOriginalName(), 'category' => $data['category'], 'path' => $path, 'mime_type' => $file->getMimeType(), 'size' => $file->getSize()]);
+        $document = CompanyDocument::create(['tenant_id' => $company->tenant_id, 'company_id' => $company->id, 'uploaded_by' => $request->user()->id, 'name' => $file->getClientOriginalName(), 'category' => $data['category'], 'path' => $path, 'mime_type' => $file->getMimeType(), 'size' => $file->getSize(), 'expires_at' => $data['expires_at'] ?? null]);
         $audit->record($request, 'company.document.created', $company->tenant_id, $document, ['company_id' => $company->id]);
         return response()->json(['data' => $document], 201);
     }
@@ -177,7 +178,7 @@ final class CompanyController
     {
         return [
             'name' => ['sometimes', 'string', 'max:200'], 'code' => ['sometimes', 'alpha_dash', 'max:40', Rule::unique('companies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))->ignore($company->id)],
-            'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'industry' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'alternative_phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'township' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3', Rule::exists('accounting_currencies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'fiscal_year_start' => ['nullable', 'date'], 'document_number_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'number_format' => ['nullable', Rule::in(['1,234.56', '1.234,56', '1 234,56'])], 'invoice_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'purchase_order_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'brand_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
+            'legal_name' => ['nullable', 'string', 'max:200'], 'trading_name' => ['nullable', 'string', 'max:200'], 'business_type' => ['nullable', 'string', 'max:120'], 'industry' => ['nullable', 'string', 'max:120'], 'registration_number' => ['nullable', 'string', 'max:120'], 'tax_identifier' => ['nullable', 'string', 'max:120'], 'tax_registration_details' => ['nullable', 'string', 'max:5000'], 'registration_date' => ['nullable', 'date'], 'description' => ['nullable', 'string', 'max:5000'], 'email' => ['nullable', 'email', 'max:255'], 'phone' => ['nullable', 'string', 'max:60'], 'alternative_phone' => ['nullable', 'string', 'max:60'], 'primary_contact_name' => ['nullable', 'string', 'max:160'], 'primary_contact_email' => ['nullable', 'email', 'max:255'], 'primary_contact_phone' => ['nullable', 'string', 'max:60'], 'website' => ['nullable', 'url', 'max:255'], 'country_code' => ['nullable', 'alpha', 'size:2'], 'region' => ['nullable', 'string', 'max:120'], 'city' => ['nullable', 'string', 'max:120'], 'township' => ['nullable', 'string', 'max:120'], 'postal_code' => ['nullable', 'string', 'max:30'], 'street_address' => ['nullable', 'string', 'max:255'], 'base_currency' => ['nullable', 'alpha', 'size:3', Rule::exists('accounting_currencies', 'code')->where(fn ($query) => $query->where('tenant_id', $company->tenant_id))], 'timezone' => ['required', 'timezone'], 'default_locale' => ['required', 'string', 'max:10'], 'date_format' => ['required', 'string', 'max:30'], 'fiscal_year_start' => ['nullable', 'date'], 'document_number_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'number_format' => ['nullable', Rule::in(['1,234.56', '1.234,56', '1 234,56'])], 'invoice_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'purchase_order_prefix' => ['nullable', 'alpha_dash', 'max:40'], 'brand_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'], 'tenant_id' => ['prohibited'], 'is_active' => ['prohibited'],
         ];
     }
 
@@ -263,6 +264,21 @@ final class CompanyController
 
     private function payload(Company $company): array
     {
-        return [...$company->toArray(), 'logo_url' => $company->logo_path ? Storage::disk('public')->url($company->logo_path) : null, 'cover_image_url' => $company->cover_image_path ? Storage::disk('public')->url($company->cover_image_path) : null];
+        $company->loadCount([
+            'branches as branches_count',
+            'branches as active_branches_count' => fn ($query) => $query->where('is_active', true),
+            'memberships as members_count',
+            'memberships as active_members_count' => fn ($query) => $query->where('status', 'active'),
+            'documents as documents_count',
+        ]);
+
+        return [...$company->toArray(), 'stats' => [
+            'branches' => (int) $company->branches_count,
+            'active_branches' => (int) $company->active_branches_count,
+            'members' => (int) $company->members_count,
+            'active_members' => (int) $company->active_members_count,
+            'documents' => (int) $company->documents_count,
+            'departments' => Department::where('tenant_id', $company->tenant_id)->where('company_id', $company->id)->count(),
+        ], 'logo_url' => $company->logo_path ? Storage::disk('public')->url($company->logo_path) : null, 'cover_image_url' => $company->cover_image_path ? Storage::disk('public')->url($company->cover_image_path) : null];
     }
 }
