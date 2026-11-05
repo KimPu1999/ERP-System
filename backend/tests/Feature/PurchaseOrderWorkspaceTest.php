@@ -49,6 +49,18 @@ it('creates a draft without posting stock and rejects unauthorized company acces
     $this->actingAs($unauthorized)->getJson('/api/v1/purchase-orders?company_id='.$company->id, ['X-Tenant-Id' => $tenant->id])->assertForbidden();
 });
 
+it('rejects zero quantity purchase order lines', function (): void {
+    [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
+
+    $this->actingAs($user)->postJson('/api/v1/purchase-orders', [
+        'company_id' => $company->id,
+        'supplier_id' => $supplier->id,
+        'items' => [['variant_id' => $variant->id, 'ordered_quantity' => '0', 'unit_price' => '10']],
+    ], ['X-Tenant-Id' => $tenant->id])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('items');
+});
+
 it('enforces an active supplier purchasing hold before draft creation', function (): void {
     [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
     SupplierPurchasingHold::create([

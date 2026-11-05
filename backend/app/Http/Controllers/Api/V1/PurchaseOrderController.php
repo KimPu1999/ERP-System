@@ -37,7 +37,8 @@ final class PurchaseOrderController
             ->when($request->filled('date_to'), fn ($q) => $q->whereDate('order_date', '<=', $request->date('date_to')));
         $sort = in_array($request->string('sort')->toString(), ['number', 'state', 'expected_at', 'created_at'], true) ? $request->string('sort')->toString() : 'created_at';
         $direction = $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc';
-        $page = $query->orderBy($sort, $direction)->paginate(min(max($request->integer('per_page', 25), 10), 100));
+        // Compact register by default; larger page sizes remain available.
+        $page = $query->orderBy($sort, $direction)->paginate(min(max($request->integer('per_page', 10), 10), 100));
         return response()->json(['data' => $page, 'summary' => $this->summary($tenantId, $companyId, $branchId, $accessibleCompanyIds, $request)]);
     }
 
@@ -212,6 +213,9 @@ final class PurchaseOrderController
     {
         $subtotal = '0'; $discountTotal = '0'; $taxTotal = '0'; $normalized = [];
         foreach ($items as $item) {
+            if (Decimal::compare((string) $item['ordered_quantity'], '0') <= 0) {
+                throw ValidationException::withMessages(['items' => ['Ordered quantity must be greater than zero.']]);
+            }
             $lineSubtotal = Decimal::mul((string) $item['ordered_quantity'], (string) $item['unit_price']);
             $discountType = $item['discount_type'] ?? 'amount'; $discountInput = (string) ($item['discount_amount'] ?? '0');
             $discount = $discountType === 'percent' ? Decimal::div(Decimal::mul($lineSubtotal, $discountInput), '100') : Decimal::normalize($discountInput);
