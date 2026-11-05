@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\{ApprovalDefinition, ApprovalRequest, ApprovalStep, Company, PurchaseOrder};
-use App\Services\{AuthorizationService, PurchaseOrderApprovalService};
+use App\Services\{AuthorizationService, PurchaseOrderApprovalService, PurchaseOrderResolver};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,8 +38,9 @@ final class PurchaseApprovalController
         return response()->json(['data' => new LengthAwarePaginator($items, $requests->count(), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]), 'summary' => $summary]);
     }
 
-    public function show(Request $request, PurchaseOrder $purchaseOrder, AuthorizationService $authorization, PurchaseOrderApprovalService $approvals): JsonResponse
+    public function show(Request $request, string $purchaseOrder, AuthorizationService $authorization, PurchaseOrderApprovalService $approvals, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $tenantId = (string) app(TenantContext::class)->id();
         abort_unless((string) $purchaseOrder->tenant_id === $tenantId, 404);
         $canManage = $authorization->allows($request->user(), $tenantId, 'procurement.manage', $purchaseOrder->company_id, $purchaseOrder->branch_id)

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\{AccountingCurrency, Branch, Company, ProductVariant, PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct, SupplierPurchasingHold, Warehouse};
-use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService, PurchaseOrderApprovalService};
+use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, ProcurementStateService, PurchaseOrderApprovalService, PurchaseOrderResolver};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,8 +41,9 @@ final class PurchaseOrderController
         return response()->json(['data' => $page, 'summary' => $this->summary($tenantId, $companyId, $branchId, $accessibleCompanyIds, $request)]);
     }
 
-    public function show(Request $request, PurchaseOrder $purchaseOrder, AuthorizationService $authorization): JsonResponse
+    public function show(Request $request, string $purchaseOrder, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
         return response()->json(['data' => $purchaseOrder->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product', 'approvalRequest.definition', 'approvalRequest.actions.approver', 'approvalRequests.actions.approver'])]);
     }
@@ -64,8 +65,9 @@ final class PurchaseOrderController
         return response()->json(['data' => $order->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product'])], 201);
     }
 
-    public function update(Request $request, PurchaseOrder $purchaseOrder, AuditLogger $audit, AuthorizationService $authorization): JsonResponse
+    public function update(Request $request, string $purchaseOrder, AuditLogger $audit, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
         abort_unless($purchaseOrder->state === 'draft', 422, 'Only draft purchase orders can be edited.');
         $data = $this->validatedPayload($request, (string) $purchaseOrder->tenant_id);
@@ -83,38 +85,44 @@ final class PurchaseOrderController
         return response()->json(['data' => $purchaseOrder->fresh()->load(['supplier', 'company', 'branch', 'warehouse', 'currency', 'items.variant.product'])]);
     }
 
-    public function submit(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals, AuthorizationService $authorization): JsonResponse
+    public function submit(Request $request, string $purchaseOrder, PurchaseOrderApprovalService $approvals, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
         return response()->json(['data' => $approvals->submit($request, $purchaseOrder)]);
     }
 
-    public function approve(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals): JsonResponse
+    public function approve(Request $request, string $purchaseOrder, PurchaseOrderApprovalService $approvals, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $data = $request->validate(['remarks' => ['nullable', 'string', 'max:2000'], 'comment' => ['nullable', 'string', 'max:2000']]);
         return response()->json(['data' => $approvals->decide($request, $purchaseOrder, 'approved', $data['remarks'] ?? $data['comment'] ?? null)]);
     }
 
-    public function reject(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals): JsonResponse
+    public function reject(Request $request, string $purchaseOrder, PurchaseOrderApprovalService $approvals, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $data = $request->validate(['remarks' => ['required', 'string', 'min:2', 'max:2000']]);
         return response()->json(['data' => $approvals->decide($request, $purchaseOrder, 'rejected', $data['remarks'])]);
     }
 
-    public function requestRevision(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals): JsonResponse
+    public function requestRevision(Request $request, string $purchaseOrder, PurchaseOrderApprovalService $approvals, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $data = $request->validate(['remarks' => ['required', 'string', 'min:2', 'max:2000']]);
         return response()->json(['data' => $approvals->decide($request, $purchaseOrder, 'revision_required', $data['remarks'])]);
     }
 
-    public function revise(Request $request, PurchaseOrder $purchaseOrder, PurchaseOrderApprovalService $approvals, AuthorizationService $authorization): JsonResponse
+    public function revise(Request $request, string $purchaseOrder, PurchaseOrderApprovalService $approvals, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
         return response()->json(['data' => $approvals->returnToDraft($request, $purchaseOrder)]);
     }
 
-    public function cancel(Request $request, PurchaseOrder $purchaseOrder, ProcurementStateService $states, AuditLogger $audit, AuthorizationService $authorization): JsonResponse
+    public function cancel(Request $request, string $purchaseOrder, ProcurementStateService $states, AuditLogger $audit, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderAccess($request, $purchaseOrder, $authorization);
         $order = $states->transition($purchaseOrder, 'cancelled', $request, (string) $purchaseOrder->tenant_id, $request->string('comment')->toString());
         $audit->record($request, 'purchase_order.cancelled', (string) $purchaseOrder->tenant_id, $order);

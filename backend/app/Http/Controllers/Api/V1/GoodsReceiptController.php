@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\{CompanyMembership, GoodsReceipt, PurchaseOrder, PurchaseOrderItem, StockMovement, Warehouse, WarehouseLocation};
-use App\Services\{AuditLogger, AuthorizationService, GoodsReceiptService};
+use App\Services\{AuditLogger, AuthorizationService, GoodsReceiptService, PurchaseOrderResolver};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,8 +54,9 @@ final class GoodsReceiptController
     }
 
     /** Compatibility endpoint retained for clients from the pre-Phase-4 API. */
-    public function legacyStore(Request $request, PurchaseOrder $purchaseOrder, GoodsReceiptService $receipts, AuthorizationService $authorization, AuditLogger $audit): JsonResponse
+    public function legacyStore(Request $request, string $purchaseOrder, GoodsReceiptService $receipts, AuthorizationService $authorization, AuditLogger $audit, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $tenantId = $this->tenantId(); abort_unless((string) $purchaseOrder->tenant_id === $tenantId, 404); $this->assertOrderScope($request, $authorization, $tenantId, $purchaseOrder);
         $data = $request->validate(['idempotency_key' => ['required', 'string', 'max:100'], 'lines' => ['required', 'array', 'min:1'], 'lines.*.purchase_order_item_id' => ['required', 'uuid'], 'lines.*.location_id' => ['required', 'uuid'], 'lines.*.quantity' => ['required', 'regex:/^\d+(\.\d{1,6})?$/']]);
         $receipt = $receipts->post($tenantId, $request->user()->id, $purchaseOrder, $data['lines'], $data['idempotency_key']); $audit->record($request, 'goods_receipt.posted', $tenantId, $receipt, ['purchase_order_id' => $purchaseOrder->id]); return response()->json(['data' => $receipt], 201);
@@ -72,8 +73,9 @@ final class GoodsReceiptController
         return response()->view('procurement.goods-receipt', ['receipt' => $goodsReceipt->load(['purchaseOrder.supplier', 'company', 'branch', 'warehouse', 'items.purchaseOrderItem.variant.product', 'items.location'])]);
     }
 
-    public function receivingSummary(Request $request, PurchaseOrder $purchaseOrder, AuthorizationService $authorization): JsonResponse
+    public function receivingSummary(Request $request, string $purchaseOrder, AuthorizationService $authorization, PurchaseOrderResolver $resolver): JsonResponse
     {
+        $purchaseOrder = $resolver->resolve($purchaseOrder);
         $this->assertOrderScope($request, $authorization, $this->tenantId(), $purchaseOrder); $items = $purchaseOrder->items()->with('variant.product')->get(); return response()->json(['data' => ['purchase_order_id' => $purchaseOrder->id, 'state' => $purchaseOrder->state, 'items' => $items->map(fn ($item) => ['id' => $item->id, 'variant_id' => $item->variant_id, 'product' => $item->variant?->product?->name, 'sku' => $item->variant?->sku, 'ordered_quantity' => (string) $item->ordered_quantity, 'received_quantity' => (string) $item->received_quantity, 'remaining_quantity' => Decimal::sub((string) $item->ordered_quantity, (string) $item->received_quantity)])->values()]]);
     }
 

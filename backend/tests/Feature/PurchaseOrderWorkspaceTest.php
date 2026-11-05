@@ -30,6 +30,15 @@ it('returns scoped purchase orders with currency-safe summary data', function ()
         ->assertOk()->assertJsonPath('data.items.0.variant.product.name', 'Procurement Item');
 });
 
+it('returns a tenant-scoped not found response for a missing purchase order', function (): void {
+    [$user, $tenant] = purchaseOrderWorkspaceFixture();
+
+    $this->actingAs($user)
+        ->getJson('/api/v1/purchase-orders/01a1a072-8c4f-70c1-88fa-9088dcfec28d', ['X-Tenant-Id' => $tenant->id])
+        ->assertNotFound()
+        ->assertJsonPath('message', 'Purchase order not found.');
+});
+
 it('creates a draft without posting stock and rejects unauthorized company access', function (): void {
     [$user, $tenant, $company, $supplier, $variant] = purchaseOrderWorkspaceFixture();
     $response = $this->actingAs($user)->postJson('/api/v1/purchase-orders', ['company_id' => $company->id, 'supplier_id' => $supplier->id, 'items' => [['variant_id' => $variant->id, 'ordered_quantity' => '3', 'unit_price' => '10.25']]], ['X-Tenant-Id' => $tenant->id])->assertCreated()->assertJsonPath('data.state', 'draft');

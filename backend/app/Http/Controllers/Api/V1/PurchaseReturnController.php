@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\{CompanyMembership, GoodsReceipt, GoodsReceiptItem, PurchaseOrder, PurchaseReturn, PurchaseReturnItem, PurchaseReturnShipment, PurchaseReturnShipmentItem, SupplierDebitNote, SupplierRefund, WarehouseLocation};
-use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, StockMovementService};
+use App\Services\{AuditLogger, AuthorizationService, ProcurementNumberService, PurchaseOrderResolver, StockMovementService};
 use App\Support\{Decimal, TenantContext};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\DB;
@@ -44,5 +44,5 @@ final class PurchaseReturnController
     private function transition(Request $request, PurchaseReturn $return, string $status, AuthorizationService $auth, AuditLogger $audit, string $action): JsonResponse { $tenant=$this->tenant(); abort_unless($return->tenant_id===$tenant,404); $this->scope($request,$auth,$tenant,$return->company_id,$return->branch_id); abort_unless(in_array($return->approval_status,['draft','pending','revision_required'],true),422); $return->update(['approval_status'=>$status,'state'=>$status==='pending'?'pending_approval':$status]); $audit->record($request,$action,$tenant,$return); return response()->json(['data'=>$return->fresh()]); }
     private function scope(Request $request, AuthorizationService $auth, string $tenant, ?string $company, ?string $branch=null): void { if($company){abort_unless($auth->allows($request->user(),$tenant,'procurement.manage',$company,$branch),403); abort_unless(CompanyMembership::where('tenant_id',$tenant)->where('company_id',$company)->where('user_id',$request->user()->id)->where('status','active')->exists(),403);}}
     private function tenant(): string { return (string)app(TenantContext::class)->id(); }
-    public function post(Request $request, PurchaseOrder $purchaseOrder, StockMovementService $movements, ProcurementNumberService $numbers, AuthorizationService $authorization, AuditLogger $audit): JsonResponse { abort_unless($purchaseOrder->tenant_id===$this->tenant(),404); abort_unless($authorization->allows($request->user(),$this->tenant(),'procurement.manage'),403); throw ValidationException::withMessages(['workflow'=>['Direct purchase-return posting is disabled. Create a return, obtain approval, then dispatch it.']]); }
+    public function post(Request $request, string $purchaseOrder, StockMovementService $movements, ProcurementNumberService $numbers, AuthorizationService $authorization, AuditLogger $audit, PurchaseOrderResolver $resolver): JsonResponse { $purchaseOrder = $resolver->resolve($purchaseOrder); abort_unless($authorization->allows($request->user(),$this->tenant(),'procurement.manage'),403); throw ValidationException::withMessages(['workflow'=>['Direct purchase-return posting is disabled. Create a return, obtain approval, then dispatch it.']]); }
 }

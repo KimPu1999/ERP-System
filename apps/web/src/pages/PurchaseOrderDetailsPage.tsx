@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ban, CheckCircle2, Clock3, FileDown, PackageCheck, Pencil, RefreshCw, ShoppingCart, XCircle } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ApiError, API_BASE_URL, approvePurchaseOrder, cancelPurchaseOrder, getPurchaseOrder, getPurchaseOrderApprovals, rejectPurchaseOrder, requestPurchaseOrderRevision, submitPurchaseOrder } from '../lib/api';
+import { ApiError, API_BASE_URL, approvePurchaseOrder, cancelPurchaseOrder, getPurchaseOrder, getPurchaseOrderApprovals, isApiNotFound, rejectPurchaseOrder, requestPurchaseOrderRevision, submitPurchaseOrder } from '../lib/api';
 import { formatMoney, formatNumber } from '../lib/dashboardFormatting';
 
 const label = (value: string) => value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -12,7 +13,7 @@ const errorMessage = (error: unknown) => error instanceof ApiError ? error.messa
 const tone = (state: string) => ['approved', 'received', 'closed'].includes(state) ? 'success' : ['cancelled', 'rejected'].includes(state) ? 'danger' : state === 'submitted' ? 'warning' : 'neutral';
 
 function Status({ state }: { state: string }) { return <span className={`purchasing-status ${tone(state)}`}>{label(state)}</span>; }
-function StateCard({ title, message }: { title: string; message: string }) { return <article className="purchasing-state-card"><div className="purchasing-state-icon"><ShoppingCart size={20} /></div><h2>{title}</h2><p>{message}</p></article>; }
+function StateCard({ title, message, action }: { title: string; message: string; action?: ReactNode }) { return <article className="purchasing-state-card"><div className="purchasing-state-icon"><ShoppingCart size={20} /></div><h2>{title}</h2><p>{message}</p>{action}</article>; }
 function Field({ name, value }: { name: string; value: unknown }) { return <div><dt>{name}</dt><dd>{dash(value)}</dd></div>; }
 
 export function PurchaseOrderDetailsPage() {
@@ -22,7 +23,7 @@ export function PurchaseOrderDetailsPage() {
   const action = useMutation({ mutationFn: (kind: 'submit' | 'cancel') => kind === 'submit' ? submitPurchaseOrder(purchaseOrderId) : cancelPurchaseOrder(purchaseOrderId), onSuccess: () => { void client.invalidateQueries({ queryKey: ['purchase-order-v2', purchaseOrderId] }); void client.invalidateQueries({ queryKey: ['purchase-order-approvals', purchaseOrderId] }); void client.invalidateQueries({ queryKey: ['purchase-orders-v2'] }); } });
   const approvalAction = useMutation({ mutationFn: ({ kind, remarks }: { kind: 'approved' | 'rejected' | 'revision_required'; remarks?: string }) => kind === 'approved' ? approvePurchaseOrder(purchaseOrderId, remarks) : kind === 'rejected' ? rejectPurchaseOrder(purchaseOrderId, remarks ?? '') : requestPurchaseOrderRevision(purchaseOrderId, remarks ?? ''), onSuccess: () => { void client.invalidateQueries({ queryKey: ['purchase-order-v2', purchaseOrderId] }); void client.invalidateQueries({ queryKey: ['purchase-order-approvals', purchaseOrderId] }); void client.invalidateQueries({ queryKey: ['purchase-approvals'] }); } });
   if (order.isLoading) return <section className="purchasing-page page-section"><StateCard title="Loading purchase order" message="Retrieving the authorized document." /></section>;
-  if (order.isError || !order.data?.data) return <section className="purchasing-page page-section"><StateCard title="Purchase order unavailable" message={errorMessage(order.error)} /></section>;
+  if (order.isError || !order.data?.data) return <section className="purchasing-page page-section"><StateCard title="Purchase order unavailable" message={isApiNotFound(order.error) ? 'This purchase order is no longer available in the current workspace, or you do not have access to it.' : errorMessage(order.error)} action={<Link className="secondary" to={`/purchasing?company_id=${encodeURIComponent(searchParams.get('company_id') ?? '')}`}>Back to purchase orders</Link>} /></section>;
   const data = order.data.data; const currency = data.currency?.code ?? data.company?.base_currency ?? null; const ordered = data.items.reduce((sum, item) => sum + Number(item.ordered_quantity || 0), 0); const received = data.items.reduce((sum, item) => sum + Number(item.received_quantity || 0), 0); const remaining = Math.max(ordered - received, 0); const histories = approvals.data?.data ?? []; const currentApproval = histories[0];
   const tabs = ['overview', 'products', 'delivery', 'approvals', 'documents', 'activity']; const terminal = ['cancelled', 'rejected'].includes(data.state); const progress = ['draft', 'submitted', 'approved', 'partially_received', 'received', 'closed']; const activeIndex = progress.indexOf(data.state);
   const decision = (kind: 'rejected' | 'revision_required') => { const remarks = window.prompt(kind === 'rejected' ? 'Reason for rejection' : 'Reason for revision'); if (remarks?.trim()) approvalAction.mutate({ kind, remarks: remarks.trim() }); };
